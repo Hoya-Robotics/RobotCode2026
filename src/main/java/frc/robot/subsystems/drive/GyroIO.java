@@ -10,10 +10,13 @@ import org.littletonrobotics.junction.AutoLog;
 public interface GyroIO {
   @AutoLog
   public static class GyroIOInputs {
-    // Do we need pitch or roll?
     public boolean isConnected = false;
     public Rotation2d yaw = Rotation2d.kZero;
-    public AngularVelocity yawVelocity = RadiansPerSecond.of(0);
+		public Rotation2d pitch = Rotation2d.kZero;
+		public Rotation2d roll = Rotation2d.kZero;
+    public double yawRps = 0.0;
+    public double pitchRps = 0.0;
+    public double rollRps = 0.0;
   }
 
   public default void updateInputs(GyroIOInputs inputs) {}

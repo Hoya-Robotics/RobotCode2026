@@ -1,13 +1,26 @@
 package frc.robot;
 
+import frc.robot.subsystems.drive.*;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import java.util.Arrays;
-import java.util.function.Supplier;
-import org.littletonrobotics.junction.Logger;
+import edu.wpi.first.math.geometry.Twist2d;
+import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 
 public class RobotState {
+  private final double poseBufferSizeSec = 2.0;
+
+	private final TimeInterpolatableBuffer<Pose2d> poseBuffer =
+    TimeInterpolatableBuffer.createBuffer(poseBufferSizeSec);
+
+	private final SwerveDriveKinematics kinematics;
+	private SwerveModulePosition[] modulePositions;
+
+  private Pose2d odometryPose = Pose2d.kZero;
+  private Pose2d estimatedPose = Pose2d.kZero;
+    
   private static RobotState instance;
 
   // Singleton pattern
@@ -18,43 +31,32 @@ public class RobotState {
     return instance;
   }
 
-  private Pose2d odometryPose = Pose2d.kZero;
-  private Supplier<Pose2d> simulatedPoseCallback = null;
+	private RobotState() {
+		kinematics = new SwerveDriveKinematics(DriveConstants.modulePositions);
+		modulePositions = new SwerveModulePosition[4];
+	}
+
+	public Pose2d getEstimatedPose() {
+		return estimatedPose;
+	}
 
   public void addOdometryObservation(OdometryObservation observation) {
-    final var robotDisplacement =
-        Arrays.stream(observation.moduleDisplacements)
-            .reduce(Translation2d.kZero, Translation2d::plus)
-            .rotateBy(observation.gyroYaw);
-    final Pose2d poseEstimate =
-        new Pose2d(odometryPose.getTranslation().plus(robotDisplacement), observation.gyroYaw);
+		Twist2d twist = kinematics.toTwist2d(modulePositions, observation.modulePositions());
+		modulePositions = observation.modulePositions();
+		Pose2d lastPose = odometryPose;
+		odometryPose = new Pose2d(
+			odometryPose.exp(twist).getTranslation(),
+			observation.gyroAngle()
+		);
 
-    odometryPose = poseEstimate;
-    Logger.recordOutput("RobotState/odometryPose", odometryPose);
+		poseBuffer.addSample(observation.timestamp(), odometryPose);
+
+		estimatedPose = estimatedPose.exp(lastPose.log(odometryPose));
   }
 
-  public void addSimulatedPoseCallback(Supplier<Pose2d> simulatedPoseCallback) {
-    this.simulatedPoseCallback = simulatedPoseCallback;
-  }
-
-  // TODO: implement
-  public void addVisionObservation(AprilTagObservation observation) {}
-
-  public final Pose2d getOdometryPose() {
-    return odometryPose;
-  }
-
-  public final Pose2d getSimulatedPose() {
-    return simulatedPoseCallback.get();
-  }
-
-  // TODO: add observation functions for vision and drive odometry
-  public Pose2d getEstimatedRobotPose() {
-    return Pose2d.kZero;
-  }
-
-  public record AprilTagObservation(double timestamp, Pose2d visionPose) {}
+	public void addVisionObservation() {
+	}
 
   public record OdometryObservation(
-      double timestamp, Rotation2d gyroYaw, Translation2d[] moduleDisplacements) {}
+    double timestamp, SwerveModulePosition[] modulePositions, Rotation2d gyroAngle) {}
 }

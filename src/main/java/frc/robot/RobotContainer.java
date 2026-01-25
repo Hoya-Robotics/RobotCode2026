@@ -18,9 +18,6 @@ import org.littletonrobotics.junction.Logger;
 public class RobotContainer {
   public final Drive drive;
   public final XboxController driveController = new XboxController(0);
-  public final DoubleSupplier driveX = () -> -driveController.getLeftY();
-  public final DoubleSupplier driveY = () -> driveController.getLeftX();
-  public final DoubleSupplier turnX = () -> -driveController.getRightY();
   public SwerveDriveSimulation swerveSim = null;
 
   public RobotContainer() {
@@ -40,18 +37,6 @@ public class RobotContainer {
             new SwerveDriveSimulation(
                 DriveConstants.mapleSimConfig, new Pose2d(3, 3, Rotation2d.kZero));
         SimulatedArena.getInstance().addDriveTrainSimulation(swerveSim);
-        RobotState.getInstance().addSimulatedPoseCallback(swerveSim::getSimulatedDriveTrainPose);
-        var simMods = swerveSim.getModules();
-        drive =
-            new Drive(
-                new GyroIOSim(swerveSim.getGyroSimulation()),
-                new ModuleIOGeneralSim(simMods[0]),
-                new ModuleIOGeneralSim(simMods[1]),
-                new ModuleIOGeneralSim(simMods[2]),
-                new ModuleIOGeneralSim(simMods[3]),
-                driveController);
-        break;
-      default:
         drive =
             new Drive(
                 new GyroIO() {},

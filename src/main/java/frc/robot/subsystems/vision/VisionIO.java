@@ -11,7 +11,6 @@ public interface VisionIO {
     AprilFiducial bestTarget;
     AprilFiducial[] allTargets;
     Angle megatagYaw;
-    boolean update_yaw;
   }
 
   public static record AprilFiducial(
