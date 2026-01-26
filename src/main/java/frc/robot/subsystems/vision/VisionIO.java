@@ -2,7 +2,6 @@ package frc.robot.subsystems.vision;
 
 import edu.wpi.first.units.measure.Angle;
 import org.littletonrobotics.junction.AutoLog;
-import org.photonvision.targeting.PhotonTrackedTarget;
 
 public interface VisionIO {
   @AutoLog

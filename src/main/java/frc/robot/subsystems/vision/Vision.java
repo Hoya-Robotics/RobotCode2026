@@ -3,7 +3,6 @@ package frc.robot.subsystems.vision;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.units.measure.Angle;
 import frc.robot.FieldConstants;
-import frc.robot.RobotState;
 import frc.robot.RobotState.*;
 import frc.robot.StateSubsystem;
 import java.util.function.Consumer;
@@ -39,20 +38,24 @@ public class Vision extends StateSubsystem<frc.robot.subsystems.vision.Vision.Sy
   protected void applyState() {
     for (int i = 0; i < cameras.length; ++i) {
       final VisionIOInputsAutoLogged input = inputs[i];
-      if (input.update_yaw) setYaw.accept(input.megatagYaw);
+      // setYaw.accept(input.megatagYaw);
 
       switch (getCurrentState()) {
         case BEST_TAG_2D -> {
           final Pose2d estimate = poseEstimate2d(input.bestTarget);
+          /*
           RobotState.getInstance()
               .addVisionObservation(
                   new AprilTagObservation(input.bestTarget.timestamp(), estimate));
+                  */
         }
         case ALL_TAGS_2D -> {
           for (var tag : input.allTargets) {
             final Pose2d estimate = poseEstimate2d(tag);
+            /*
             RobotState.getInstance()
                 .addVisionObservation(new AprilTagObservation(tag.timestamp(), estimate));
+                */
           }
         }
       }

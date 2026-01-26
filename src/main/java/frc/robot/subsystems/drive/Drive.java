@@ -2,12 +2,11 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
@@ -21,13 +20,7 @@ public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.Syste
     TO_POSE_PID,
   };
 
-  private final Module[] swerveModules = new Module[4];
-  private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(DriveConstants.modulePositions);
-
-  private final GyroIO gyro;
-  private final GyroIOInputsAutoLogged gyroData = new GyroIOInputsAutoLogged();
-
-	// Drive to pose controllers
+  // Drive to pose controllers
   private final PIDController linearController =
       new PIDController(
           DriveConstants.driveGains.kp(),
@@ -39,20 +32,15 @@ public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.Syste
 
   private final XboxController controller;
   private Pose2d driveToPointPose = new Pose2d();
+  private final SwerveIO io;
+  private final ModuleIOInputsAutoLogged[] moduleInputs = new ModuleIOInputsAutoLogged[4];
+  private final SwerveIOInputsAutoLogged swerveInputs = new SwerveIOInputsAutoLogged();
 
-  public Drive(
-      GyroIO gyro,
-      ModuleIO flModuleIO,
-      ModuleIO frModuleIO,
-      ModuleIO blModuleIO,
-      ModuleIO brModuleIO,
-      XboxController controller) {
+  public Drive(SwerveIO io, XboxController controller) {
     this.controller = controller;
-    this.gyro = gyro;
-    this.swerveModules[0] = new Module(flModuleIO, 0);
-    this.swerveModules[1] = new Module(frModuleIO, 1);
-    this.swerveModules[2] = new Module(blModuleIO, 2);
-    this.swerveModules[3] = new Module(brModuleIO, 3);
+    this.io = io;
+
+    io.setTelemetryInputs(swerveInputs);
 
     omegaController.enableContinuousInput(-Math.PI, Math.PI);
     linearController.setTolerance(DriveConstants.driveTolerance.in(Meters));
@@ -61,19 +49,14 @@ public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.Syste
 
   @Override
   public void periodic() {
-    gyro.updateInputs(gyroData);
-    Logger.processInputs("Drive/Gryo", gyroData);
+    io.updateModuleInputs(moduleInputs);
+
+    for (int i = 0; i < 4; ++i) Logger.processInputs("Drive/Module" + i, moduleInputs[i]);
+    Logger.processInputs("Drive", swerveInputs);
+
     Logger.recordOutput("Drive/systemState", getCurrentState());
 
-    for (var m : swerveModules) {
-      m.periodic();
-    }
-
     statePeriodic();
-
-    for (var m : swerveModules) {
-      m.periodicAfter();
-    }
   }
 
   @Override
@@ -105,17 +88,7 @@ public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.Syste
   }
 
   private void runVelocity(ChassisSpeeds velocity) {
-    var moduleStates = kinematics.toSwerveModuleStates(velocity);
-    SwerveDriveKinematics.desaturateWheelSpeeds(
-      moduleStates,
-      DriveConstants.maxLinearSpeed
-    );
-
-    for (int i = 0; i < 4; ++i) swerveModules[i].runState(moduleStates[i]);
-  }
-
-  public void setYaw(Angle yaw) {
-    gyro.setYaw(yaw);
+    io.applyRequest(new SwerveRequest.ApplyFieldSpeeds().withSpeeds(velocity));
   }
 
   private void pidToPose() {
@@ -134,10 +107,11 @@ public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.Syste
 
     if (linearController.atSetpoint() && omegaController.atSetpoint()) {
       setState(SystemState.TELEOP_DRIVE);
-			runVelocity(new ChassisSpeeds());
+      runVelocity(new ChassisSpeeds());
     } else {
       // var robotVelocity = ChassisVelocity(RadiansPerSecond.of(vw), linearVector);
-      var robotVelocity = ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, vw, gyroData.yaw);
+      ChassisSpeeds robotVelocity =
+          ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, vw, swerveInputs.yaw);
 
       Logger.recordOutput("pidToPose/pidLinearOutput", output);
       Logger.recordOutput("pidToPose/pidOmegaOutput", vw);
@@ -149,8 +123,10 @@ public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.Syste
   }
 
   private ChassisSpeeds getControllerSpeeds() {
-    final double sX = MathUtil.applyDeadband(controller.getLeftY(), DriveConstants.controllerDeadband);
-    final double sY = MathUtil.applyDeadband(controller.getLeftX(), DriveConstants.controllerDeadband);
+    final double sX =
+        MathUtil.applyDeadband(controller.getLeftY(), DriveConstants.controllerDeadband);
+    final double sY =
+        MathUtil.applyDeadband(controller.getLeftX(), DriveConstants.controllerDeadband);
     double sW = MathUtil.applyDeadband(controller.getRightX(), DriveConstants.controllerDeadband);
 
     sW = Math.copySign(sW * sW, sW); // heuristic?
@@ -159,6 +135,6 @@ public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.Syste
     final double vY = sY * DriveConstants.maxLinearSpeed * sign;
     final double vW = sW * DriveConstants.maxOmega;
 
-    return ChassisSpeeds.fromFieldRelativeSpeeds(vX, vY, vW, gyroData.yaw);
+    return ChassisSpeeds.fromFieldRelativeSpeeds(vX, vY, vW, swerveInputs.yaw);
   }
 }

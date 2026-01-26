@@ -2,6 +2,7 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Angle;
@@ -14,7 +15,7 @@ public class DriveConstants {
   public static record PIDGains(double kp, double ki, double kd) {}
   ;
 
-	public static final double controllerDeadband = 0.1;
+  public static final double controllerDeadband = 0.1;
 
   public static final PIDGains driveGains = new PIDGains(0.75, 0.0, 0.0);
   public static final PIDGains rotGains = new PIDGains(1.6, 0.0, 0.0);
@@ -49,4 +50,20 @@ public class DriveConstants {
           .withBumperSize(Constants.config.bumperLength(), Constants.config.bumperWidth())
           .withCustomModuleTranslations(modulePositions)
           .withGyro(COTS.ofPigeon2());
+
+  public static final ModuleConfig[] moduleConfigs =
+      new ModuleConfig[] {
+        new ModuleConfig(0, 0, 0, Rotation2d.kZero, false, false),
+        new ModuleConfig(0, 0, 0, Rotation2d.kZero, false, false),
+        new ModuleConfig(0, 0, 0, Rotation2d.kZero, false, false),
+        new ModuleConfig(0, 0, 0, Rotation2d.kZero, false, false),
+      };
+
+  public record ModuleConfig(
+      int driveMotorId,
+      int turnMotorId,
+      int encoderChannel,
+      Rotation2d encoderOffset,
+      boolean turnInverted,
+      boolean encoderInverted) {}
 }
