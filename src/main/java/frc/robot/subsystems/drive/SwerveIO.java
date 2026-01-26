@@ -19,18 +19,24 @@ public interface SwerveIO {
 
   @AutoLog
   public static class ModuleIOInputs {
-    double driveStatorCurrent;
-    double driveSupplyCurrent;
-    double driveVoltsApplied;
+    double driveStatorCurrent = 0.0;
+    double driveSupplyCurrent = 0.0;
+    double driveVoltsApplied = 0.0;
 
-    double steerStatorCurrent;
-    double steerSupplyCurrent;
-    double steerVoltsApplied;
+    double steerStatorCurrent = 0.0;
+    double steerSupplyCurrent = 0.0;
+    double steerVoltsApplied = 0.0;
   }
 
   default void setTelemetryInputs(SwerveIOInputs inputs) {}
 
   default void applyRequest(SwerveRequest request) {}
+
+  default void simThread() {}
+
+  default Pose2d getSimPose() {
+    return Pose2d.kZero;
+  }
 
   default void updateModuleInputs(ModuleIOInputs[] inputs) {}
 }

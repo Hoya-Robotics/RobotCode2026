@@ -2,8 +2,10 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 
-import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.numbers.*;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
@@ -15,15 +17,18 @@ public class DriveConstants {
   public static record PIDGains(double kp, double ki, double kd) {}
   ;
 
+  public static final Matrix<N3, N1> odometryStdDevs =
+      new Matrix<>(VecBuilder.fill(0.003, 0.003, 0.002));
+
   public static final double controllerDeadband = 0.1;
 
+  // Robot level PID gains
   public static final PIDGains driveGains = new PIDGains(0.75, 0.0, 0.0);
   public static final PIDGains rotGains = new PIDGains(1.6, 0.0, 0.0);
   public static final double maxLinearSpeed = 6.7;
   public static final double maxOmega = 10.0;
   public static final double maxOmegaAccel = 15.0;
   public static final Distance wheelRadius = Inches.of(2.6);
-  public static final boolean motionMagicSteerControl = false;
   public static final Distance driveTolerance = Inches.of(1.5);
   public static final Angle rotateTolerance = Degrees.of(2.5);
 
@@ -39,10 +44,6 @@ public class DriveConstants {
     new Translation2d(-trackLengthMeters / 2, -trackWidthMeters / 2),
   };
 
-  // Feed forward
-  public static final double drivekS = 0.0;
-  public static final double drivekV = 2.0;
-
   // Sim specific
   public static final DriveTrainSimulationConfig mapleSimConfig =
       DriveTrainSimulationConfig.Default()
@@ -50,20 +51,4 @@ public class DriveConstants {
           .withBumperSize(Constants.config.bumperLength(), Constants.config.bumperWidth())
           .withCustomModuleTranslations(modulePositions)
           .withGyro(COTS.ofPigeon2());
-
-  public static final ModuleConfig[] moduleConfigs =
-      new ModuleConfig[] {
-        new ModuleConfig(0, 0, 0, Rotation2d.kZero, false, false),
-        new ModuleConfig(0, 0, 0, Rotation2d.kZero, false, false),
-        new ModuleConfig(0, 0, 0, Rotation2d.kZero, false, false),
-        new ModuleConfig(0, 0, 0, Rotation2d.kZero, false, false),
-      };
-
-  public record ModuleConfig(
-      int driveMotorId,
-      int turnMotorId,
-      int encoderChannel,
-      Rotation2d encoderOffset,
-      boolean turnInverted,
-      boolean encoderInverted) {}
 }

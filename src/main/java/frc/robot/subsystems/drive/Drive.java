@@ -6,10 +6,12 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.XboxController;
+import frc.robot.Constants;
+import frc.robot.Constants.Mode;
 import frc.robot.FieldConstants;
-import frc.robot.RobotState;
 import frc.robot.StateSubsystem;
 import org.littletonrobotics.junction.Logger;
 
@@ -33,7 +35,13 @@ public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.Syste
   private final XboxController controller;
   private Pose2d driveToPointPose = new Pose2d();
   private final SwerveIO io;
-  private final ModuleIOInputsAutoLogged[] moduleInputs = new ModuleIOInputsAutoLogged[4];
+  private final ModuleIOInputsAutoLogged[] moduleInputs =
+      new ModuleIOInputsAutoLogged[] {
+        new ModuleIOInputsAutoLogged(),
+        new ModuleIOInputsAutoLogged(),
+        new ModuleIOInputsAutoLogged(),
+        new ModuleIOInputsAutoLogged(),
+      };
   private final SwerveIOInputsAutoLogged swerveInputs = new SwerveIOInputsAutoLogged();
 
   public Drive(SwerveIO io, XboxController controller) {
@@ -45,6 +53,9 @@ public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.Syste
     omegaController.enableContinuousInput(-Math.PI, Math.PI);
     linearController.setTolerance(DriveConstants.driveTolerance.in(Meters));
     omegaController.setTolerance(DriveConstants.rotateTolerance.in(Radians));
+
+    setState(SystemState.TO_POSE_PID);
+    driveToPointPose = new Pose2d(2.0, 2.0, Rotation2d.k180deg);
   }
 
   @Override
@@ -55,6 +66,11 @@ public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.Syste
     Logger.processInputs("Drive", swerveInputs);
 
     Logger.recordOutput("Drive/systemState", getCurrentState());
+
+    if (Constants.getMode() == Mode.SIM) {
+      io.simThread();
+      Logger.recordOutput("Drive/simulatedPose", io.getSimPose());
+    }
 
     statePeriodic();
   }
@@ -92,7 +108,7 @@ public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.Syste
   }
 
   private void pidToPose() {
-    var robotPose = RobotState.getInstance().getEstimatedPose();
+    var robotPose = swerveInputs.pose;
     // A - B = B -> A
     var robotToTarget = driveToPointPose.getTranslation().minus(robotPose.getTranslation());
     double distance = robotPose.getTranslation().getDistance(driveToPointPose.getTranslation());

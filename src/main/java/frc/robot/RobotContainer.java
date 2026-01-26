@@ -8,16 +8,37 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.*;
-import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
-import org.littletonrobotics.junction.Logger;
 
 public class RobotContainer {
   public final XboxController driveController = new XboxController(0);
-  public final Drive drive = new Drive(new SwerveIO() {}, driveController);
-  public SwerveDriveSimulation swerveSim = null;
+  public final Drive drive;
 
   public RobotContainer() {
     switch (Constants.getMode()) {
+      case REAL:
+        drive =
+            new Drive(
+                new SwerveIOPheonix(
+                    TunerConstants.DrivetrainConstants,
+                    TunerConstants.FrontLeft,
+                    TunerConstants.FrontRight,
+                    TunerConstants.BackLeft,
+                    TunerConstants.BackRight),
+                driveController);
+        break;
+      case SIM:
+        drive =
+            new Drive(
+                new SwerveIOPheonixSim(
+                    TunerConstants.DrivetrainConstants,
+                    TunerConstants.FrontLeft,
+                    TunerConstants.FrontRight,
+                    TunerConstants.BackLeft,
+                    TunerConstants.BackRight),
+                driveController);
+        break;
+      default:
+        drive = new Drive(new SwerveIO() {}, driveController);
     }
 
     configureBindings();
@@ -27,9 +48,5 @@ public class RobotContainer {
 
   public Command getAutonomousCommand() {
     return Commands.print("No autonomous command configured");
-  }
-
-  public void displaySimField() {
-    Logger.recordOutput("FieldSimulation/robotPose", swerveSim.getSimulatedDriveTrainPose());
   }
 }

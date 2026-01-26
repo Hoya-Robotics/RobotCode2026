@@ -14,17 +14,16 @@ import java.util.HashMap;
 import java.util.List;
 
 public class SwerveIOPheonix extends SwerveDrivetrain implements SwerveIO {
-  private List<HashMap<String, BaseStatusSignal>> moduleSignals = new ArrayList<>(4);
+  private List<HashMap<String, BaseStatusSignal>> moduleSignals = new ArrayList<>();
 
   public SwerveIOPheonix(
-      SwerveIOInputsAutoLogged loggedInputs,
       SwerveDrivetrainConstants constants,
       SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>...
           moduleConstants) {
     super(TalonFX::new, TalonFX::new, CANcoder::new, constants, moduleConstants);
 
     for (int i = 0; i < 4; ++i) {
-      var signalMap = moduleSignals.get(i);
+      var signalMap = new HashMap<String, BaseStatusSignal>();
 
       var driveMotor = this.getModule(i).getDriveMotor();
       var steerMotor = this.getModule(i).getSteerMotor();
@@ -36,6 +35,8 @@ public class SwerveIOPheonix extends SwerveDrivetrain implements SwerveIO {
       signalMap.put("steerStatorCurrent", steerMotor.getStatorCurrent());
       signalMap.put("steerSupplyCurrent", steerMotor.getSupplyCurrent());
       signalMap.put("steerVoltsApplied", steerMotor.getMotorVoltage());
+
+      moduleSignals.add(signalMap);
     }
   }
 
