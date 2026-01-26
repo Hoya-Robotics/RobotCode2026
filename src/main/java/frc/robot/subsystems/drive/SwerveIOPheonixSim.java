@@ -1,12 +1,16 @@
 package frc.robot.subsystems.drive;
 
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import com.ctre.phoenix6.sim.CANcoderSimState;
 import com.ctre.phoenix6.sim.Pigeon2SimState;
 import com.ctre.phoenix6.sim.TalonFXSimState;
@@ -94,12 +98,56 @@ public class SwerveIOPheonixSim extends SwerveIOPheonix {
     SimulatedArena.getInstance().addDriveTrainSimulation(mapleDriveSim);
   }
 
+  public static SwerveModuleConstants<
+          TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
+      [] regulateModuleConstantsForSim(
+      SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>...
+          moduleConstants) {
+    for (var mc : moduleConstants) regulateModuleConfigForSim(mc);
+    return moduleConstants;
+  }
+
+  private static void regulateModuleConfigForSim(SwerveModuleConstants<?, ?, ?> moduleConstants) {
+    moduleConstants
+        .withEncoderOffset(0)
+        .withDriveMotorInverted(false)
+        .withSteerMotorInverted(false)
+        .withEncoderInverted(false)
+        .withSteerMotorGains(
+            new Slot0Configs()
+                .withKP(70)
+                .withKI(0)
+                .withKD(4.5)
+                .withKS(0)
+                .withKV(1.91)
+                .withKA(0)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign))
+        .withSteerMotorGearRatio(16.0)
+        .withDriveFrictionVoltage(Volts.of(0.1))
+        .withSteerFrictionVoltage(Volts.of(0.05))
+        .withSteerInertia(KilogramSquareMeters.of(0.05));
+  }
+
+  @Override
+  public void updateModuleInputs(ModuleIOInputs[] inputs) {
+    for (int i = 0; i < 4; ++i) {
+      inputs[i].driveStatorCurrent = simModules[i].getDriveMotorStatorCurrent().in(Amps);
+      inputs[i].driveSupplyCurrent = simModules[i].getDriveMotorSupplyCurrent().in(Amps);
+      inputs[i].driveVoltsApplied = simModules[i].getDriveMotorAppliedVoltage().in(Volts);
+
+      inputs[i].steerStatorCurrent = simModules[i].getSteerMotorStatorCurrent().in(Amps);
+      inputs[i].steerSupplyCurrent = simModules[i].getSteerMotorSupplyCurrent().in(Amps);
+      inputs[i].steerVoltsApplied = simModules[i].getSteerMotorAppliedVoltage().in(Volts);
+    }
+  }
+
   @Override
   public Pose2d getSimPose() {
     return mapleDriveSim.getSimulatedDriveTrainPose();
   }
 
-  public void simThread() {
+  @Override
+  public void updateSim() {
     this.updateSimState(
         SimulatedArena.getSimulationDt().in(Seconds),
         SimulatedBattery.getBatteryVoltage().in(Volts));

@@ -31,10 +31,11 @@ public class RobotContainer {
             new Drive(
                 new SwerveIOPheonixSim(
                     TunerConstants.DrivetrainConstants,
-                    TunerConstants.FrontLeft,
-                    TunerConstants.FrontRight,
-                    TunerConstants.BackLeft,
-                    TunerConstants.BackRight),
+                    SwerveIOPheonixSim.regulateModuleConstantsForSim(
+                        TunerConstants.FrontLeft,
+                        TunerConstants.FrontRight,
+                        TunerConstants.BackLeft,
+                        TunerConstants.BackRight)),
                 driveController);
         break;
       default:

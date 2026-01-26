@@ -8,11 +8,14 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.robot.FieldConstants;
 import frc.robot.StateSubsystem;
+import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.Logger;
 
 public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.SystemState> {
@@ -32,6 +35,7 @@ public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.Syste
       new PIDController(
           DriveConstants.rotGains.kp(), DriveConstants.rotGains.ki(), DriveConstants.rotGains.kd());
 
+  private Notifier simThread = null;
   private final XboxController controller;
   private Pose2d driveToPointPose = new Pose2d();
   private final SwerveIO io;
@@ -55,7 +59,18 @@ public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.Syste
     omegaController.setTolerance(DriveConstants.rotateTolerance.in(Radians));
 
     setState(SystemState.TO_POSE_PID);
-    driveToPointPose = new Pose2d(2.0, 2.0, Rotation2d.k180deg);
+    driveToPointPose = new Pose2d(2.0, 2.0, Rotation2d.kZero);
+  }
+
+  public void startSimThread(Time simPeriod) {
+    SimulatedArena.overrideSimulationTimings(simPeriod, 1);
+    simThread =
+        new Notifier(
+            () -> {
+              SimulatedArena.getInstance().simulationPeriodic();
+              io.updateSim();
+            });
+    simThread.startPeriodic(simPeriod.in(Seconds));
   }
 
   @Override
@@ -68,7 +83,6 @@ public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.Syste
     Logger.recordOutput("Drive/systemState", getCurrentState());
 
     if (Constants.getMode() == Mode.SIM) {
-      io.simThread();
       Logger.recordOutput("Drive/simulatedPose", io.getSimPose());
     }
 
@@ -109,6 +123,7 @@ public class Drive extends StateSubsystem<frc.robot.subsystems.drive.Drive.Syste
 
   private void pidToPose() {
     var robotPose = swerveInputs.pose;
+    if (Constants.getMode() == Mode.SIM) robotPose = io.getSimPose();
     // A - B = B -> A
     var robotToTarget = driveToPointPose.getTranslation().minus(robotPose.getTranslation());
     double distance = robotPose.getTranslation().getDistance(driveToPointPose.getTranslation());

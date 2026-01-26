@@ -32,7 +32,7 @@ public interface SwerveIO {
 
   default void applyRequest(SwerveRequest request) {}
 
-  default void simThread() {}
+  default void updateSim() {}
 
   default Pose2d getSimPose() {
     return Pose2d.kZero;

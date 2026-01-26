@@ -4,9 +4,10 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Seconds;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -97,10 +98,10 @@ public class Robot extends LoggedRobot {
   public void testExit() {}
 
   @Override
-  public void simulationInit() {}
+  public void simulationInit() {
+    m_robotContainer.drive.startSimThread(Seconds.of(1.0 / 400));
+  }
 
   @Override
-  public void simulationPeriodic() {
-    SimulatedArena.getInstance().simulationPeriodic();
-  }
+  public void simulationPeriodic() {}
 }

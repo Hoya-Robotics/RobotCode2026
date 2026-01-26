@@ -23,7 +23,7 @@ public class DriveConstants {
   public static final double controllerDeadband = 0.1;
 
   // Robot level PID gains
-  public static final PIDGains driveGains = new PIDGains(0.75, 0.0, 0.0);
+  public static final PIDGains driveGains = new PIDGains(2.75, 0.0, 0.0);
   public static final PIDGains rotGains = new PIDGains(1.6, 0.0, 0.0);
   public static final double maxLinearSpeed = 6.7;
   public static final double maxOmega = 10.0;
