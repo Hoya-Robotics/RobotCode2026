@@ -1,5 +1,10 @@
 # Team 4152 2026 Robot
 
+## Current Features/Architecture
+- CTRE Swerve API
+- Maple Sim physics simulation
+- Advantage Kit hardware abstraction and logging
+
 ## Season Goals
 - nearly optimal auto alignment (TOPP-RA + PID feedback?)
 - state machine subsystem runtime for simplicity and encapsulation
