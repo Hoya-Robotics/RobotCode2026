@@ -1,4 +1,4 @@
-package frc.robot;
+package frc.robot.util;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignalCollection;

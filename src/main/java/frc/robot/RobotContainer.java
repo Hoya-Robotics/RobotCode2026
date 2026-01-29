@@ -11,35 +11,9 @@ import frc.robot.subsystems.drive.*;
 
 public class RobotContainer {
   public final XboxController driveController = new XboxController(0);
-  public final Drive drive;
 
   public RobotContainer() {
-    switch (Constants.getMode()) {
-      case REAL:
-        drive =
-            new Drive(
-                new SwerveIOPheonix(
-                    TunerConstants.DrivetrainConstants,
-                    TunerConstants.FrontLeft,
-                    TunerConstants.FrontRight,
-                    TunerConstants.BackLeft,
-                    TunerConstants.BackRight),
-                driveController);
-        break;
-      case SIM:
-        drive =
-            new Drive(
-                new SwerveIOPheonixSim(
-                    TunerConstants.DrivetrainConstants,
-                    SwerveIOPheonixSim.regulateModuleConstantsForSim(
-                        TunerConstants.FrontLeft,
-                        TunerConstants.FrontRight,
-                        TunerConstants.BackLeft,
-                        TunerConstants.BackRight)),
-                driveController);
-        break;
-      default:
-        drive = new Drive(new SwerveIO() {}, driveController);
+    switch (RobotConfig.getMode()) {
     }
 
     configureBindings();

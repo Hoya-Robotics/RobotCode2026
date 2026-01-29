@@ -4,15 +4,12 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Seconds;
-
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import org.littletonrobotics.junction.LogFileUtil;
+import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
-import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 
 public class Robot extends LoggedRobot {
@@ -22,20 +19,13 @@ public class Robot extends LoggedRobot {
 
   public Robot() {
     Logger.recordMetadata("ProjectName", "Rebuilt4152");
-    switch (Constants.getMode()) {
+    switch (RobotConfig.getMode()) {
       case REAL:
         Logger.addDataReceiver(new WPILOGWriter()); // USB Logging
         Logger.addDataReceiver(new NT4Publisher()); // Network Table Logging
         break;
       case SIM:
         Logger.addDataReceiver(new NT4Publisher()); // Network Table Logging
-        break;
-      case REPLAY:
-        setUseTiming(false);
-        String logPath = LogFileUtil.findReplayLog();
-        Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
-        Logger.addDataReceiver(
-            new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save replay output
         break;
     }
 
@@ -98,10 +88,10 @@ public class Robot extends LoggedRobot {
   public void testExit() {}
 
   @Override
-  public void simulationInit() {
-    m_robotContainer.drive.startSimThread(Seconds.of(1.0 / 400));
-  }
+  public void simulationInit() {}
 
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+    SimulatedArena.getInstance().simulationPeriodic();
+  }
 }
