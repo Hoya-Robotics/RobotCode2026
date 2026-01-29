@@ -16,6 +16,8 @@ public class RobotConfig {
     SIM,
   }
 
+  public record PIDConfig(double kp, double ki, double kd, double tolerance) {}
+
   public static OperationMode getMode() {
     return RobotBase.isReal() ? OperationMode.REAL : OperationMode.SIM;
   }
@@ -32,6 +34,12 @@ public class RobotConfig {
   public static Distance wheelRadius = Inches.of(1.75);
 
   public static double maxDriveSpeedMps = 7.5;
+  public static double maxRotationSpeedRps = 10.0;
+
+  public static PIDConfig toPoseLinearGains = new PIDConfig(0.0, 0.0, 0.0, 0.0);
+  public static PIDConfig toPoseOmegaGains = new PIDConfig(0.0, 0.0, 0.0, 0.0);
+
+  public static double controllerDeadband = 0.1;
 
   public static double driveKs = 0.0;
   public static double driveKv = 0.0;

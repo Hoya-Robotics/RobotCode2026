@@ -21,6 +21,10 @@ public class RobotState {
     return instance;
   }
 
+  public Pose2d getEstimatedPose() {
+    return estimatedPose;
+  }
+
   public void addOdometryObservation(OdometryObservation observation) {
     this.odometryPose = observation.pose();
     this.odometrySpeeds = observation.speeds();
