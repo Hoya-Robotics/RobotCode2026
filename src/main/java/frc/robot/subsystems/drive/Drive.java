@@ -6,10 +6,15 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.RobotConfig;
 import frc.robot.RobotState;
+import frc.robot.RobotState.*;
 import frc.robot.StateSubsystem;
+import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
 
 enum DriveState {
@@ -24,6 +29,8 @@ public class Drive extends StateSubsystem<DriveState> {
 
   private final Module[] modules = new Module[4];
   private final XboxController driveController;
+
+  private SwerveDriveSimulation sim = null;
 
   private final SwerveDriveKinematics kinematics =
       new SwerveDriveKinematics(RobotConfig.moduleTranslations);
@@ -48,9 +55,38 @@ public class Drive extends StateSubsystem<DriveState> {
       this.modules[i] = new Module(i, moduleIOs[i]);
     }
 
-    linearController.setTolerance(RobotConfig.toPoseLinearGains.tolerance());
-    omegaController.setTolerance(RobotConfig.toPoseOmegaGains.tolerance());
+    linearController.setTolerance(RobotConfig.toPoseLinearTolerance);
+    omegaController.setTolerance(RobotConfig.toPoseThetaTolerance);
     omegaController.enableContinuousInput(-Math.PI, Math.PI);
+
+    setState(DriveState.IDLE);
+  }
+
+  public void setSimDrivetrain(SwerveDriveSimulation sim) {
+    this.sim = sim;
+  }
+
+  public static Drive empty() {
+    return new Drive(null, new GyroIO() {}, new ModuleIO[4]);
+  }
+
+  public static Drive simulatedDrive(XboxController controller) {
+    var sim = new SwerveDriveSimulation(RobotConfig.mapleSwerveConfig, new Pose2d());
+    SimulatedArena.getInstance().addDriveTrainSimulation(sim);
+
+    var instance =
+        new Drive(
+            controller,
+            new GyroIOSim(sim.getGyroSimulation()),
+            new ModuleIO[] {
+              new ModuleIOSim(sim.getModules()[0]),
+              new ModuleIOSim(sim.getModules()[1]),
+              new ModuleIOSim(sim.getModules()[2]),
+              new ModuleIOSim(sim.getModules()[3])
+            });
+    instance.setSimDrivetrain(sim);
+
+    return instance;
   }
 
   @Override
@@ -58,7 +94,15 @@ public class Drive extends StateSubsystem<DriveState> {
     gyro.updateInputs(gyroData);
     Logger.processInputs("Gyro", gyroData);
 
-    for (var m : modules) m.periodic();
+    var modulePositions = new SwerveModulePosition[4];
+    for (int i = 0; i < 4; ++i) {
+      modules[i].periodic();
+      modulePositions[i] = modules[i].getPosition();
+    }
+
+    RobotState.getInstance()
+        .addOdometryObservation(
+            new OdometryObservation(modulePositions, gyroData.yaw, Timer.getFPGATimestamp()));
 
     statePeriodic();
 
@@ -70,11 +114,18 @@ public class Drive extends StateSubsystem<DriveState> {
   }
 
   public void runSetpoint(ChassisSpeeds speeds) {
-    var moduleStates = kinematics.toSwerveModuleStates(speeds);
+    var discrete = ChassisSpeeds.discretize(speeds, 0.02);
+    var moduleStates = kinematics.toSwerveModuleStates(discrete);
     SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, RobotConfig.maxDriveSpeedMps);
 
     for (int i = 0; i < 4; ++i) {
       modules[i].runSetpoint(moduleStates[i]);
+    }
+  }
+
+  public void xBrake() {
+    for (int i = 0; i < 4; ++i) {
+      modules[i].runSetpoint(RobotConfig.xBrakeStates[i]);
     }
   }
 
@@ -99,15 +150,16 @@ public class Drive extends StateSubsystem<DriveState> {
         runSetpoint(getControllerSpeeds());
         break;
       case TO_POSE:
-        runSetpoint(getPidToPoseSetpoint());
+        var robotPose = RobotState.getInstance().getOdometryPose();
+        runSetpoint(getPidToPoseSetpoint(robotPose));
         break;
-      default:
+      case IDLE:
+        xBrake();
         break;
     }
   }
 
-  private ChassisSpeeds getPidToPoseSetpoint() {
-    var robotPose = RobotState.getInstance().getEstimatedPose();
+  private ChassisSpeeds getPidToPoseSetpoint(Pose2d robotPose) {
     var robotToTarget = targetDrivePose.minus(robotPose);
     double distance = robotToTarget.getTranslation().getNorm();
     Rotation2d heading = robotToTarget.getRotation();
@@ -123,6 +175,10 @@ public class Drive extends StateSubsystem<DriveState> {
                 robotPose.getRotation().getRadians(), targetDrivePose.getRotation().getRadians()),
             -RobotConfig.maxRotationSpeedRps,
             RobotConfig.maxRotationSpeedRps);
+
+    Logger.recordOutput("Drive/ToPose/TargetPose", targetDrivePose);
+    Logger.recordOutput("Drive/ToPose/linearOutput", linearOutput);
+    Logger.recordOutput("Drive/ToPose/OmegaOutput", omega);
 
     return ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, omega, gyroData.yaw);
   }

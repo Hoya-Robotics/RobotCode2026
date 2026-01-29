@@ -8,7 +8,8 @@ public interface ModuleIO {
   public static class ModuleIOInputs {
     public boolean driveConnected = false;
 
-    public double drivePositionMeters = 0.0;
+    public double drivePositionRads = 0.0;
+    public double driveVelocityRadps = 0.0;
 
     public double driveStatorCurrentAmps = 0.0;
     public double driveSupplyCurrentAmps = 0.0;
@@ -18,6 +19,7 @@ public interface ModuleIO {
     public boolean steerConnected = false;
 
     public Rotation2d absoluteSteerHeading = Rotation2d.kZero;
+    public double steerVelocityRadps = 0.0;
 
     public double steerStatorCurrentAmps = 0.0;
     public double steerSupplyCurrentAmps = 0.0;

@@ -3,6 +3,7 @@ package frc.robot.subsystems.drive;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import frc.robot.RobotConfig;
 import frc.robot.subsystems.drive.ModuleIO.ModuleIOOutputs;
@@ -25,6 +26,11 @@ public class Module {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Module" + index, inputs);
+  }
+
+  public SwerveModulePosition getPosition() {
+    return new SwerveModulePosition(
+        inputs.drivePositionRads * RobotConfig.wheelRadius.in(Meters), inputs.absoluteSteerHeading);
   }
 
   public void applyOutputs() {

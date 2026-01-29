@@ -11,9 +11,16 @@ import frc.robot.subsystems.drive.*;
 
 public class RobotContainer {
   public final XboxController driveController = new XboxController(0);
+  public final Drive drive;
 
   public RobotContainer() {
     switch (RobotConfig.getMode()) {
+      case SIM:
+        drive = Drive.empty();
+        break;
+      default:
+        drive = Drive.simulatedDrive(driveController);
+        break;
     }
 
     configureBindings();

@@ -2,10 +2,13 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.RobotBase;
+import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 
 /*
  * Complete description of physical and virtual robot configuration
@@ -16,41 +19,61 @@ public class RobotConfig {
     SIM,
   }
 
-  public record PIDConfig(double kp, double ki, double kd, double tolerance) {}
+  public record PIDGains(double kp, double ki, double kd) {}
 
   public static OperationMode getMode() {
     return RobotBase.isReal() ? OperationMode.REAL : OperationMode.SIM;
   }
 
   // Robot dimensions / specs
-  public static Mass robotMass = Kilograms.of(0.0);
-  public static Distance bumperWidthX = Inches.of(0.0);
-  public static Distance bumperWidthY = Inches.of(0.0);
-  public static Distance trackWidthX = Inches.of(24.4);
-  public static Distance trackWidthY = Inches.of(24.4);
+  public static final Mass robotMass = Kilograms.of(65.0);
+
+  public static final Distance bumperWidthX = Inches.of(0.0);
+  public static final Distance bumperWidthY = Inches.of(0.0);
+  public static final Distance trackWidthX = Inches.of(24.4);
+  public static final Distance trackWidthY = Inches.of(24.4);
+
+  public static final Distance wheelRadius = Inches.of(1.75);
 
   // Drivebase Constants/Config
-  public static Translation2d[] moduleTranslations = new Translation2d[4];
-  public static Distance wheelRadius = Inches.of(1.75);
+  public static final Translation2d[] moduleTranslations = new Translation2d[4];
+  public static final SwerveModuleState[] xBrakeStates = new SwerveModuleState[4];
 
-  public static double maxDriveSpeedMps = 7.5;
-  public static double maxRotationSpeedRps = 10.0;
+  public static final double maxDriveSpeedMps = 7.5;
+  public static final double maxRotationSpeedRps = 10.0;
 
-  public static PIDConfig toPoseLinearGains = new PIDConfig(0.0, 0.0, 0.0, 0.0);
-  public static PIDConfig toPoseOmegaGains = new PIDConfig(0.0, 0.0, 0.0, 0.0);
+  public static final PIDGains toPoseLinearGains = new PIDGains(0.0, 0.0, 0.0);
+  public static final double toPoseLinearTolerance = 0.0;
+  public static final PIDGains toPoseOmegaGains = new PIDGains(0.0, 0.0, 0.0);
+  public static final double toPoseThetaTolerance = 0.0;
 
-  public static double controllerDeadband = 0.1;
+  public static final double controllerDeadband = 0.1;
 
-  public static double driveKs = 0.0;
-  public static double driveKv = 0.0;
+  public static final double driveKs = 0.0;
+  public static final double driveKv = 0.0;
 
   static {
     double dx = trackWidthX.in(Meters) / 2.0;
     double dy = trackWidthY.in(Meters) / 2.0;
 
     moduleTranslations[0] = new Translation2d(dx, dy);
-    moduleTranslations[0] = new Translation2d(dx, -dy);
-    moduleTranslations[0] = new Translation2d(-dx, dy);
-    moduleTranslations[0] = new Translation2d(-dx, -dy);
+    moduleTranslations[1] = new Translation2d(dx, -dy);
+    moduleTranslations[2] = new Translation2d(-dx, dy);
+    moduleTranslations[3] = new Translation2d(-dx, -dy);
+
+    xBrakeStates[0] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(45));
+    xBrakeStates[1] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(-45));
+    xBrakeStates[2] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(45));
+    xBrakeStates[3] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(-45));
   }
+
+  // Simulated Robot Constants
+  public static final DriveTrainSimulationConfig mapleSwerveConfig =
+      DriveTrainSimulationConfig.Default()
+          .withRobotMass(robotMass)
+          .withCustomModuleTranslations(moduleTranslations)
+          .withTrackLengthTrackWidth(trackWidthX, trackWidthY);
+
+  public static final PIDGains simDriveMotorGains = new PIDGains(0.0, 0.0, 0.0);
+  public static final PIDGains simSteerMotorGains = new PIDGains(0.0, 0.0, 0.0);
 }
