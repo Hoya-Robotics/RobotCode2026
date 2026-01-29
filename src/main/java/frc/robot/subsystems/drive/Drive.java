@@ -24,6 +24,7 @@ enum DriveState {
 }
 
 public class Drive extends StateSubsystem<DriveState> {
+
   private final GyroIO gyro;
   private GyroIOInputsAutoLogged gyroData = new GyroIOInputsAutoLogged();
 
@@ -71,8 +72,11 @@ public class Drive extends StateSubsystem<DriveState> {
   }
 
   public static Drive simulatedDrive(XboxController controller) {
-    var sim = new SwerveDriveSimulation(RobotConfig.mapleSwerveConfig, new Pose2d());
+    var sim =
+        new SwerveDriveSimulation(
+            RobotConfig.mapleSwerveConfig, new Pose2d(1.0, 1.0, Rotation2d.kZero));
     SimulatedArena.getInstance().addDriveTrainSimulation(sim);
+    RobotState.getInstance().hardSetOdometry(new Pose2d(1.0, 1.0, Rotation2d.kZero));
 
     var instance =
         new Drive(
@@ -92,7 +96,8 @@ public class Drive extends StateSubsystem<DriveState> {
   @Override
   public void periodic() {
     gyro.updateInputs(gyroData);
-    Logger.processInputs("Gyro", gyroData);
+    Logger.processInputs("Drive/Gyro", gyroData);
+    Logger.recordOutput("Drive/systemState", getCurrentState());
 
     var modulePositions = new SwerveModulePosition[4];
     for (int i = 0; i < 4; ++i) {
@@ -109,8 +114,14 @@ public class Drive extends StateSubsystem<DriveState> {
     for (var m : modules) m.applyOutputs();
   }
 
-  public void setTargetPose(Pose2d target) {
+  @Override
+  public void simulationPeriodic() {
+    Logger.recordOutput("Drive/simulatedPose", sim.getSimulatedDriveTrainPose());
+  }
+
+  public void driveToPose(Pose2d target) {
     this.targetDrivePose = target;
+    setState(DriveState.TO_POSE);
   }
 
   public void runSetpoint(ChassisSpeeds speeds) {
@@ -160,9 +171,9 @@ public class Drive extends StateSubsystem<DriveState> {
   }
 
   private ChassisSpeeds getPidToPoseSetpoint(Pose2d robotPose) {
-    var robotToTarget = targetDrivePose.minus(robotPose);
-    double distance = robotToTarget.getTranslation().getNorm();
-    Rotation2d heading = robotToTarget.getRotation();
+    var robotToTarget = targetDrivePose.getTranslation().minus(robotPose.getTranslation());
+    double distance = robotToTarget.getNorm();
+    Rotation2d heading = robotToTarget.getAngle();
 
     double linearOutput =
         Math.min(Math.abs(linearController.calculate(distance, 0.0)), RobotConfig.maxDriveSpeedMps);
@@ -177,8 +188,15 @@ public class Drive extends StateSubsystem<DriveState> {
             RobotConfig.maxRotationSpeedRps);
 
     Logger.recordOutput("Drive/ToPose/TargetPose", targetDrivePose);
+    Logger.recordOutput("Drive/ToPose/headingDeg", heading.getDegrees());
     Logger.recordOutput("Drive/ToPose/linearOutput", linearOutput);
     Logger.recordOutput("Drive/ToPose/OmegaOutput", omega);
+
+    /*
+    if (linearController.atSetpoint() && omegaController.atSetpoint()) {
+      setState(DriveState.IDLE);
+      return new ChassisSpeeds();
+    }*/
 
     return ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, omega, gyroData.yaw);
   }

@@ -5,13 +5,13 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.math.controller.PIDController;
 import frc.robot.RobotConfig;
 import org.ironmaple.simulation.drivesims.SwerveModuleSimulation;
-import org.ironmaple.simulation.motorsims.SimulatedMotorController.GenericMotorController;
+import org.ironmaple.simulation.motorsims.SimulatedMotorController;
 
 public class ModuleIOSim implements ModuleIO {
   private final SwerveModuleSimulation simModule;
 
-  private final GenericMotorController driveMotor;
-  private final GenericMotorController steerMotor;
+  private final SimulatedMotorController.GenericMotorController driveMotor;
+  private final SimulatedMotorController.GenericMotorController steerMotor;
 
   private final PIDController driveClosedLoop =
       new PIDController(
@@ -24,14 +24,27 @@ public class ModuleIOSim implements ModuleIO {
           RobotConfig.simSteerMotorGains.ki(),
           RobotConfig.simSteerMotorGains.kd());
 
+  private double driveFFVolts = 0.0;
+
   public ModuleIOSim(SwerveModuleSimulation simModule) {
     this.simModule = simModule;
-    this.driveMotor = simModule.useGenericControllerForSteer();
-    this.steerMotor = simModule.useGenericControllerForSteer();
+    this.driveMotor =
+        this.simModule.useGenericMotorControllerForDrive().withCurrentLimit(Amps.of(60));
+    this.steerMotor = this.simModule.useGenericControllerForSteer().withCurrentLimit(Amps.of(60));
+
+    steerClosedLoop.enableContinuousInput(-Math.PI, Math.PI);
   }
 
   @Override
   public void updateInputs(ModuleIOInputs inputs) {
+    driveMotor.requestVoltage(
+        Volts.of(
+            driveFFVolts
+                + driveClosedLoop.calculate(
+                    simModule.getDriveWheelFinalSpeed().in(RadiansPerSecond))));
+    steerMotor.requestVoltage(
+        Volts.of(steerClosedLoop.calculate(simModule.getSteerAbsoluteFacing().getRadians())));
+
     inputs.driveConnected = true;
     inputs.drivePositionRads = simModule.getDriveWheelFinalPosition().in(Radians);
     inputs.driveVelocityRadps = simModule.getDriveWheelFinalSpeed().in(RadiansPerSecond);
@@ -49,11 +62,9 @@ public class ModuleIOSim implements ModuleIO {
 
   @Override
   public void applyOutputs(ModuleIOOutputs outputs) {
-    double driveVoltage =
-        outputs.driveFeedforward + driveClosedLoop.calculate(outputs.driveVelocityRadps);
-    double steerVoltage = steerClosedLoop.calculate(outputs.steerHeading.getRadians());
+    driveFFVolts = outputs.driveFeedforward;
 
-    driveMotor.requestVoltage(Volts.of(driveVoltage));
-    steerMotor.requestVoltage(Volts.of(steerVoltage));
+    steerClosedLoop.setSetpoint(outputs.steerHeading.getRadians());
+    driveClosedLoop.setSetpoint(outputs.driveVelocityRadps);
   }
 }

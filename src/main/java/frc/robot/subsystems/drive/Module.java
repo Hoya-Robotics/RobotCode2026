@@ -13,7 +13,7 @@ public class Module {
   private final ModuleIO io;
   private final int index;
   private ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
-  private ModuleIOOutputs outputs;
+  private ModuleIOOutputs outputs = new ModuleIOOutputs();
 
   private SimpleMotorFeedforward ffModel =
       new SimpleMotorFeedforward(RobotConfig.driveKs, RobotConfig.driveKv);
@@ -25,12 +25,7 @@ public class Module {
 
   public void periodic() {
     io.updateInputs(inputs);
-    Logger.processInputs("Module" + index, inputs);
-  }
-
-  public SwerveModulePosition getPosition() {
-    return new SwerveModulePosition(
-        inputs.drivePositionRads * RobotConfig.wheelRadius.in(Meters), inputs.absoluteSteerHeading);
+    Logger.processInputs("Drive/Module-" + index, inputs);
   }
 
   public void applyOutputs() {
@@ -44,5 +39,15 @@ public class Module {
     outputs.driveVelocityRadps = setpoint.speedMetersPerSecond / RobotConfig.wheelRadius.in(Meters);
     outputs.driveFeedforward = ffModel.calculate(outputs.driveVelocityRadps);
     outputs.steerHeading = setpoint.angle;
+
+    Logger.recordOutput(
+        "Drive/Module-" + index + "/outputDriveVelocityRadps", outputs.driveVelocityRadps);
+    Logger.recordOutput("Drive/Module-" + index + "/driveFeedforward", outputs.driveFeedforward);
+    Logger.recordOutput("Drive/Module-" + index + "/steerHeading", outputs.steerHeading);
+  }
+
+  public SwerveModulePosition getPosition() {
+    return new SwerveModulePosition(
+        inputs.drivePositionRads * RobotConfig.wheelRadius.in(Meters), inputs.absoluteSteerHeading);
   }
 }

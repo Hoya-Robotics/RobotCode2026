@@ -5,9 +5,11 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.RobotBase;
+import org.ironmaple.simulation.drivesims.COTS;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 
 /*
@@ -42,15 +44,21 @@ public class RobotConfig {
   public static final double maxDriveSpeedMps = 7.5;
   public static final double maxRotationSpeedRps = 10.0;
 
-  public static final PIDGains toPoseLinearGains = new PIDGains(0.0, 0.0, 0.0);
-  public static final double toPoseLinearTolerance = 0.0;
-  public static final PIDGains toPoseOmegaGains = new PIDGains(0.0, 0.0, 0.0);
-  public static final double toPoseThetaTolerance = 0.0;
+  public static final PIDGains toPoseLinearGains = new PIDGains(0.75, 0.0, 0.0);
+  public static final double toPoseLinearTolerance = Units.inchesToMeters(2.0);
+  public static final PIDGains toPoseOmegaGains = new PIDGains(0.8, 0.0, 0.0);
+  public static final double toPoseThetaTolerance = Units.degreesToRadians(3.0);
 
   public static final double controllerDeadband = 0.1;
 
   public static final double driveKs = 0.0;
-  public static final double driveKv = 0.0;
+  public static final double driveKv = 2.0;
+
+  // Simulated Robot Constants
+  public static final DriveTrainSimulationConfig mapleSwerveConfig;
+
+  public static final PIDGains simDriveMotorGains = new PIDGains(0.1, 0.0, 0.0);
+  public static final PIDGains simSteerMotorGains = new PIDGains(10.0, 0.0, 0.0);
 
   static {
     double dx = trackWidthX.in(Meters) / 2.0;
@@ -65,15 +73,12 @@ public class RobotConfig {
     xBrakeStates[1] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(-45));
     xBrakeStates[2] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(45));
     xBrakeStates[3] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(-45));
+
+    mapleSwerveConfig =
+        DriveTrainSimulationConfig.Default()
+            .withRobotMass(robotMass)
+            .withCustomModuleTranslations(moduleTranslations)
+            .withTrackLengthTrackWidth(trackWidthX, trackWidthY)
+            .withGyro(COTS.ofPigeon2());
   }
-
-  // Simulated Robot Constants
-  public static final DriveTrainSimulationConfig mapleSwerveConfig =
-      DriveTrainSimulationConfig.Default()
-          .withRobotMass(robotMass)
-          .withCustomModuleTranslations(moduleTranslations)
-          .withTrackLengthTrackWidth(trackWidthX, trackWidthY);
-
-  public static final PIDGains simDriveMotorGains = new PIDGains(0.0, 0.0, 0.0);
-  public static final PIDGains simSteerMotorGains = new PIDGains(0.0, 0.0, 0.0);
 }

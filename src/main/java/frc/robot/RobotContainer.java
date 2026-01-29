@@ -16,10 +16,10 @@ public class RobotContainer {
   public RobotContainer() {
     switch (RobotConfig.getMode()) {
       case SIM:
-        drive = Drive.empty();
+        drive = Drive.simulatedDrive(driveController);
         break;
       default:
-        drive = Drive.simulatedDrive(driveController);
+        drive = Drive.empty();
         break;
     }
 

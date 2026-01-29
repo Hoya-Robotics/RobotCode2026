@@ -8,12 +8,13 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.*;
 import frc.robot.subsystems.drive.*;
 import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.AutoLogOutputManager;
 
 public class RobotState {
   private static RobotState instance;
 
-  @AutoLogOutput private Pose2d estimatedPose = Pose2d.kZero;
-  @AutoLogOutput private Pose2d odometryPose = Pose2d.kZero;
+  private Pose2d estimatedPose = Pose2d.kZero;
+  private Pose2d odometryPose = Pose2d.kZero;
 
   private final SwerveDriveKinematics kinematics =
       new SwerveDriveKinematics(RobotConfig.moduleTranslations);
@@ -33,6 +34,15 @@ public class RobotState {
     return instance;
   }
 
+  private RobotState() {
+    AutoLogOutputManager.addObject(this);
+  }
+
+  public void hardSetOdometry(Pose2d pose) {
+    this.odometryPose = pose;
+  }
+
+  @AutoLogOutput(key = "RobotState/odometryPose")
   public Pose2d getOdometryPose() {
     return odometryPose;
   }
@@ -41,7 +51,6 @@ public class RobotState {
     var twist = kinematics.toTwist2d(lastModulePositions, observation.modulePositions());
     lastModulePositions = observation.modulePositions();
 
-    // var lastPose = odometryPose;
     odometryPose = new Pose2d(odometryPose.exp(twist).getTranslation(), observation.gyroYaw());
   }
 
