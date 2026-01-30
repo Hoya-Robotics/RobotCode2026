@@ -1,13 +1,9 @@
 package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.geometry.*;
-import edu.wpi.first.units.measure.Angle;
-import frc.robot.FieldConstants;
 import frc.robot.RobotState.*;
-import frc.robot.StateSubsystem;
-import java.util.function.Consumer;
-import org.littletonrobotics.junction.Logger;
 
+/*
 public class Vision extends StateSubsystem<frc.robot.subsystems.vision.Vision.SystemState> {
   public enum SystemState {
     BEST_TAG_2D,
@@ -43,29 +39,16 @@ public class Vision extends StateSubsystem<frc.robot.subsystems.vision.Vision.Sy
       switch (getCurrentState()) {
         case BEST_TAG_2D -> {
           final Pose2d estimate = poseEstimate2d(input.bestTarget);
-          /*
-          RobotState.getInstance()
-              .addVisionObservation(
-                  new AprilTagObservation(input.bestTarget.timestamp(), estimate));
-                  */
         }
         case ALL_TAGS_2D -> {
           for (var tag : input.allTargets) {
             final Pose2d estimate = poseEstimate2d(tag);
-            /*
-            RobotState.getInstance()
-                .addVisionObservation(new AprilTagObservation(tag.timestamp(), estimate));
-                */
           }
         }
       }
     }
   }
 
-  /*
-   * Estimates robot pose relative to april tag using only 2 DOF (yaw and distance)
-   * Simpler and more robust to noise during motion than 6 DOF methods like Megatag
-   */
   public Pose2d poseEstimate2d(VisionIO.AprilFiducial tag) {
     final Pose3d tagPose = FieldConstants.aprilLayout.getTagPose(tag.tid()).get();
     final Transform3d robotToCamera = VisionConstants.robotToCameras[tag.camera()];
@@ -85,3 +68,4 @@ public class Vision extends StateSubsystem<frc.robot.subsystems.vision.Vision.Sy
     return cameraPose.transformBy(VisionConstants.cameraToRobot2d[tag.camera()]);
   }
 }
+*/

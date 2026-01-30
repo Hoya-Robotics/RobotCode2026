@@ -59,8 +59,6 @@ public class Robot extends LoggedRobot {
     if (m_autonomousCommand != null) {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
-
-    // m_robotContainer.drive.driveToPose(new Pose2d(3.0, 3.0, Rotation2d.k180deg));
   }
 
   @Override

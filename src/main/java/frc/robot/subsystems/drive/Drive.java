@@ -8,12 +8,13 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.RobotConfig;
 import frc.robot.RobotState;
 import frc.robot.RobotState.*;
-import frc.robot.StateSubsystem;
+import frc.robot.util.StateSubsystem;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
@@ -30,7 +31,7 @@ public class Drive extends StateSubsystem<DriveState> {
   private GyroIOInputsAutoLogged gyroData = new GyroIOInputsAutoLogged();
 
   private final Module[] modules = new Module[4];
-  private final PS5Controller driveController;
+  private final XboxController driveController;
 
   private SwerveDriveSimulation sim = null;
 
@@ -61,7 +62,7 @@ public class Drive extends StateSubsystem<DriveState> {
     omegaController.setTolerance(RobotConfig.toPoseThetaTolerance);
     omegaController.enableContinuousInput(-Math.PI, Math.PI);
 
-    setState(DriveState.TELEOP);
+    setState(DriveState.IDLE);
   }
 
   public void setSimDrivetrain(SwerveDriveSimulation sim) {
@@ -100,6 +101,10 @@ public class Drive extends StateSubsystem<DriveState> {
     Logger.processInputs("Drive/Gyro", gyroData);
     Logger.recordOutput("Drive/systemState", getCurrentState());
 
+    if (DriverStation.isTeleop() && getCurrentState() == DriveState.IDLE) {
+      setState(DriveState.TELEOP);
+    }
+
     var modulePositions = new SwerveModulePosition[4];
     for (int i = 0; i < 4; ++i) {
       modules[i].periodic();
@@ -108,7 +113,8 @@ public class Drive extends StateSubsystem<DriveState> {
 
     RobotState.getInstance()
         .addOdometryObservation(
-            new OdometryObservation(modulePositions, gyroData.yaw, Timer.getFPGATimestamp()));
+            new OdometryObservation(
+                getChassisSpeeds(), modulePositions, gyroData.yaw, Timer.getFPGATimestamp()));
 
     statePeriodic();
 

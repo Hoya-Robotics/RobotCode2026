@@ -3,6 +3,8 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
@@ -22,6 +24,8 @@ public class RobotConfig {
   }
 
   public record PIDGains(double kp, double ki, double kd) {}
+
+  public record CameraConfig(String name, Transform3d robotToCamera) {}
 
   public static OperationMode getMode() {
     return RobotBase.isReal() ? OperationMode.REAL : OperationMode.SIM;
@@ -54,6 +58,15 @@ public class RobotConfig {
   public static final double driveKs = 0.0;
   public static final double driveKv = 2.0;
 
+  // Vision Constants
+  public static final CameraConfig[] cameras =
+      new CameraConfig[] {new CameraConfig("foo", new Transform3d())};
+  public static final Transform2d[] cameraToRobot2d = new Transform2d[cameras.length];
+
+  // Shooter Constants
+  public static final double lookaheadSeconds = 0.03;
+  public static final Transform3d robotToTurret = new Transform3d();
+
   // Simulated Robot Constants
   public static final DriveTrainSimulationConfig mapleSwerveConfig;
 
@@ -80,5 +93,11 @@ public class RobotConfig {
             .withCustomModuleTranslations(moduleTranslations)
             .withTrackLengthTrackWidth(trackWidthX, trackWidthY)
             .withGyro(COTS.ofPigeon2());
+
+    for (int i = 0; i < cameras.length; ++i) {
+      var inv = cameras[i].robotToCamera();
+      cameraToRobot2d[i] =
+          new Transform2d(inv.getX(), inv.getY(), inv.getRotation().toRotation2d());
+    }
   }
 }
