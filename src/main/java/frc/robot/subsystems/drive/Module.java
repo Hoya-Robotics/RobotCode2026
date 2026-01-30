@@ -46,6 +46,12 @@ public class Module {
     Logger.recordOutput("Drive/Module-" + index + "/steerHeading", outputs.steerHeading);
   }
 
+  public SwerveModuleState getState() {
+    return new SwerveModuleState(
+        inputs.driveVelocityRadps * RobotConfig.wheelRadius.in(Meters),
+        inputs.absoluteSteerHeading);
+  }
+
   public SwerveModulePosition getPosition() {
     return new SwerveModulePosition(
         inputs.drivePositionRads * RobotConfig.wheelRadius.in(Meters), inputs.absoluteSteerHeading);

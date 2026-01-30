@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.RobotConfig;
@@ -29,7 +30,7 @@ public class Drive extends StateSubsystem<DriveState> {
   private GyroIOInputsAutoLogged gyroData = new GyroIOInputsAutoLogged();
 
   private final Module[] modules = new Module[4];
-  private final XboxController driveController;
+  private final PS5Controller driveController;
 
   private SwerveDriveSimulation sim = null;
 
@@ -60,7 +61,7 @@ public class Drive extends StateSubsystem<DriveState> {
     omegaController.setTolerance(RobotConfig.toPoseThetaTolerance);
     omegaController.enableContinuousInput(-Math.PI, Math.PI);
 
-    setState(DriveState.IDLE);
+    setState(DriveState.TELEOP);
   }
 
   public void setSimDrivetrain(SwerveDriveSimulation sim) {
@@ -192,11 +193,10 @@ public class Drive extends StateSubsystem<DriveState> {
     Logger.recordOutput("Drive/ToPose/linearOutput", linearOutput);
     Logger.recordOutput("Drive/ToPose/OmegaOutput", omega);
 
-    /*
     if (linearController.atSetpoint() && omegaController.atSetpoint()) {
       setState(DriveState.IDLE);
       return new ChassisSpeeds();
-    }*/
+    }
 
     return ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, omega, gyroData.yaw);
   }
@@ -215,5 +215,12 @@ public class Drive extends StateSubsystem<DriveState> {
 
     return ChassisSpeeds.fromFieldRelativeSpeeds(
         magnitude * heading.getCos(), magnitude * heading.getSin(), omega, gyroData.yaw);
+  }
+
+  public ChassisSpeeds getChassisSpeeds() {
+    SwerveModuleState[] moduleStates = new SwerveModuleState[4];
+    for (int i = 0; i < 4; ++i) moduleStates[i] = modules[i].getState();
+
+    return kinematics.toChassisSpeeds(moduleStates);
   }
 }

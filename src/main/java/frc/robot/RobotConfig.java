@@ -30,8 +30,8 @@ public class RobotConfig {
   // Robot dimensions / specs
   public static final Mass robotMass = Kilograms.of(65.0);
 
-  public static final Distance bumperWidthX = Inches.of(0.0);
-  public static final Distance bumperWidthY = Inches.of(0.0);
+  public static final Distance bumperWidthX = Inches.of(30.0);
+  public static final Distance bumperWidthY = Inches.of(30.0);
   public static final Distance trackWidthX = Inches.of(24.4);
   public static final Distance trackWidthY = Inches.of(24.4);
 
