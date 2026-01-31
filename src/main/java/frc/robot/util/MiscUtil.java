@@ -43,7 +43,7 @@ public class MiscUtil {
 
     public static boolean shouldFlip() {
       return DriverStation.getAlliance().isPresent()
-          && DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
+          && DriverStation.getAlliance().get() != DriverStation.Alliance.Red;
     }
   }
 }

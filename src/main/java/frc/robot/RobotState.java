@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -13,6 +14,7 @@ import frc.robot.subsystems.drive.*;
 import frc.robot.util.MiscUtil;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.AutoLogOutputManager;
+import org.littletonrobotics.junction.Logger;
 
 public class RobotState {
   private static RobotState instance;
@@ -68,15 +70,26 @@ public class RobotState {
 
   // heuristic placeholder, probably crap
   private static double distanceToTrajectorySpeed(double distanceMeters) {
-    return 10 / -Math.exp(distanceMeters - 5);
+    final double vMin = 10.0;
+    final double vMax = 17.5;
+    final double dStart = 1.5;
+    final double dEnd = 8.0;
+    if (distanceMeters < dStart) {
+      return vMin;
+    } else if (distanceMeters > dEnd) {
+      return vMax;
+    } else {
+      double t = (distanceMeters - dStart) / (dEnd - dStart);
+      return MathUtil.interpolate(vMin, vMax, t);
+    }
   }
 
   // https://en.wikipedia.org/wiki/Projectile_motion#Angle_%CE%B8_required_to_hit_coordinate_(x,_y)
   private static final double G = 9.8;
 
   private static Rotation2d getShotPitch(double v, double x, double y) {
-    double top = (v * v) - Math.sqrt(Math.pow(v, 4) - G * (G * x * x + 2 * y * v * v));
-    return Rotation2d.fromRadians(Math.atan(top / G * x));
+    double top = v * v + Math.sqrt(Math.pow(v, 4) - G * (G * x * x + 2 * y * v * v));
+    return Rotation2d.fromRadians(Math.atan(top / (G * x)));
   }
 
   public OptimalShot getOptimalShot() {
@@ -95,8 +108,19 @@ public class RobotState {
     double distance = shotVector.getNorm();
     shotVector = shotVector.div(distance).times(distanceToTrajectorySpeed(distance));
 
+
     Rotation2d yaw = new Rotation2d(shotVector.getX(), shotVector.getY());
-    var pitch = getShotPitch(shotVector.getNorm(), distance, target.getZ());
+    double relativeHeight = target.getZ() - entry.getZ();
+    var pitch = getShotPitch(shotVector.getNorm(), distance, relativeHeight);
+
+    Logger.recordOutput("RobotState/Turret/projectileStart", entry);
+    Logger.recordOutput("RobotState/Turret/target", target);
+    Logger.recordOutput("RobotState/Turret/relativeHeight", relativeHeight);
+    Logger.recordOutput("RobotState/Turret/hubDistance", distance);
+    Logger.recordOutput("RobotState/Turret/outputSpeed", shotVector.getNorm());
+    Logger.recordOutput("RobotState/Turret/outputYaw", yaw);
+    Logger.recordOutput("RobotState/Turret/outputPitch", pitch);
+
     return new OptimalShot(yaw, pitch, shotVector.getNorm());
   }
 

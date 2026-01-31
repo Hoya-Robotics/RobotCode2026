@@ -4,8 +4,6 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
 import frc.robot.RobotConfig;
 import frc.robot.RobotState;
 import frc.robot.util.FuelSim;
@@ -25,21 +23,18 @@ public class PlaceholderTurret extends StateSubsystem<TurretState> {
   private BooleanSupplier fuelLoaded;
 
   public PlaceholderTurret() {
-    fuelLoaded =
-        () -> {
-          return DriverStation.isEnabled()
-              && ((int) Timer.getFPGATimestamp()) % 1 == 0
-              && fuelRemaining > 0;
-        };
     setState(TurretState.SHOOT);
   }
 
-  private Translation3d launchVector(double vel, Rotation2d pitch) {
-    var robot = RobotState.getInstance().getOdometryPose();
+  private Translation3d launchVector(double vel, Rotation2d pitch, Rotation2d yaw) {
     var robotSpeeds = RobotState.getInstance().getFieldVelocity();
-    double vx = vel * pitch.getCos() * robot.getRotation().getCos() + robotSpeeds.vxMetersPerSecond;
-    double vy = vel * pitch.getCos() * robot.getRotation().getSin() + robotSpeeds.vyMetersPerSecond;
-    return new Translation3d(vx, vy, vel * pitch.getSin());
+
+    double horizontal = vel * pitch.getCos();
+    double vx = horizontal * yaw.getCos() + robotSpeeds.vxMetersPerSecond * yaw.getCos();
+    double vy = horizontal * yaw.getSin() + robotSpeeds.vyMetersPerSecond * yaw.getSin();
+    double vz = vel * pitch.getSin();
+
+    return new Translation3d(vx, vy, vz);
   }
 
   @Override
@@ -47,24 +42,31 @@ public class PlaceholderTurret extends StateSubsystem<TurretState> {
     statePeriodic();
   }
 
+  public void letShoot() {
+    setState(TurretState.SHOOT);
+  }
+
   @Override
   public void applyState() {
     switch (getCurrentState()) {
       case SHOOT:
-        if (fuelLoaded.getAsBoolean()) {
-          var shot = RobotState.getInstance().getOptimalShot();
-          turretYaw = shot.turretYaw();
-          var shotVector = launchVector(shot.turretVel(), shot.turretPitch());
-          FuelSim.getInstance()
-              .spawnFuel(
-                  new Pose3d(RobotState.getInstance().getOdometryPose())
-                      .transformBy(RobotConfig.robotToTurret)
-                      .getTranslation(),
-                  shotVector);
-          fuelRemaining -= 1;
-          Logger.recordOutput("Turret/fuelRemaining", fuelRemaining);
-          Logger.recordOutput("Turret/shotVector", shotVector);
+        if (fuelRemaining <= 0) {
+          setState(TurretState.HOLD);
+          break;
         }
+        var shot = RobotState.getInstance().getOptimalShot();
+        turretYaw = shot.turretYaw();
+        var shotVector = launchVector(shot.turretVel(), shot.turretPitch(), shot.turretYaw());
+        FuelSim.getInstance()
+            .spawnFuel(
+                new Pose3d(RobotState.getInstance().getOdometryPose())
+                    .transformBy(RobotConfig.robotToTurret)
+                    .getTranslation(),
+                shotVector);
+        fuelRemaining -= 1;
+        Logger.recordOutput("Turret/fuelRemaining", fuelRemaining);
+        Logger.recordOutput("Turret/shotVector", shotVector);
+        setState(TurretState.HOLD);
         break;
       default:
         break;

@@ -3,6 +3,7 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -65,7 +66,8 @@ public class RobotConfig {
 
   // Shooter Constants
   public static final double lookaheadSeconds = 0.03;
-  public static final Transform3d robotToTurret = new Transform3d();
+  public static final Transform3d robotToTurret =
+      new Transform3d(0.0, 0.0, Units.inchesToMeters(25), Rotation3d.kZero);
 
   // Simulated Robot Constants
   public static final DriveTrainSimulationConfig mapleSwerveConfig;

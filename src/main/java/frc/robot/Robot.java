@@ -6,7 +6,10 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.util.FuelSim;
@@ -59,6 +62,14 @@ public class Robot extends LoggedRobot {
     if (m_autonomousCommand != null) {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
+
+    m_robotContainer.drive.driveToPose(new Pose2d(2.0, 2.0, Rotation2d.kZero));
+    var initialShots =
+        new Notifier(
+            () -> {
+              m_robotContainer.turret.letShoot();
+            });
+    initialShots.startPeriodic(0.25);
   }
 
   @Override
