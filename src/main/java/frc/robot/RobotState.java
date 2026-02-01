@@ -1,10 +1,11 @@
 package frc.robot;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -16,7 +17,6 @@ import frc.robot.subsystems.drive.*;
 import frc.robot.util.MiscUtil;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.AutoLogOutputManager;
-import org.littletonrobotics.junction.Logger;
 
 public class RobotState {
   private static RobotState instance;
@@ -70,82 +70,64 @@ public class RobotState {
 
   public void addVisionObservation(AprilTagObservation observation) {}
 
-  // heuristic placeholder, probably crap
-  private static double distanceToTrajectorySpeed(double distanceMeters) {
-    final double vMin = 6.0;
-    final double vMax = 8.0;
-    final double dStart = 1.5;
-    final double dEnd = 5.0;
-    if (distanceMeters < dStart) {
-      return vMin;
-    } else if (distanceMeters > dEnd) {
-      return vMax;
-    } else {
-      double t = (distanceMeters - dStart) / (dEnd - dStart);
-      return MathUtil.interpolate(vMin, vMax, t);
-    }
-  }
-
-  // https://en.wikipedia.org/wiki/Projectile_motion#Angle_%CE%B8_required_to_hit_coordinate_(x,_y)
-  private static final double G = 9.8;
-
-  private static Rotation2d getShotPitch(double v, double x, double y, double k, double h) {
-    double mj = Double.MAX_VALUE;
-    double best = 0.0;
-    for (double theta = 5; theta <= 85; ++theta) {
-      double th = Units.degreesToRadians(theta);
-      double y_hit = x * Math.tan(th) - ((G * x * x) / (2 * v * v * Math.pow(Math.cos(th), 2)));
-      double h_apex = (v * v * Math.pow(Math.sin(th), 2)) / (2 * G);
-      double J = Math.pow(y_hit - y, 2) + k * Math.pow(h_apex - h, 2);
-      if (J < mj) {
-        mj = J;
-        best = th;
-      }
-    }
-    return Rotation2d.fromRadians(best);
-  }
+  private static double G = 9.8062;
 
   public OptimalShot getOptimalShot() {
     var robot = odometryPose;
-    var speeds = odometrySpeeds;
+    var v_robot = odometrySpeeds;
+    var v_robot_field = getFieldVelocity();
+
+    // 1. Project robot into future (latency comp)
     var future =
         robot.exp(
             new Twist2d(
-                speeds.vxMetersPerSecond * RobotConfig.lookaheadSeconds,
-                speeds.vyMetersPerSecond * RobotConfig.lookaheadSeconds,
-                speeds.omegaRadiansPerSecond * RobotConfig.lookaheadSeconds));
-    var entry = new Pose3d(future).transformBy(RobotConfig.robotToTurret);
+                v_robot.vxMetersPerSecond * RobotConfig.lookaheadSeconds,
+                v_robot.vyMetersPerSecond * RobotConfig.lookaheadSeconds,
+                v_robot.omegaRadiansPerSecond * RobotConfig.lookaheadSeconds));
+    var turretPos = new Pose3d(future).transformBy(RobotConfig.robotToTurret);
     var target = MiscUtil.AllianceFlip.apply(FieldConstants.Hub.topCenterPoint);
-    var offset = future.getTranslation().minus(target.toTranslation2d());
-    // interpolate 20inches closer on xy plane
-    offset = offset.div(offset.getNorm()).times(Units.inchesToMeters(20));
-    // target = target.plus(new Translation3d(offset));
 
-    var shotVector = target.minus(entry.getTranslation());
+    // 2. Calculate field relative direction vector
+    Translation3d trajectoryVector = target.minus(turretPos.getTranslation());
 
-    double distance = shotVector.getNorm();
-    double exitSpeed = distanceToTrajectorySpeed(distance);
+    // 3. Calculate field relative turret velocity
+    // 	v_t = v_r(field) + w_r(field) x r_t(field)
+    var turret_radius_perp =
+        new Translation2d(-RobotConfig.robotToTurret.getY(), RobotConfig.robotToTurret.getX())
+            .rotateBy(future.getRotation());
 
-    shotVector =
-        shotVector
-            .div(distance)
-            .times(exitSpeed)
-            .minus(new Translation3d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, 0.0));
+    var v_turret_field =
+        new Translation2d(v_robot_field.vxMetersPerSecond, v_robot_field.vyMetersPerSecond)
+            .plus(turret_radius_perp.times(v_robot_field.omegaRadiansPerSecond));
 
-    Rotation2d yaw = shotVector.toTranslation2d().getAngle();
-    double relativeHeight = target.getZ() - entry.getZ();
-    var pitch = getShotPitch(shotVector.getNorm(), distance, relativeHeight, 0.5, 2.5);
+    var yaw = trajectoryVector.toTranslation2d().getAngle();
 
-    Logger.recordOutput("RobotState/Turret/overallSpeedRequested", exitSpeed);
-    Logger.recordOutput("RobotState/Turret/projectileStart", entry);
-    Logger.recordOutput("RobotState/Turret/target", target);
-    Logger.recordOutput("RobotState/Turret/relativeHeight", relativeHeight);
-    Logger.recordOutput("RobotState/Turret/hubDistance", distance);
-    Logger.recordOutput("RobotState/Turret/turretSpeed", shotVector.getNorm());
-    Logger.recordOutput("RobotState/Turret/outputYaw", yaw);
-    Logger.recordOutput("RobotState/Turret/outputPitchDegs", pitch.getDegrees());
+    double t_min = 0.0;
+    double t_max = 6.0;
+    int samples = 50;
 
-    return new OptimalShot(yaw, pitch, shotVector.getNorm());
+    var weights = VecBuilder.fill(1.0, 10.0, 0.1);
+    double optimalPitch = Units.degreesToRadians(45);
+    double bestCost = Double.MAX_VALUE;
+    var shot = new OptimalShot(Rotation2d.kZero, Rotation2d.kZero, 0.0);
+    for (int i = 0; i < samples; i++) {
+      double t = t_min + i * (t_max - t_min) / (samples - 1);
+      var v_fuel_field =
+          new Translation3d(
+              trajectoryVector.getX() / t,
+              trajectoryVector.getY() / t,
+              (trajectoryVector.getZ() + 0.5 * G * t * t) / t);
+      var v_fuel_rel = v_fuel_field.minus(new Translation3d(v_turret_field));
+      var pitch = Math.atan2(v_fuel_rel.getZ(), Math.hypot(v_fuel_rel.getY(), v_fuel_rel.getX()));
+      var parameterVector =
+          VecBuilder.fill(v_fuel_rel.getSquaredNorm(), Math.pow(pitch - optimalPitch, 2), t);
+      double cost = parameterVector.dot(weights);
+      if (cost < bestCost) {
+        bestCost = cost;
+        shot = new OptimalShot(yaw, Rotation2d.fromRadians(pitch), v_fuel_rel.getNorm());
+      }
+    }
+    return shot;
   }
 
   public record OptimalShot(Rotation2d turretYaw, Rotation2d turretPitch, double turretVel) {}
