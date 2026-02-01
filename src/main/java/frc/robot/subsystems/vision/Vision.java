@@ -1,55 +1,14 @@
 package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.geometry.*;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotState.*;
 
-/*
-public class Vision extends StateSubsystem<frc.robot.subsystems.vision.Vision.SystemState> {
-  public enum SystemState {
-    BEST_TAG_2D,
-    ALL_TAGS_2D,
-  }
+public class Vision extends SubsystemBase {
+  public Vision() {}
+}
 
-  private VisionIO[] cameras;
-  private VisionIOInputsAutoLogged[] inputs;
-  private final Consumer<Angle> setYaw;
-
-  public Vision(VisionIO[] cameras, Consumer<Angle> setYaw) {
-    this.setYaw = setYaw;
-    this.cameras = cameras;
-    this.inputs = new VisionIOInputsAutoLogged[cameras.length];
-  }
-
-  @Override
-  public void periodic() {
-    for (int i = 0; i < cameras.length; ++i) {
-      cameras[i].updateInputs(inputs[i]);
-      Logger.processInputs("Vision/camera" + i, inputs[i]);
-    }
-
-    applyState();
-  }
-
-  @Override
-  protected void applyState() {
-    for (int i = 0; i < cameras.length; ++i) {
-      final VisionIOInputsAutoLogged input = inputs[i];
-      // setYaw.accept(input.megatagYaw);
-
-      switch (getCurrentState()) {
-        case BEST_TAG_2D -> {
-          final Pose2d estimate = poseEstimate2d(input.bestTarget);
-        }
-        case ALL_TAGS_2D -> {
-          for (var tag : input.allTargets) {
-            final Pose2d estimate = poseEstimate2d(tag);
-          }
-        }
-      }
-    }
-  }
-
-  public Pose2d poseEstimate2d(VisionIO.AprilFiducial tag) {
+/*  public Pose2d poseEstimate2d(VisionIO.AprilFiducial tag) {
     final Pose3d tagPose = FieldConstants.aprilLayout.getTagPose(tag.tid()).get();
     final Transform3d robotToCamera = VisionConstants.robotToCameras[tag.camera()];
     final Rotation3d camRot = robotToCamera.getRotation();

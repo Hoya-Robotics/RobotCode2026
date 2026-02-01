@@ -72,30 +72,8 @@ public class RobotConfig {
   public static final double driveKv = 2.0;
 
   // Vision Constants
-  /*
-   * Prototyping vision setup ideas:
-   *
-   * Option 1:
-   * 	- fixed camera on hopper for game piece detection
-   * 	- fixed camera on each corner of turret side
-   * Option 2:
-   *  - fixed camera on hopper for game piece detection
-   *  - 1 fixed camera straight out turret side
-   * Option 3 (Untlikely):
-   *  - fixed camera on hopper for game piece detection
-   *  - rotating camera, attatched to turret yaw axis
-   */
-
-  enum VisionConcept {
-    FIXED_FRONT,
-    ANGLED_2,
-    ON_TURRET
-  }
-
-  public static final VisionConcept currentConcept = VisionConcept.FIXED_FRONT;
 
   public static final List<CameraConfig> cameras = new ArrayList<>();
-
   public static final Transform2d[] cameraToRobot2d;
 
   // Shooter Constants
@@ -144,39 +122,6 @@ public class RobotConfig {
                 Units.inchesToMeters(-10.5),
                 Rotation3d.kZero),
             CameraType.FUEL_DETECT));
-
-    switch (currentConcept) {
-      case FIXED_FRONT:
-        cameras.add(new CameraConfig("turretFixed", new Transform3d(), CameraType.HUB_ESTIMATE));
-        break;
-      case ANGLED_2:
-        var lCornerTransform =
-            new Transform3d(
-                Units.inchesToMeters(13.00),
-                Units.inchesToMeters(-6.194),
-                Units.inchesToMeters(20.125),
-                new Rotation3d(Units.degreesToRadians(90), 0.0, Units.degreesToRadians(45)));
-        var rCornerTransform =
-            new Transform3d(
-                -lCornerTransform.getX(),
-                lCornerTransform.getY(),
-                lCornerTransform.getZ(),
-                new Rotation3d(Units.degreesToRadians(90), 0.0, Units.degreesToRadians(-45)));
-        cameras.add(new CameraConfig("turretLs", lCornerTransform, CameraType.HUB_ESTIMATE));
-        cameras.add(new CameraConfig("turretRs", rCornerTransform, CameraType.HUB_ESTIMATE));
-        break;
-      case ON_TURRET:
-        cameras.add(
-            new CameraConfig(
-                "turretRotatable",
-                new Transform3d(
-                    0.0,
-                    Units.inchesToMeters(-13.00),
-                    Units.inchesToMeters(8.625),
-                    new Rotation3d(Units.degreesToRadians(90), 0.0, 0.0)),
-                CameraType.HUB_ESTIMATE));
-        break;
-    }
 
     cameraToRobot2d = new Transform2d[cameras.size()];
     for (int i = 0; i < cameras.size(); ++i) {

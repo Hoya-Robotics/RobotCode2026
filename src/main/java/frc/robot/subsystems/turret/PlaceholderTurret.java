@@ -55,7 +55,7 @@ public class PlaceholderTurret extends StateSubsystem<TurretState> {
           setState(TurretState.HOLD);
           break;
         }
-        var shot = RobotState.getInstance().getOptimalShot();
+        var shot = ShotOptimizer.apply();
         turretYaw = shot.turretYaw();
         var shotVector = launchVector(shot.turretVel(), shot.turretPitch(), shot.turretYaw());
         FuelSim.getInstance()
