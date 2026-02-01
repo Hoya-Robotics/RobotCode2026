@@ -104,9 +104,9 @@ public class RobotConfig {
   public static final Vector<N3> trajectoryWeights = VecBuilder.fill(0.8, 10.0, 0.1);
   public static final Angle optimalPitch = Degrees.of(50.0);
   public static final double lookaheadSeconds = 0.1;
-  public static final Distance hubFunnelClearance = Meters.of(2.1);
   public static final Transform3d robotToTurret =
       new Transform3d(0.0, 0.0, Units.inchesToMeters(25), Rotation3d.kZero);
+  public static final Distance hubFunnelClearance = Meters.of(2.1 - robotToTurret.getZ());
 
   // Simulated Robot Constants
   public static final DriveTrainSimulationConfig mapleSwerveConfig;
