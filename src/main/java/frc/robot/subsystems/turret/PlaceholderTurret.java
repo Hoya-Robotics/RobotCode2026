@@ -26,13 +26,15 @@ public class PlaceholderTurret extends StateSubsystem<TurretState> {
     setState(TurretState.SHOOT);
   }
 
-  private Translation3d launchVector(double vel, Rotation2d pitch, Rotation2d yaw) {
+  private Translation3d launchVector(double vel, Rotation2d pitch, Rotation2d turretYaw) {
     var robotSpeeds = RobotState.getInstance().getFieldVelocity();
 
     double horizontal = vel * pitch.getCos();
-    double vx = horizontal * yaw.getCos() + robotSpeeds.vxMetersPerSecond * yaw.getCos();
-    double vy = horizontal * yaw.getSin() + robotSpeeds.vyMetersPerSecond * yaw.getSin();
     double vz = vel * pitch.getSin();
+
+    var yaw = RobotState.getInstance().getOdometryPose().getRotation().rotateBy(turretYaw);
+    double vx = horizontal * yaw.getCos() + robotSpeeds.vxMetersPerSecond;
+    double vy = horizontal * yaw.getSin() + robotSpeeds.vyMetersPerSecond;
 
     return new Translation3d(vx, vy, vz);
   }

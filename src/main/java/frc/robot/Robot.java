@@ -7,12 +7,15 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.util.FuelSim;
+import java.util.Arrays;
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -63,7 +66,7 @@ public class Robot extends LoggedRobot {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
 
-    m_robotContainer.drive.driveToPose(new Pose2d(2.0, 2.0, Rotation2d.kZero));
+    m_robotContainer.drive.driveToPose(new Pose2d(2.5, 2.5, Rotation2d.kZero));
     var initialShots =
         new Notifier(
             () -> {
@@ -114,6 +117,15 @@ public class Robot extends LoggedRobot {
         m_robotContainer.drive::getChassisSpeeds);
 
     fuelSim.start();
+
+    Logger.recordOutput(
+        "RobotConfig/cameraTransforms",
+        Arrays.stream(RobotConfig.cameras.toArray(CameraConfig[]::new))
+            .map(
+                c ->
+                    new Pose3d(RobotState.getInstance().getOdometryPose())
+                        .transformBy(c.robotToCamera()))
+            .toArray(Pose3d[]::new));
   }
 
   @Override

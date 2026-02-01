@@ -5,11 +5,13 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.*;
+import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.drive.*;
 import frc.robot.util.MiscUtil;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -70,10 +72,10 @@ public class RobotState {
 
   // heuristic placeholder, probably crap
   private static double distanceToTrajectorySpeed(double distanceMeters) {
-    final double vMin = 10.0;
-    final double vMax = 17.5;
+    final double vMin = 6.0;
+    final double vMax = 8.0;
     final double dStart = 1.5;
-    final double dEnd = 8.0;
+    final double dEnd = 5.0;
     if (distanceMeters < dStart) {
       return vMin;
     } else if (distanceMeters > dEnd) {
@@ -87,9 +89,20 @@ public class RobotState {
   // https://en.wikipedia.org/wiki/Projectile_motion#Angle_%CE%B8_required_to_hit_coordinate_(x,_y)
   private static final double G = 9.8;
 
-  private static Rotation2d getShotPitch(double v, double x, double y) {
-    double top = v * v + Math.sqrt(Math.pow(v, 4) - G * (G * x * x + 2 * y * v * v));
-    return Rotation2d.fromRadians(Math.atan(top / (G * x)));
+  private static Rotation2d getShotPitch(double v, double x, double y, double k, double h) {
+    double mj = Double.MAX_VALUE;
+    double best = 0.0;
+    for (double theta = 5; theta <= 85; ++theta) {
+      double th = Units.degreesToRadians(theta);
+      double y_hit = x * Math.tan(th) - ((G * x * x) / (2 * v * v * Math.pow(Math.cos(th), 2)));
+      double h_apex = (v * v * Math.pow(Math.sin(th), 2)) / (2 * G);
+      double J = Math.pow(y_hit - y, 2) + k * Math.pow(h_apex - h, 2);
+      if (J < mj) {
+        mj = J;
+        best = th;
+      }
+    }
+    return Rotation2d.fromRadians(best);
   }
 
   public OptimalShot getOptimalShot() {
@@ -103,23 +116,34 @@ public class RobotState {
                 speeds.omegaRadiansPerSecond * RobotConfig.lookaheadSeconds));
     var entry = new Pose3d(future).transformBy(RobotConfig.robotToTurret);
     var target = MiscUtil.AllianceFlip.apply(FieldConstants.Hub.topCenterPoint);
+    var offset = future.getTranslation().minus(target.toTranslation2d());
+    // interpolate 20inches closer on xy plane
+    offset = offset.div(offset.getNorm()).times(Units.inchesToMeters(20));
+    // target = target.plus(new Translation3d(offset));
 
     var shotVector = target.minus(entry.getTranslation());
+
     double distance = shotVector.getNorm();
-    shotVector = shotVector.div(distance).times(distanceToTrajectorySpeed(distance));
+    double exitSpeed = distanceToTrajectorySpeed(distance);
 
+    shotVector =
+        shotVector
+            .div(distance)
+            .times(exitSpeed)
+            .minus(new Translation3d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, 0.0));
 
-    Rotation2d yaw = new Rotation2d(shotVector.getX(), shotVector.getY());
+    Rotation2d yaw = shotVector.toTranslation2d().getAngle();
     double relativeHeight = target.getZ() - entry.getZ();
-    var pitch = getShotPitch(shotVector.getNorm(), distance, relativeHeight);
+    var pitch = getShotPitch(shotVector.getNorm(), distance, relativeHeight, 0.5, 2.5);
 
+    Logger.recordOutput("RobotState/Turret/overallSpeedRequested", exitSpeed);
     Logger.recordOutput("RobotState/Turret/projectileStart", entry);
     Logger.recordOutput("RobotState/Turret/target", target);
     Logger.recordOutput("RobotState/Turret/relativeHeight", relativeHeight);
     Logger.recordOutput("RobotState/Turret/hubDistance", distance);
-    Logger.recordOutput("RobotState/Turret/outputSpeed", shotVector.getNorm());
+    Logger.recordOutput("RobotState/Turret/turretSpeed", shotVector.getNorm());
     Logger.recordOutput("RobotState/Turret/outputYaw", yaw);
-    Logger.recordOutput("RobotState/Turret/outputPitch", pitch);
+    Logger.recordOutput("RobotState/Turret/outputPitchDegs", pitch.getDegrees());
 
     return new OptimalShot(yaw, pitch, shotVector.getNorm());
   }

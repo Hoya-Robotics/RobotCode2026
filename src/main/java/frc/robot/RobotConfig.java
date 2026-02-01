@@ -12,6 +12,8 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.RobotBase;
+import java.util.ArrayList;
+import java.util.List;
 import org.ironmaple.simulation.drivesims.COTS;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 
@@ -26,7 +28,13 @@ public class RobotConfig {
 
   public record PIDGains(double kp, double ki, double kd) {}
 
-  public record CameraConfig(String name, Transform3d robotToCamera) {}
+  public enum CameraType {
+    POSE_ESTIMATE,
+    FUEL_DETECT,
+    HUB_ESTIMATE
+  }
+
+  public record CameraConfig(String name, Transform3d robotToCamera, CameraType type) {}
 
   public static OperationMode getMode() {
     return RobotBase.isReal() ? OperationMode.REAL : OperationMode.SIM;
@@ -60,9 +68,31 @@ public class RobotConfig {
   public static final double driveKv = 2.0;
 
   // Vision Constants
-  public static final CameraConfig[] cameras =
-      new CameraConfig[] {new CameraConfig("foo", new Transform3d())};
-  public static final Transform2d[] cameraToRobot2d = new Transform2d[cameras.length];
+  /*
+   * Prototyping vision setup ideas:
+   *
+   * Option 1:
+   * 	- fixed camera on hopper for game piece detection
+   * 	- fixed camera on each corner of turret side
+   * Option 2:
+   *  - fixed camera on hopper for game piece detection
+   *  - 1 fixed camera straight out turret side
+   * Option 3 (Untlikely):
+   *  - fixed camera on hopper for game piece detection
+   *  - rotating camera, attatched to turret yaw axis
+   */
+
+  enum VisionConcept {
+    FIXED_FRONT,
+    ANGLED_2,
+    ON_TURRET
+  }
+
+  public static final VisionConcept currentConcept = VisionConcept.FIXED_FRONT;
+
+  public static final List<CameraConfig> cameras = new ArrayList<>();
+
+  public static final Transform2d[] cameraToRobot2d;
 
   // Shooter Constants
   public static final double lookaheadSeconds = 0.03;
@@ -96,8 +126,52 @@ public class RobotConfig {
             .withTrackLengthTrackWidth(trackWidthX, trackWidthY)
             .withGyro(COTS.ofPigeon2());
 
-    for (int i = 0; i < cameras.length; ++i) {
-      var inv = cameras[i].robotToCamera();
+    cameras.add(
+        new CameraConfig(
+            "intake",
+            new Transform3d(
+                Units.inchesToMeters(9.75),
+                Units.inchesToMeters(-5.806),
+                Units.inchesToMeters(-10.5),
+                Rotation3d.kZero),
+            CameraType.FUEL_DETECT));
+
+    switch (currentConcept) {
+      case FIXED_FRONT:
+        cameras.add(new CameraConfig("turretFixed", new Transform3d(), CameraType.HUB_ESTIMATE));
+        break;
+      case ANGLED_2:
+        var lCornerTransform =
+            new Transform3d(
+                Units.inchesToMeters(13.00),
+                Units.inchesToMeters(-6.194),
+                Units.inchesToMeters(20.125),
+                new Rotation3d(Units.degreesToRadians(90), 0.0, Units.degreesToRadians(45)));
+        var rCornerTransform =
+            new Transform3d(
+                -lCornerTransform.getX(),
+                lCornerTransform.getY(),
+                lCornerTransform.getZ(),
+                new Rotation3d(Units.degreesToRadians(90), 0.0, Units.degreesToRadians(-45)));
+        cameras.add(new CameraConfig("turretLs", lCornerTransform, CameraType.HUB_ESTIMATE));
+        cameras.add(new CameraConfig("turretRs", rCornerTransform, CameraType.HUB_ESTIMATE));
+        break;
+      case ON_TURRET:
+        cameras.add(
+            new CameraConfig(
+                "turretRotatable",
+                new Transform3d(
+                    0.0,
+                    Units.inchesToMeters(-13.00),
+                    Units.inchesToMeters(8.625),
+                    new Rotation3d(Units.degreesToRadians(90), 0.0, 0.0)),
+                CameraType.HUB_ESTIMATE));
+        break;
+    }
+
+    cameraToRobot2d = new Transform2d[cameras.size()];
+    for (int i = 0; i < cameras.size(); ++i) {
+      var inv = cameras.get(i).robotToCamera().inverse();
       cameraToRobot2d[i] =
           new Transform2d(inv.getX(), inv.getY(), inv.getRotation().toRotation2d());
     }

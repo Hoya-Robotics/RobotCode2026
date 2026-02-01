@@ -20,7 +20,7 @@ public class VisionIOSim implements VisionIO {
 
   public VisionIOSim(int index, Supplier<Pose2d> poseSupplier) {
     this.index = index;
-    this.config = RobotConfig.cameras[index];
+    this.config = RobotConfig.cameras.get(index);
     this.poseSupplier = poseSupplier;
 
     if (simWorld == null) {
