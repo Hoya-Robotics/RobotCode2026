@@ -32,9 +32,8 @@ public class PlaceholderTurret extends StateSubsystem<TurretState> {
     double horizontal = vel * pitch.getCos();
     double vz = vel * pitch.getSin();
 
-    var yaw = RobotState.getInstance().getOdometryPose().getRotation().rotateBy(turretYaw);
-    double vx = horizontal * yaw.getCos() + robotSpeeds.vxMetersPerSecond;
-    double vy = horizontal * yaw.getSin() + robotSpeeds.vyMetersPerSecond;
+    double vx = horizontal * turretYaw.getCos() + robotSpeeds.vxMetersPerSecond;
+    double vy = horizontal * turretYaw.getSin() + robotSpeeds.vyMetersPerSecond;
 
     return new Translation3d(vx, vy, vz);
   }

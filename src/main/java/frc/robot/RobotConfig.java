@@ -2,13 +2,17 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -95,7 +99,12 @@ public class RobotConfig {
   public static final Transform2d[] cameraToRobot2d;
 
   // Shooter Constants
-  public static final double lookaheadSeconds = 0.03;
+
+  // Weights: { shot speed, pitch error, time of flight }
+  public static final Vector<N3> trajectoryWeights = VecBuilder.fill(0.8, 10.0, 0.1);
+  public static final Angle optimalPitch = Degrees.of(50.0);
+  public static final double lookaheadSeconds = 0.1;
+  public static final Distance hubFunnelClearance = Meters.of(2.1);
   public static final Transform3d robotToTurret =
       new Transform3d(0.0, 0.0, Units.inchesToMeters(25), Rotation3d.kZero);
 

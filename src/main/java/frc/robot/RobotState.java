@@ -1,5 +1,7 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.*;
+
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -17,6 +19,7 @@ import frc.robot.subsystems.drive.*;
 import frc.robot.util.MiscUtil;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.AutoLogOutputManager;
+import org.littletonrobotics.junction.Logger;
 
 public class RobotState {
   private static RobotState instance;
@@ -70,6 +73,14 @@ public class RobotState {
 
   public void addVisionObservation(AprilTagObservation observation) {}
 
+  private static boolean validTrajectory(Translation3d v, double x) {
+    double t = x / Math.hypot(v.getX(), v.getY());
+    double y = v.getZ() * t - 0.5 * G * t * t;
+    double clearance = RobotConfig.hubFunnelClearance.in(Meters) - RobotConfig.robotToTurret.getZ();
+
+    return y > clearance;
+  }
+
   private static double G = 9.8062;
 
   public OptimalShot getOptimalShot() {
@@ -100,16 +111,18 @@ public class RobotState {
         new Translation2d(v_robot_field.vxMetersPerSecond, v_robot_field.vyMetersPerSecond)
             .plus(turret_radius_perp.times(v_robot_field.omegaRadiansPerSecond));
 
-    var yaw = trajectoryVector.toTranslation2d().getAngle();
+    double funnelHorizontalDistance =
+        MiscUtil.AllianceFlip.apply(FieldConstants.Hub.nearFace)
+            .getTranslation()
+            .getDistance(future.getTranslation());
 
     double t_min = 0.0;
     double t_max = 6.0;
-    int samples = 50;
+    int samples = 100;
 
-    var weights = VecBuilder.fill(1.0, 10.0, 0.1);
-    double optimalPitch = Units.degreesToRadians(45);
     double bestCost = Double.MAX_VALUE;
     var shot = new OptimalShot(Rotation2d.kZero, Rotation2d.kZero, 0.0);
+    double clearance = 0.0;
     for (int i = 0; i < samples; i++) {
       double t = t_min + i * (t_max - t_min) / (samples - 1);
       var v_fuel_field =
@@ -119,14 +132,29 @@ public class RobotState {
               (trajectoryVector.getZ() + 0.5 * G * t * t) / t);
       var v_fuel_rel = v_fuel_field.minus(new Translation3d(v_turret_field));
       var pitch = Math.atan2(v_fuel_rel.getZ(), Math.hypot(v_fuel_rel.getY(), v_fuel_rel.getX()));
+      var yaw = v_fuel_rel.toTranslation2d().getAngle();
       var parameterVector =
-          VecBuilder.fill(v_fuel_rel.getSquaredNorm(), Math.pow(pitch - optimalPitch, 2), t);
-      double cost = parameterVector.dot(weights);
-      if (cost < bestCost) {
+          VecBuilder.fill(
+              v_fuel_rel.getSquaredNorm(),
+              Math.pow(pitch - RobotConfig.optimalPitch.in(Radians), 2),
+              t);
+      double cost = parameterVector.dot(RobotConfig.trajectoryWeights);
+      if (validTrajectory(v_fuel_field, funnelHorizontalDistance) && cost < bestCost) {
         bestCost = cost;
         shot = new OptimalShot(yaw, Rotation2d.fromRadians(pitch), v_fuel_rel.getNorm());
+        {
+          double tt = funnelHorizontalDistance / v_fuel_field.toTranslation2d().getNorm();
+          double y =
+              RobotConfig.robotToTurret.getZ() + v_fuel_field.getZ() * tt - 0.5 * G * tt * tt;
+          clearance = Units.metersToInches(y - RobotConfig.hubFunnelClearance.in(Meters));
+        }
       }
     }
+    Logger.recordOutput("OptimalShot/velocity", shot.turretVel());
+    Logger.recordOutput("OptimalShot/pitch", shot.turretPitch());
+    Logger.recordOutput("OptimalShot/yaw", shot.turretYaw());
+    Logger.recordOutput("OptimalShot/clearanceInches", clearance);
+
     return shot;
   }
 
