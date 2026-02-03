@@ -74,7 +74,7 @@ public class RobotConfig {
   // Vision Constants
 
   public static final List<CameraConfig> cameras = new ArrayList<>();
-  public static final Transform2d[] cameraToRobot2d;
+	public static final int matchImuMode = 4;
 
   // Shooter Constants
 
@@ -112,22 +112,5 @@ public class RobotConfig {
             .withCustomModuleTranslations(moduleTranslations)
             .withTrackLengthTrackWidth(trackWidthX, trackWidthY)
             .withGyro(COTS.ofPigeon2());
-
-    cameras.add(
-        new CameraConfig(
-            "intake",
-            new Transform3d(
-                Units.inchesToMeters(9.75),
-                Units.inchesToMeters(-5.806),
-                Units.inchesToMeters(-10.5),
-                Rotation3d.kZero),
-            CameraType.FUEL_DETECT));
-
-    cameraToRobot2d = new Transform2d[cameras.size()];
-    for (int i = 0; i < cameras.size(); ++i) {
-      var inv = cameras.get(i).robotToCamera().inverse();
-      cameraToRobot2d[i] =
-          new Transform2d(inv.getX(), inv.getY(), inv.getRotation().toRotation2d());
-    }
   }
 }

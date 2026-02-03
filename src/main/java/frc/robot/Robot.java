@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.RobotConfig.CameraConfig;
+import frc.robot.subsystems.vision.VisionProto;
 import frc.robot.util.FuelSim;
 import java.util.Arrays;
 import org.ironmaple.simulation.SimulatedArena;
@@ -107,6 +108,37 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void simulationInit() {
+    // Testing
+    /*
+    {
+      var state1 =
+          new RobotPathState(RobotState.getInstance().getOdometryPose(), new ChassisSpeeds());
+      var state2 =
+          new RobotPathState(
+              new Pose2d(4.0, 0.4, Rotation2d.kZero), new ChassisSpeeds(5.0, 0.0, 0.0));
+      var state3 =
+          new RobotPathState(
+              new Pose2d(
+                  (FieldConstants.fieldLength / 2) - 0.5,
+              2.0,
+                  Rotation2d.kZero),
+              new ChassisSpeeds(0.0, 3.0, 0.0));
+      var state4 =
+          new RobotPathState(
+              new Pose2d(
+                  (FieldConstants.fieldLength / 2) - 0.5,
+                  FieldConstants.fieldWidth / 2,
+                  Rotation2d.kZero),
+              new ChassisSpeeds());
+      List<Transform3d> trajectory =
+          Arrays.stream(
+                  SwerveControl.bezierPath(List.of(state1, state2, state3, state4), 50)
+                      .toArray(Translation2d[]::new))
+              .map(t -> new Transform3d(new Translation3d(t), Rotation3d.kZero))
+              .toList();
+      Logger.recordOutput("Testing/bezierTrajectory", trajectory.toArray(Transform3d[]::new));
+    }*/
+
     var fuelSim = FuelSim.getInstance();
     fuelSim.spawnStartingFuel();
     fuelSim.registerRobot(
@@ -116,6 +148,7 @@ public class Robot extends LoggedRobot {
         RobotState.getInstance()::getOdometryPose,
         m_robotContainer.drive::getChassisSpeeds);
 
+    fuelSim.enableAirResistance();
     fuelSim.start();
 
     Logger.recordOutput(
@@ -132,5 +165,6 @@ public class Robot extends LoggedRobot {
   public void simulationPeriodic() {
     SimulatedArena.getInstance().simulationPeriodic();
     FuelSim.getInstance().updateSim();
+		VisionProto.logCameras();
   }
 }
