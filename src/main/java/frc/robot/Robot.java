@@ -165,6 +165,6 @@ public class Robot extends LoggedRobot {
   public void simulationPeriodic() {
     SimulatedArena.getInstance().simulationPeriodic();
     FuelSim.getInstance().updateSim();
-		VisionProto.logCameras();
+    VisionProto.logCameras();
   }
 }

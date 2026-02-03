@@ -5,8 +5,8 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.RobotConfig;
-import frc.robot.RobotState;
 import frc.robot.RobotConfig.*;
+import frc.robot.RobotState;
 import org.littletonrobotics.junction.Logger;
 
 public class VisionProto {
@@ -16,12 +16,12 @@ public class VisionProto {
     new Transform3d(),
     CameraType.FUEL_DETECT
   );*/
-	public static void logCameras() {
-		var robot = new Pose3d(RobotState.getInstance().getOdometryPose());
-		for (var cam : RobotConfig.cameras) {
-			Logger.recordOutput("VisionProto/" + cam.name(), robot.transformBy(cam.robotToCamera()));
-		}
-	}
+  public static void logCameras() {
+    var robot = new Pose3d(RobotState.getInstance().getOdometryPose());
+    for (var cam : RobotConfig.cameras) {
+      Logger.recordOutput("VisionProto/" + cam.name(), robot.transformBy(cam.robotToCamera()));
+    }
+  }
 
   public static void wideFOVFrontSetup() {
     var turretLeft =

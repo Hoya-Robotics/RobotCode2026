@@ -1,33 +1,30 @@
 package frc.robot.subsystems.vision;
 
-import java.util.Optional;
-
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import frc.robot.subsystems.vision.Vision.LimelightOutputs;
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import frc.robot.subsystems.vision.Vision.LimelightOutputs;
-
 public interface LocalizationCameraIO {
-	@AutoLog
-	public static class LocalizationInputs {
-		public boolean isConnected = false;
-		public double timestamp = 0.0;
-		public Optional<Pose3d> cameraToHub = Optional.empty();
-		public MT2Observation[] globalPoseObservations;
-	}
+  @AutoLog
+  public static class LocalizationInputs {
+    public boolean isConnected = false;
 
-	public record MT2Observation(
-		double timestamp,
-		Pose3d pose,
-		double avgTagDistance,
-		int tagCount
-	) {}
+    public boolean hubInView = false;
+    public double cameraToHubTimestamp = 0.0;
+    public Transform3d cameraToHub = new Transform3d();
 
-	public static class LocalizationOutputs {
-		public LimelightOutputs llOutputs;
-	}
+    public MT2Observation[] globalPoseObservations;
+  }
 
-	default void updateInputs(LocalizationInputs input) {}
-	default void applyOutputs(LocalizationOutputs outputs) {}
+  public record MT2Observation(
+      double timestamp, Pose3d pose, double avgTagDistance, int tagCount) {}
+
+  public static class LocalizationOutputs {
+    public LimelightOutputs llOutputs;
+  }
+
+  default void updateInputs(LocalizationInputs input) {}
+
+  default void applyOutputs(LocalizationOutputs outputs) {}
 }
