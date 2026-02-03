@@ -145,7 +145,7 @@ public class Robot extends LoggedRobot {
         RobotConfig.bumperWidthY.in(Meters),
         RobotConfig.bumperWidthX.in(Meters),
         Units.inchesToMeters(3.0),
-        RobotState.getInstance()::getOdometryPose,
+        RobotState.getInstance()::getSimulatedDrivePose,
         m_robotContainer.drive::getChassisSpeeds);
 
     fuelSim.enableAirResistance();
