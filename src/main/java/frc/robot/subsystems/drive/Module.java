@@ -6,6 +6,7 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import frc.robot.RobotConfig;
+import frc.robot.RobotConfig.DriveConstants;
 import frc.robot.subsystems.drive.ModuleIO.ModuleIOOutputs;
 import org.littletonrobotics.junction.Logger;
 
@@ -16,7 +17,7 @@ public class Module {
   private ModuleIOOutputs outputs = new ModuleIOOutputs();
 
   private SimpleMotorFeedforward ffModel =
-      new SimpleMotorFeedforward(RobotConfig.driveKs, RobotConfig.driveKv);
+      new SimpleMotorFeedforward(DriveConstants.driveKs, DriveConstants.driveKv);
 
   public Module(int index, ModuleIO io) {
     this.index = index;

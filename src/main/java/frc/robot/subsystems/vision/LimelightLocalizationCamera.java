@@ -1,6 +1,7 @@
 package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
@@ -12,12 +13,12 @@ import edu.wpi.first.networktables.IntegerPublisher;
 import edu.wpi.first.networktables.IntegerSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
-import frc.robot.RobotConfig;
 import frc.robot.RobotConfig.CameraConfig;
+import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.RobotState.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class LimelightLocalizationCamera implements LocalizationCameraIO {
   private final CameraConfig config;
@@ -30,17 +31,22 @@ public class LimelightLocalizationCamera implements LocalizationCameraIO {
   private final DoubleArraySubscriber rawFiducialSubscriber;
   private final DoubleArraySubscriber stdDevsSubscriber;
 
+  private final DoubleArrayPublisher orientationPublisher;
   private final DoubleArrayPublisher rewindCapturePublisher;
   private final DoublePublisher rewindEnablePublisher;
   private final IntegerPublisher throttlePublisher;
   private final IntegerPublisher imuModePublisher;
-  private final DoubleArrayPublisher imuSeedDataPublisher;
+
+  private final Supplier<Rotation2d> externalYawSupplier;
 
   private boolean disabledState = false;
+  private boolean rewindEnabled = VisionConstants.enableLimelightRewind;
   private double captures = 0.0;
 
-  public LimelightLocalizationCamera(CameraConfig config) {
+  public LimelightLocalizationCamera(
+      CameraConfig config, Supplier<Rotation2d> externalYawSupplier) {
     this.config = config;
+    this.externalYawSupplier = externalYawSupplier;
 
     var table = NetworkTableInstance.getDefault().getTable(config.name());
 
@@ -55,11 +61,13 @@ public class LimelightLocalizationCamera implements LocalizationCameraIO {
     rawFiducialSubscriber = table.getDoubleArrayTopic("rawfiducials").subscribe(new double[] {});
     stdDevsSubscriber = table.getDoubleArrayTopic("stddevs").subscribe(new double[] {});
 
+    orientationPublisher = table.getDoubleArrayTopic("robot_orientation_set").publish();
     throttlePublisher = table.getIntegerTopic("throttle_set").publish();
     imuModePublisher = table.getIntegerTopic("imumode_set").publish();
-    imuSeedDataPublisher = table.getDoubleArrayTopic("imu").publish();
-    rewindEnablePublisher = table.getDoubleTopic("rewind_enable_set").publish();
     rewindCapturePublisher = table.getDoubleArrayTopic("capture_rewind").publish();
+    rewindEnablePublisher = table.getDoubleTopic("rewind_enable_set").publish();
+
+    rewindEnablePublisher.set(VisionConstants.enableLimelightRewind ? 1.0 : 0.0);
   }
 
   @Override
@@ -73,6 +81,9 @@ public class LimelightLocalizationCamera implements LocalizationCameraIO {
 
     double latency = tlSubscriber.get() + clSubscriber.get();
 
+    orientationPublisher.set(
+        new double[] {externalYawSupplier.get().getDegrees(), 0.0, 0.0, 0.0, 0.0, 0.0});
+
     if (DriverStation.isDisabled()) {
       disabledState = true;
       throttlePublisher.set(200);
@@ -80,7 +91,7 @@ public class LimelightLocalizationCamera implements LocalizationCameraIO {
     } else if (disabledState) {
       disabledState = false;
       throttlePublisher.set(0);
-      imuModePublisher.set(RobotConfig.matchImuMode);
+      imuModePublisher.set(VisionConstants.matchImuMode);
     }
 
     int tid = (int) tidSubscriber.get();
@@ -127,24 +138,15 @@ public class LimelightLocalizationCamera implements LocalizationCameraIO {
   }
 
   @Override
-  public void applyOutputs(LocalizationOutputs outputs) {
-    outputs.llOutputs.setRewind.ifPresent(
-        (enable) -> {
-          double value = enable ? 1.0 : 0.0;
-          rewindEnablePublisher.set(value);
-        });
+  public void enableRewind(boolean enable) {
+    this.rewindEnabled = enable;
+    rewindEnablePublisher.set(enable ? 1.0 : 0.0);
+  }
 
-    outputs.llOutputs.captureRewindWithDuration.ifPresent(
-        (duration) -> {
-          rewindCapturePublisher.set(new double[] {captures, duration});
-          captures += 1;
-        });
-
-    outputs.llOutputs.imuSeedData.ifPresent(
-        (dataArray) -> {
-          double[] data = Arrays.stream(dataArray).mapToDouble(Double::doubleValue).toArray();
-          imuSeedDataPublisher.set(data);
-        });
+  @Override
+  public void captureRewind(int duration) {
+    rewindCapturePublisher.set(new double[] {captures, duration});
+    captures += 1;
   }
 
   private static Pose3d deserializeLLPose(double[] values) {

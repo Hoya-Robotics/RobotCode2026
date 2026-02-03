@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.FieldConstants;
 import frc.robot.RobotConfig;
+import frc.robot.RobotConfig.DriveConstants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.*;
 import frc.robot.util.MiscUtil;
@@ -38,18 +39,18 @@ public class Drive extends StateSubsystem<DriveState> {
   private SwerveDriveSimulation sim = null;
 
   private final SwerveDriveKinematics kinematics =
-      new SwerveDriveKinematics(RobotConfig.moduleTranslations);
+      new SwerveDriveKinematics(DriveConstants.moduleTranslations);
 
   private PIDController linearController =
       new PIDController(
-          RobotConfig.toPoseLinearGains.kp(),
-          RobotConfig.toPoseLinearGains.ki(),
-          RobotConfig.toPoseLinearGains.kd());
+          DriveConstants.toPoseLinearGains.kp(),
+          DriveConstants.toPoseLinearGains.ki(),
+          DriveConstants.toPoseLinearGains.kd());
   private PIDController omegaController =
       new PIDController(
-          RobotConfig.toPoseOmegaGains.kp(),
-          RobotConfig.toPoseOmegaGains.ki(),
-          RobotConfig.toPoseOmegaGains.kd());
+          DriveConstants.toPoseOmegaGains.kp(),
+          DriveConstants.toPoseOmegaGains.ki(),
+          DriveConstants.toPoseOmegaGains.kd());
 
   private Pose2d targetDrivePose = null;
 
@@ -60,8 +61,8 @@ public class Drive extends StateSubsystem<DriveState> {
       this.modules[i] = new Module(i, moduleIOs[i]);
     }
 
-    linearController.setTolerance(RobotConfig.toPoseLinearTolerance);
-    omegaController.setTolerance(RobotConfig.toPoseThetaTolerance);
+    linearController.setTolerance(DriveConstants.toPoseLinearTolerance);
+    omegaController.setTolerance(DriveConstants.toPoseThetaTolerance);
     omegaController.enableContinuousInput(-Math.PI, Math.PI);
 
     setState(DriveState.IDLE);
@@ -109,6 +110,12 @@ public class Drive extends StateSubsystem<DriveState> {
     Logger.processInputs("Drive/Gyro", gyroData);
     Logger.recordOutput("Drive/systemState", getCurrentState());
 
+    var chassisSpeeds = getChassisSpeeds();
+    Logger.recordOutput("Drive/chassisSpeeds", chassisSpeeds);
+    Logger.recordOutput(
+        "Drive/linearSpeed",
+        Math.hypot(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond));
+
     if (DriverStation.isTeleop() && getCurrentState() == DriveState.IDLE) {
       setState(DriveState.TELEOP);
     }
@@ -142,7 +149,7 @@ public class Drive extends StateSubsystem<DriveState> {
   public void runSetpoint(ChassisSpeeds speeds) {
     var discrete = ChassisSpeeds.discretize(speeds, 0.02);
     var moduleStates = kinematics.toSwerveModuleStates(discrete);
-    SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, RobotConfig.maxDriveSpeedMps);
+    SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, DriveConstants.maxDriveSpeedMps);
 
     for (int i = 0; i < 4; ++i) {
       modules[i].runSetpoint(moduleStates[i]);
@@ -151,7 +158,7 @@ public class Drive extends StateSubsystem<DriveState> {
 
   public void xBrake() {
     for (int i = 0; i < 4; ++i) {
-      modules[i].runSetpoint(RobotConfig.xBrakeStates[i]);
+      modules[i].runSetpoint(DriveConstants.xBrakeStates[i]);
     }
   }
 
@@ -176,7 +183,7 @@ public class Drive extends StateSubsystem<DriveState> {
         runSetpoint(getControllerSpeeds());
         break;
       case TO_POSE:
-        var robotPose = RobotState.getInstance().getOdometryPose();
+        var robotPose = RobotState.getInstance().getEstimatedRobotPose();
         runSetpoint(getPidToPoseSetpoint(robotPose));
         break;
       case IDLE:
@@ -191,7 +198,8 @@ public class Drive extends StateSubsystem<DriveState> {
     Rotation2d heading = robotToTarget.getAngle();
 
     double linearOutput =
-        Math.min(Math.abs(linearController.calculate(distance, 0.0)), RobotConfig.maxDriveSpeedMps);
+        Math.min(
+            Math.abs(linearController.calculate(distance, 0.0)), DriveConstants.maxDriveSpeedMps);
     double vx = linearOutput * heading.getCos();
     double vy = linearOutput * heading.getSin();
 
@@ -199,18 +207,20 @@ public class Drive extends StateSubsystem<DriveState> {
         MathUtil.clamp(
             omegaController.calculate(
                 robotPose.getRotation().getRadians(), targetDrivePose.getRotation().getRadians()),
-            -RobotConfig.maxRotationSpeedRps,
-            RobotConfig.maxRotationSpeedRps);
+            -DriveConstants.maxRotationSpeedRps,
+            DriveConstants.maxRotationSpeedRps);
 
     Logger.recordOutput("Drive/ToPose/TargetPose", targetDrivePose);
+    Logger.recordOutput("Drive/ToPose/linearError", distance);
     Logger.recordOutput("Drive/ToPose/headingDeg", heading.getDegrees());
     Logger.recordOutput("Drive/ToPose/linearOutput", linearOutput);
     Logger.recordOutput("Drive/ToPose/OmegaOutput", omega);
 
+    /*
     if (linearController.atSetpoint() && omegaController.atSetpoint()) {
       setState(DriveState.IDLE);
       return new ChassisSpeeds();
-    }
+    }*/
 
     return ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, omega, gyroData.yaw);
   }
@@ -220,11 +230,11 @@ public class Drive extends StateSubsystem<DriveState> {
     double sy = -driveController.getLeftX();
     double omega = -driveController.getRightX();
 
-    omega = MathUtil.applyDeadband(omega, RobotConfig.controllerDeadband);
+    omega = MathUtil.applyDeadband(omega, DriveConstants.controllerDeadband);
     omega = omega * omega * Math.signum(omega); // heuristic
 
     var heading = new Rotation2d(sx, sy);
-    var magnitude = MathUtil.applyDeadband(Math.hypot(sx, sy), RobotConfig.controllerDeadband);
+    var magnitude = MathUtil.applyDeadband(Math.hypot(sx, sy), DriveConstants.controllerDeadband);
     magnitude = magnitude * magnitude; // heuristic
 
     return ChassisSpeeds.fromFieldRelativeSpeeds(

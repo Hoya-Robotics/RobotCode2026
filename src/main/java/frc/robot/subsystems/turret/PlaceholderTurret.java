@@ -49,7 +49,7 @@ public class PlaceholderTurret extends StateSubsystem<TurretState> {
                 MetersPerSecond.of(shot.turretVel()),
                 shot.turretPitch().getMeasure(),
                 shot.turretYaw().getMeasure(),
-                RobotConfig.robotToTurret.getMeasureZ());
+                RobotConfig.ShooterConstants.robotToTurret.getMeasureZ());
         fuelRemaining -= 1;
         Logger.recordOutput("Turret/fuelRemaining", fuelRemaining);
         setState(TurretState.HOLD);

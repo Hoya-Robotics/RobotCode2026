@@ -24,7 +24,7 @@ import org.photonvision.PhotonUtils;
 
 public class RobotState {
   private final SwerveDriveKinematics kinematics =
-      new SwerveDriveKinematics(RobotConfig.moduleTranslations);
+      new SwerveDriveKinematics(RobotConfig.DriveConstants.moduleTranslations);
   private SwerveModulePosition[] lastModulePositions =
       new SwerveModulePosition[] {
         new SwerveModulePosition(),

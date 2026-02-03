@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.ironmaple.simulation.drivesims.COTS;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
+import org.photonvision.simulation.SimCameraProperties;
 
 /*
  * Complete description of physical and virtual robot configuration
@@ -54,37 +55,44 @@ public class RobotConfig {
   public static final Distance wheelRadius = Inches.of(1.75);
 
   // Drivebase Constants/Config
-  public static final Translation2d[] moduleTranslations = new Translation2d[4];
-  public static final SwerveModuleState[] xBrakeStates = new SwerveModuleState[4];
+  public static final class DriveConstants {
+    public static final Translation2d[] moduleTranslations = new Translation2d[4];
+    public static final SwerveModuleState[] xBrakeStates = new SwerveModuleState[4];
 
-  public static final double maxDriveSpeedMps = 7.5;
-  public static final double maxRotationSpeedRps = 10.0;
+    public static final double maxDriveSpeedMps = 7.5;
+    public static final double maxRotationSpeedRps = 10.0;
 
-  public static final PIDGains toPoseLinearGains = new PIDGains(0.75, 0.0, 0.0);
-  public static final double toPoseLinearTolerance = Units.inchesToMeters(2.0);
-  public static final PIDGains toPoseOmegaGains = new PIDGains(0.8, 0.0, 0.0);
-  public static final double toPoseThetaTolerance = Units.degreesToRadians(3.0);
+    public static final PIDGains toPoseLinearGains = new PIDGains(0.35, 0.0, 0.0);
+    public static final double toPoseLinearTolerance = Units.inchesToMeters(2.0);
+    public static final PIDGains toPoseOmegaGains = new PIDGains(0.8, 0.0, 0.0);
+    public static final double toPoseThetaTolerance = Units.degreesToRadians(3.0);
 
-  public static final double controllerDeadband = 0.1;
+    public static final double controllerDeadband = 0.1;
 
-  public static final double driveKs = 0.0;
-  public static final double driveKv = 2.0;
+    public static final double driveKs = 0.05;
+    public static final double driveKv = 4.0;
+  }
 
   // Vision Constants
-
-  public static final List<CameraConfig> cameras = new ArrayList<>();
-  public static final int matchImuMode = 4;
-  public static final Distance multitagTagDistanceThreshold = Meters.of(4.5);
+  public static final class VisionConstants {
+    public static final boolean enableLimelightRewind = true;
+    public static final List<CameraConfig> cameras = new ArrayList<>();
+    public static final int matchImuMode = 4;
+    public static final Distance multitagTagDistanceThreshold = Meters.of(4.5);
+    public static final SimCameraProperties LL4CameraProperties = new SimCameraProperties();
+  }
 
   // Shooter Constants
 
-  public static final Vector<N3> trajectoryWeights =
-      VecBuilder.fill(0.8, 10.0, 0.1); // Weights: { shot speed, pitch error, time of flight }
-  public static final Angle optimalPitch = Degrees.of(50.0);
-  public static final double lookaheadSeconds = 0.1;
-  public static final Transform3d robotToTurret =
-      new Transform3d(0.0, 0.0, Units.inchesToMeters(25), Rotation3d.kZero);
-  public static final Distance hubFunnelClearance = Meters.of(2.1 - robotToTurret.getZ());
+  public static final class ShooterConstants {
+    public static final Vector<N3> trajectoryWeights =
+        VecBuilder.fill(0.8, 10.0, 0.1); // Weights: { shot speed, pitch error, time of flight }
+    public static final Angle optimalPitch = Degrees.of(50.0);
+    public static final double lookaheadSeconds = 0.1;
+    public static final Transform3d robotToTurret =
+        new Transform3d(0.0, 0.0, Units.inchesToMeters(25), Rotation3d.kZero);
+    public static final Distance hubFunnelClearance = Meters.of(2.1 - robotToTurret.getZ());
+  }
 
   // Simulated Robot Constants
   public static final DriveTrainSimulationConfig mapleSwerveConfig;
@@ -96,21 +104,27 @@ public class RobotConfig {
     double dx = trackWidthX.in(Meters) / 2.0;
     double dy = trackWidthY.in(Meters) / 2.0;
 
-    moduleTranslations[0] = new Translation2d(dx, dy);
-    moduleTranslations[1] = new Translation2d(dx, -dy);
-    moduleTranslations[2] = new Translation2d(-dx, dy);
-    moduleTranslations[3] = new Translation2d(-dx, -dy);
+    DriveConstants.moduleTranslations[0] = new Translation2d(dx, dy);
+    DriveConstants.moduleTranslations[1] = new Translation2d(dx, -dy);
+    DriveConstants.moduleTranslations[2] = new Translation2d(-dx, dy);
+    DriveConstants.moduleTranslations[3] = new Translation2d(-dx, -dy);
 
-    xBrakeStates[0] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(45));
-    xBrakeStates[1] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(-45));
-    xBrakeStates[2] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(45));
-    xBrakeStates[3] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(-45));
+    DriveConstants.xBrakeStates[0] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(45));
+    DriveConstants.xBrakeStates[1] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(-45));
+    DriveConstants.xBrakeStates[2] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(45));
+    DriveConstants.xBrakeStates[3] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(-45));
 
     mapleSwerveConfig =
         DriveTrainSimulationConfig.Default()
             .withRobotMass(robotMass)
-            .withCustomModuleTranslations(moduleTranslations)
+            .withCustomModuleTranslations(DriveConstants.moduleTranslations)
             .withTrackLengthTrackWidth(trackWidthX, trackWidthY)
             .withGyro(COTS.ofPigeon2());
+
+    VisionConstants.LL4CameraProperties.setCalibration(1280, 800, Rotation2d.fromDegrees(90));
+    VisionConstants.LL4CameraProperties.setFPS(128);
+    VisionConstants.LL4CameraProperties.setAvgLatencyMs(5);
+    VisionConstants.LL4CameraProperties.setLatencyStdDevMs(2);
+    VisionConstants.LL4CameraProperties.setCalibError(0.25, 0.08);
   }
 }

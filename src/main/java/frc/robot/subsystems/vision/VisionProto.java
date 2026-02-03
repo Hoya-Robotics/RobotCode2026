@@ -19,8 +19,8 @@ public class VisionProto {
     CameraType.FUEL_DETECT
   );*/
   public static void logCameras() {
-    var robot = new Pose3d(RobotState.getInstance().getOdometryPose());
-    for (var cam : RobotConfig.cameras) {
+    var robot = new Pose3d(RobotState.getInstance().getSimulatedDrivePose());
+    for (var cam : RobotConfig.VisionConstants.cameras) {
       Logger.recordOutput("VisionProto/" + cam.name(), robot.transformBy(cam.robotToCamera()));
     }
   }
@@ -45,8 +45,8 @@ public class VisionProto {
                 new Rotation3d(0, Units.degreesToRadians(-30), Units.degreesToRadians(-25))),
             CameraType.HUB_ESTIMATE);
 
-    RobotConfig.cameras.add(turretLeft);
-    RobotConfig.cameras.add(turretRight);
+    RobotConfig.VisionConstants.cameras.add(turretLeft);
+    RobotConfig.VisionConstants.cameras.add(turretRight);
 
     List<LocalizationCameraIO> localizers = new ArrayList<>();
     localizers.add(new PhotonSimLocalizationCamera(turretLeft));

@@ -4,7 +4,6 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.RobotState.HubObservation;
-import frc.robot.subsystems.vision.Vision.LimelightOutputs;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface LocalizationCameraIO {
@@ -27,15 +26,13 @@ public interface LocalizationCameraIO {
       double quality,
       double[] stdDevs) {}
 
-  public static class LocalizationOutputs {
-    public LimelightOutputs llOutputs;
-  }
-
-  default CameraConfig getConfig() {
+  public default CameraConfig getConfig() {
     return null;
   }
 
-  default void updateInputs(LocalizationInputs input) {}
+  public default void enableRewind(boolean enable) {}
 
-  default void applyOutputs(LocalizationOutputs outputs) {}
+  public default void captureRewind(int duration) {}
+
+  public default void updateInputs(LocalizationInputs input) {}
 }

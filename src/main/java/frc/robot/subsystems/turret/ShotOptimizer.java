@@ -8,7 +8,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Twist2d;
 import frc.robot.FieldConstants;
-import frc.robot.RobotConfig;
+import frc.robot.RobotConfig.ShooterConstants;
 import frc.robot.RobotState;
 import frc.robot.util.MiscUtil;
 import org.littletonrobotics.junction.Logger;
@@ -31,10 +31,10 @@ public class ShotOptimizer {
     var future =
         robot.exp(
             new Twist2d(
-                v_robot.vxMetersPerSecond * RobotConfig.lookaheadSeconds,
-                v_robot.vyMetersPerSecond * RobotConfig.lookaheadSeconds,
-                v_robot.omegaRadiansPerSecond * RobotConfig.lookaheadSeconds));
-    var turretPos = new Pose3d(future).transformBy(RobotConfig.robotToTurret);
+                v_robot.vxMetersPerSecond * ShooterConstants.lookaheadSeconds,
+                v_robot.vyMetersPerSecond * ShooterConstants.lookaheadSeconds,
+                v_robot.omegaRadiansPerSecond * ShooterConstants.lookaheadSeconds));
+    var turretPos = new Pose3d(future).transformBy(ShooterConstants.robotToTurret);
     var target = MiscUtil.AllianceFlip.apply(FieldConstants.Hub.topCenterPoint);
 
     // 2. Calculate field relative direction vector
@@ -43,7 +43,8 @@ public class ShotOptimizer {
     // 3. Calculate field relative turret velocity
     // 	v_t = v_r(field) + w_r(field) x r_t(field)
     var turret_radius_perp =
-        new Translation2d(-RobotConfig.robotToTurret.getY(), RobotConfig.robotToTurret.getX())
+        new Translation2d(
+                -ShooterConstants.robotToTurret.getY(), ShooterConstants.robotToTurret.getX())
             .rotateBy(future.getRotation());
     var v_turret_field =
         new Translation2d(v_robot_field.vxMetersPerSecond, v_robot_field.vyMetersPerSecond)
@@ -67,10 +68,10 @@ public class ShotOptimizer {
     double t_max = 6.0;
     int samples = 100;
 
-    double optimalPitch = RobotConfig.optimalPitch.in(Radians);
+    double optimalPitch = ShooterConstants.optimalPitch.in(Radians);
     double bestCost = Double.MAX_VALUE;
     var shot = new OptimalShot(Rotation2d.kZero, Rotation2d.kZero, 0.0);
-    double clearance = RobotConfig.hubFunnelClearance.in(Meters);
+    double clearance = ShooterConstants.hubFunnelClearance.in(Meters);
 
     // 4. Samples possible time of flight values, minimizes cost function:
     //
@@ -104,9 +105,9 @@ public class ShotOptimizer {
       double tCost = t;
 
       double cost =
-          (vCost * RobotConfig.trajectoryWeights.get(0, 0))
-              + (pitchCost * RobotConfig.trajectoryWeights.get(1, 0))
-              + (tCost * RobotConfig.trajectoryWeights.get(2, 0));
+          (vCost * ShooterConstants.trajectoryWeights.get(0, 0))
+              + (pitchCost * ShooterConstants.trajectoryWeights.get(1, 0))
+              + (tCost * ShooterConstants.trajectoryWeights.get(2, 0));
 
       double t_funnel = funnelHorizontalDistance / Math.hypot(v_field_x, v_field_y);
       double y_funnel = v_field_z * t_funnel - 0.5 * G * t_funnel * t_funnel;

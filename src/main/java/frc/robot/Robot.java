@@ -7,16 +7,14 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.RobotConfig.CameraConfig;
+import frc.robot.subsystems.drive.SwerveControl;
 import frc.robot.subsystems.vision.VisionProto;
 import frc.robot.util.FuelSim;
-import java.util.Arrays;
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -109,36 +107,6 @@ public class Robot extends LoggedRobot {
   @Override
   public void simulationInit() {
     // Testing
-    /*
-    {
-      var state1 =
-          new RobotPathState(RobotState.getInstance().getOdometryPose(), new ChassisSpeeds());
-      var state2 =
-          new RobotPathState(
-              new Pose2d(4.0, 0.4, Rotation2d.kZero), new ChassisSpeeds(5.0, 0.0, 0.0));
-      var state3 =
-          new RobotPathState(
-              new Pose2d(
-                  (FieldConstants.fieldLength / 2) - 0.5,
-              2.0,
-                  Rotation2d.kZero),
-              new ChassisSpeeds(0.0, 3.0, 0.0));
-      var state4 =
-          new RobotPathState(
-              new Pose2d(
-                  (FieldConstants.fieldLength / 2) - 0.5,
-                  FieldConstants.fieldWidth / 2,
-                  Rotation2d.kZero),
-              new ChassisSpeeds());
-      List<Transform3d> trajectory =
-          Arrays.stream(
-                  SwerveControl.bezierPath(List.of(state1, state2, state3, state4), 50)
-                      .toArray(Translation2d[]::new))
-              .map(t -> new Transform3d(new Translation3d(t), Rotation3d.kZero))
-              .toList();
-      Logger.recordOutput("Testing/bezierTrajectory", trajectory.toArray(Transform3d[]::new));
-    }*/
-
     var fuelSim = FuelSim.getInstance();
     fuelSim.spawnStartingFuel();
     fuelSim.registerRobot(
@@ -150,15 +118,6 @@ public class Robot extends LoggedRobot {
 
     fuelSim.enableAirResistance();
     fuelSim.start();
-
-    Logger.recordOutput(
-        "RobotConfig/cameraTransforms",
-        Arrays.stream(RobotConfig.cameras.toArray(CameraConfig[]::new))
-            .map(
-                c ->
-                    new Pose3d(RobotState.getInstance().getOdometryPose())
-                        .transformBy(c.robotToCamera()))
-            .toArray(Pose3d[]::new));
   }
 
   @Override
@@ -167,5 +126,7 @@ public class Robot extends LoggedRobot {
     FuelSim.getInstance().updateSim();
     VisionProto.logCameras();
     Logger.recordOutput("estimatedPose", RobotState.getInstance().getEstimatedRobotPose());
+
+    SwerveControl.testTrajectory();
   }
 }

@@ -29,8 +29,8 @@ public class ModuleIOSim implements ModuleIO {
   public ModuleIOSim(SwerveModuleSimulation simModule) {
     this.simModule = simModule;
     this.driveMotor =
-        this.simModule.useGenericMotorControllerForDrive().withCurrentLimit(Amps.of(60));
-    this.steerMotor = this.simModule.useGenericControllerForSteer().withCurrentLimit(Amps.of(60));
+        this.simModule.useGenericMotorControllerForDrive().withCurrentLimit(Amps.of(100));
+    this.steerMotor = this.simModule.useGenericControllerForSteer().withCurrentLimit(Amps.of(100));
 
     steerClosedLoop.enableContinuousInput(-Math.PI, Math.PI);
   }

@@ -5,7 +5,7 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.RobotConfig;
+import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.*;
 import frc.robot.subsystems.vision.LocalizationCameraIO.MultitagPoseEstimate;
@@ -13,13 +13,6 @@ import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
-  public class LimelightOutputs {
-    public Optional<Boolean> setRewind = Optional.empty();
-    public Optional<Integer> captureRewindWithDuration = Optional.empty();
-    public Optional<Double[]> imuSeedData = Optional.empty();
-  }
-
-  private LimelightOutputs llOutputs = new LimelightOutputs();
   private final LocalizationCameraIO[] localizers;
   private LocalizationInputsAutoLogged[] localizerInputs;
 
@@ -55,7 +48,7 @@ public class Vision extends SubsystemBase {
 
   private Optional<VisionFieldPoseEstimate> tryProcessMultitagEstimate(
       MultitagPoseEstimate poseEstimate) {
-    if (poseEstimate.avgTagDistance() > RobotConfig.multitagTagDistanceThreshold.in(Meters)) {
+    if (poseEstimate.avgTagDistance() > VisionConstants.multitagTagDistanceThreshold.in(Meters)) {
       return Optional.empty();
     }
 

@@ -2,6 +2,7 @@ package frc.robot.subsystems.vision;
 
 import frc.robot.FieldConstants;
 import frc.robot.RobotConfig.CameraConfig;
+import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.*;
 import java.util.ArrayList;
@@ -9,7 +10,6 @@ import java.util.List;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.simulation.PhotonCameraSim;
-import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 
 public class PhotonSimLocalizationCamera implements LocalizationCameraIO {
@@ -27,9 +27,10 @@ public class PhotonSimLocalizationCamera implements LocalizationCameraIO {
       visionWorld.addAprilTags(FieldConstants.aprilLayout);
     }
 
-    SimCameraProperties props = new SimCameraProperties();
     camera = new PhotonCamera(config.name());
-    cameraSim = new PhotonCameraSim(camera, props, FieldConstants.aprilLayout);
+    cameraSim =
+        new PhotonCameraSim(
+            camera, VisionConstants.LL4CameraProperties, FieldConstants.aprilLayout);
     poseEstimator = new PhotonPoseEstimator(FieldConstants.aprilLayout, config.robotToCamera());
 
     visionWorld.addCamera(cameraSim, config.robotToCamera());
@@ -70,6 +71,10 @@ public class PhotonSimLocalizationCamera implements LocalizationCameraIO {
         multitagEst = poseEstimator.estimateLowestAmbiguityPose(result);
       }
 
+      if (multitagEst.isEmpty()) {
+        continue;
+      }
+
       observations.add(
           new MultitagPoseEstimate(
               multitagEst.get().timestampSeconds,
@@ -79,7 +84,7 @@ public class PhotonSimLocalizationCamera implements LocalizationCameraIO {
               1.0,
               new double[] {0.1, 0.1, 0.1, 0.1, 0.1, 0.1}));
     }
-    inputs.globalPoseObservations = observations.toArray(MultitagPoseEstimate[]::new);
     inputs.hubInView = hubInView;
+    inputs.globalPoseObservations = observations.toArray(MultitagPoseEstimate[]::new);
   }
 }
