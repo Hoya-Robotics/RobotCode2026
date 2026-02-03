@@ -27,6 +27,8 @@ public class LimelightLocalizationCamera implements LocalizationCameraIO {
   private final DoubleSubscriber clSubscriber;
   private final DoubleSubscriber tlSubscriber;
   private final IntegerSubscriber tidSubscriber;
+  private final DoubleArraySubscriber rawFiducialSubscriber;
+  private final DoubleArraySubscriber stdDevsSubscriber;
 
   private final DoubleArrayPublisher rewindCapturePublisher;
   private final DoublePublisher rewindEnablePublisher;
@@ -50,6 +52,8 @@ public class LimelightLocalizationCamera implements LocalizationCameraIO {
     tlSubscriber = table.getDoubleTopic("tl").subscribe(0.0);
     clSubscriber = table.getDoubleTopic("cl").subscribe(0.0);
     tidSubscriber = table.getIntegerTopic("tid").subscribe(0);
+    rawFiducialSubscriber = table.getDoubleArrayTopic("rawfiducials").subscribe(new double[] {});
+    stdDevsSubscriber = table.getDoubleArrayTopic("stddevs").subscribe(new double[] {});
 
     throttlePublisher = table.getIntegerTopic("throttle_set").publish();
     imuModePublisher = table.getIntegerTopic("imumode_set").publish();
@@ -101,18 +105,25 @@ public class LimelightLocalizationCamera implements LocalizationCameraIO {
     }
 
     // Read all updated megatag2 estimates
-    List<MT2Observation> observations = new ArrayList<>();
+    List<MultitagPoseEstimate> observations = new ArrayList<>();
+    var stddevQueue = stdDevsSubscriber.readQueue();
+    int i = 0;
     for (var megatagSample : megatag2Subscriber.readQueue()) {
       Pose3d pose = deserializeLLPose(megatagSample.value);
-      MT2Observation observation =
-          new MT2Observation(
+      int tags = (int) megatagSample.value[7];
+      double ambiguity = rawFiducialSubscriber.get()[6];
+      MultitagPoseEstimate observation =
+          new MultitagPoseEstimate(
               megatagSample.timestamp - megatagSample.value[6],
               pose,
               megatagSample.value[9],
-              (int) megatagSample.value[7]);
+              tags,
+              tags > 1 ? 1.0 : 1.0 - ambiguity,
+              stddevQueue[i].value);
       observations.add(observation);
+      i += 1;
     }
-    inputs.globalPoseObservations = observations.toArray(MT2Observation[]::new);
+    inputs.globalPoseObservations = observations.toArray(MultitagPoseEstimate[]::new);
   }
 
   @Override

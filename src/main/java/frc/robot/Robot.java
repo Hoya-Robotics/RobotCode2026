@@ -166,5 +166,6 @@ public class Robot extends LoggedRobot {
     SimulatedArena.getInstance().simulationPeriodic();
     FuelSim.getInstance().updateSim();
     VisionProto.logCameras();
+    Logger.recordOutput("estimatedPose", RobotState.getInstance().getEstimatedRobotPose());
   }
 }

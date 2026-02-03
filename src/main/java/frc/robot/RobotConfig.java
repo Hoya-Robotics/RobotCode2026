@@ -74,11 +74,12 @@ public class RobotConfig {
 
   public static final List<CameraConfig> cameras = new ArrayList<>();
   public static final int matchImuMode = 4;
+  public static final Distance multitagTagDistanceThreshold = Meters.of(4.5);
 
   // Shooter Constants
 
-  // Weights: { shot speed, pitch error, time of flight }
-  public static final Vector<N3> trajectoryWeights = VecBuilder.fill(0.8, 10.0, 0.1);
+  public static final Vector<N3> trajectoryWeights =
+      VecBuilder.fill(0.8, 10.0, 0.1); // Weights: { shot speed, pitch error, time of flight }
   public static final Angle optimalPitch = Degrees.of(50.0);
   public static final double lookaheadSeconds = 0.1;
   public static final Transform3d robotToTurret =

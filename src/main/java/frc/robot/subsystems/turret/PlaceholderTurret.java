@@ -1,11 +1,10 @@
 package frc.robot.subsystems.turret;
 
-import edu.wpi.first.math.geometry.Pose3d;
+import static edu.wpi.first.units.Units.*;
+
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import frc.robot.RobotConfig;
-import frc.robot.RobotState;
 import frc.robot.util.FuelSim;
 import frc.robot.util.StateSubsystem;
 import java.util.function.BooleanSupplier;
@@ -24,18 +23,6 @@ public class PlaceholderTurret extends StateSubsystem<TurretState> {
 
   public PlaceholderTurret() {
     setState(TurretState.SHOOT);
-  }
-
-  private Translation3d launchVector(double vel, Rotation2d pitch, Rotation2d turretYaw) {
-    var robotSpeeds = RobotState.getInstance().getFieldVelocity();
-
-    double horizontal = vel * pitch.getCos();
-    double vz = vel * pitch.getSin();
-
-    double vx = horizontal * turretYaw.getCos() + robotSpeeds.vxMetersPerSecond;
-    double vy = horizontal * turretYaw.getSin() + robotSpeeds.vyMetersPerSecond;
-
-    return new Translation3d(vx, vy, vz);
   }
 
   @Override
@@ -57,16 +44,14 @@ public class PlaceholderTurret extends StateSubsystem<TurretState> {
         }
         var shot = ShotOptimizer.apply();
         turretYaw = shot.turretYaw();
-        var shotVector = launchVector(shot.turretVel(), shot.turretPitch(), shot.turretYaw());
         FuelSim.getInstance()
-            .spawnFuel(
-                new Pose3d(RobotState.getInstance().getOdometryPose())
-                    .transformBy(RobotConfig.robotToTurret)
-                    .getTranslation(),
-                shotVector);
+            .launchFuel(
+                MetersPerSecond.of(shot.turretVel()),
+                shot.turretPitch().getMeasure(),
+                shot.turretYaw().getMeasure(),
+                RobotConfig.robotToTurret.getMeasureZ());
         fuelRemaining -= 1;
         Logger.recordOutput("Turret/fuelRemaining", fuelRemaining);
-        Logger.recordOutput("Turret/shotVector", shotVector);
         setState(TurretState.HOLD);
         break;
       default:

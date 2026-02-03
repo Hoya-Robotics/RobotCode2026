@@ -16,11 +16,16 @@ public interface LocalizationCameraIO {
     public HubObservation hubObservation =
         new HubObservation(new Transform3d(), new Transform3d(), -1);
 
-    public MT2Observation[] globalPoseObservations = new MT2Observation[] {};
+    public MultitagPoseEstimate[] globalPoseObservations = new MultitagPoseEstimate[] {};
   }
 
-  public record MT2Observation(
-      double timestamp, Pose3d pose, double avgTagDistance, int tagCount) {}
+  public record MultitagPoseEstimate(
+      double timestamp,
+      Pose3d pose,
+      double avgTagDistance,
+      int tagCount,
+      double quality,
+      double[] stdDevs) {}
 
   public static class LocalizationOutputs {
     public LimelightOutputs llOutputs;
