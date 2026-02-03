@@ -12,14 +12,16 @@ import edu.wpi.first.networktables.IntegerPublisher;
 import edu.wpi.first.networktables.IntegerSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
 import frc.robot.RobotConfig;
 import frc.robot.RobotConfig.CameraConfig;
+import frc.robot.RobotState.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class LimelightLocalizationCamera implements LocalizationCameraIO {
+  private final CameraConfig config;
+
   private final DoubleArraySubscriber cameraPoseTargetspaceSubscriber;
   private final DoubleArraySubscriber megatag2Subscriber;
   private final DoubleSubscriber clSubscriber;
@@ -36,6 +38,8 @@ public class LimelightLocalizationCamera implements LocalizationCameraIO {
   private double captures = 0.0;
 
   public LimelightLocalizationCamera(CameraConfig config) {
+    this.config = config;
+
     var table = NetworkTableInstance.getDefault().getTable(config.name());
 
     megatag2Subscriber =
@@ -55,11 +59,15 @@ public class LimelightLocalizationCamera implements LocalizationCameraIO {
   }
 
   @Override
+  public CameraConfig getConfig() {
+    return config;
+  }
+
+  @Override
   public void updateInputs(LocalizationInputs inputs) {
     NetworkTableInstance.getDefault().flush();
 
     double latency = tlSubscriber.get() + clSubscriber.get();
-    inputs.cameraToHubTimestamp = Timer.getFPGATimestamp() - latency;
 
     if (DriverStation.isDisabled()) {
       disabledState = true;
@@ -77,7 +85,8 @@ public class LimelightLocalizationCamera implements LocalizationCameraIO {
     if (tid == 9 || tid == 10 || tid == 25 || tid == 26) {
       double[] cameraposeTargetspace = cameraPoseTargetspaceSubscriber.get();
       inputs.hubInView = true;
-      inputs.cameraToHub =
+
+      var cameraToHub =
           new Transform3d(
               cameraposeTargetspace[0],
               cameraposeTargetspace[1],
@@ -86,6 +95,7 @@ public class LimelightLocalizationCamera implements LocalizationCameraIO {
                   Units.degreesToRadians(cameraposeTargetspace[3]),
                   Units.degreesToRadians(cameraposeTargetspace[5]),
                   Units.degreesToRadians(cameraposeTargetspace[4])));
+      inputs.hubObservation = new HubObservation(config.robotToCamera(), cameraToHub, tid);
     } else {
       inputs.hubInView = false;
     }

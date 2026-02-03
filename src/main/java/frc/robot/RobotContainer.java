@@ -9,15 +9,17 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.turret.PlaceholderTurret;
+import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionProto;
 
 public class RobotContainer {
   public final XboxController driveController = new XboxController(0);
   public final Drive drive;
   public final PlaceholderTurret turret = new PlaceholderTurret();
+  public final Vision vision;
 
   public RobotContainer() {
-    VisionProto.wideFOVFrontSetup();
+    vision = new Vision(VisionProto.wideFOVFrontSetup());
     switch (RobotConfig.getMode()) {
       case SIM:
         drive = Drive.simulatedDrive(driveController);

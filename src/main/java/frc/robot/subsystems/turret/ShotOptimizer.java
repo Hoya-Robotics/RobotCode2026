@@ -19,7 +19,11 @@ public class ShotOptimizer {
   private static double G = 9.80665;
 
   public static OptimalShot apply() {
+    var localEstimate = RobotState.getInstance().getHubLocalizedRobotPose();
     var robot = RobotState.getInstance().getOdometryPose();
+    if (localEstimate != null) {
+      robot = localEstimate.toPose2d();
+    }
     var v_robot = RobotState.getInstance().getChassisVelocity();
     var v_robot_field = RobotState.getInstance().getFieldVelocity();
 

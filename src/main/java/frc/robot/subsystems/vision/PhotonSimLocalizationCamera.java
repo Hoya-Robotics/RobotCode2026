@@ -1,13 +1,13 @@
 package frc.robot.subsystems.vision;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import frc.robot.FieldConstants;
 import frc.robot.RobotConfig.CameraConfig;
+import frc.robot.RobotState;
+import frc.robot.RobotState.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 import org.photonvision.PhotonCamera;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
@@ -18,10 +18,8 @@ public class PhotonSimLocalizationCamera implements LocalizationCameraIO {
   private final CameraConfig config;
   private final PhotonCamera camera;
   private final PhotonCameraSim cameraSim;
-  private final Supplier<Pose2d> simPoseSupplier;
 
-  public PhotonSimLocalizationCamera(CameraConfig config, Supplier<Pose2d> simPoseSupplier) {
-    this.simPoseSupplier = simPoseSupplier;
+  public PhotonSimLocalizationCamera(CameraConfig config) {
     this.config = config;
 
     if (visionWorld == null) {
@@ -37,8 +35,13 @@ public class PhotonSimLocalizationCamera implements LocalizationCameraIO {
   }
 
   @Override
+  public CameraConfig getConfig() {
+    return config;
+  }
+
+  @Override
   public void updateInputs(LocalizationInputs inputs) {
-    visionWorld.update(simPoseSupplier.get());
+    visionWorld.update(RobotState.getInstance().getSimulatedDrivePose());
 
     var results = camera.getAllUnreadResults();
     List<MT2Observation> observations = new ArrayList<>();
@@ -54,8 +57,8 @@ public class PhotonSimLocalizationCamera implements LocalizationCameraIO {
         // Hub target
         if (tid == 9 || tid == 10 || tid == 25 || tid == 26) {
           hubInView = true;
-          inputs.cameraToHubTimestamp = result.getTimestampSeconds();
-          inputs.cameraToHub = target.bestCameraToTarget;
+          inputs.hubObservation =
+              new HubObservation(config.robotToCamera(), target.bestCameraToTarget, tid);
           break;
         }
       }

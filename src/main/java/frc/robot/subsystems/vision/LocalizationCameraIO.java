@@ -2,6 +2,8 @@ package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import frc.robot.RobotConfig.CameraConfig;
+import frc.robot.RobotState.HubObservation;
 import frc.robot.subsystems.vision.Vision.LimelightOutputs;
 import org.littletonrobotics.junction.AutoLog;
 
@@ -11,10 +13,10 @@ public interface LocalizationCameraIO {
     public boolean isConnected = false;
 
     public boolean hubInView = false;
-    public double cameraToHubTimestamp = 0.0;
-    public Transform3d cameraToHub = new Transform3d();
+    public HubObservation hubObservation =
+        new HubObservation(new Transform3d(), new Transform3d(), -1);
 
-    public MT2Observation[] globalPoseObservations;
+    public MT2Observation[] globalPoseObservations = new MT2Observation[] {};
   }
 
   public record MT2Observation(
@@ -22,6 +24,10 @@ public interface LocalizationCameraIO {
 
   public static class LocalizationOutputs {
     public LimelightOutputs llOutputs;
+  }
+
+  default CameraConfig getConfig() {
+    return null;
   }
 
   default void updateInputs(LocalizationInputs input) {}

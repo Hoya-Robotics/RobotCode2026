@@ -85,6 +85,7 @@ public class Drive extends StateSubsystem<DriveState> {
     var sim = new SwerveDriveSimulation(RobotConfig.mapleSwerveConfig, startingPose);
     SimulatedArena.getInstance().addDriveTrainSimulation(sim);
     RobotState.getInstance().hardSetOdometry(startingPose);
+    RobotState.getInstance().addSimPoseSupplier(sim::getSimulatedDriveTrainPose);
 
     var instance =
         new Drive(
