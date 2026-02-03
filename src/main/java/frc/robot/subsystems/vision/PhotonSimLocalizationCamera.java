@@ -1,20 +1,13 @@
 package frc.robot.subsystems.vision;
 
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Transform3d;
 import frc.robot.FieldConstants;
-import frc.robot.util.MiscUtil;
 import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.RobotState;
 import frc.robot.RobotState.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.swing.plaf.RootPaneUI;
-
-import org.littletonrobotics.junction.Logger;
 import org.photonvision.PhotonCamera;
-import org.photonvision.PhotonUtils;
+import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
@@ -24,6 +17,7 @@ public class PhotonSimLocalizationCamera implements LocalizationCameraIO {
   private final CameraConfig config;
   private final PhotonCamera camera;
   private final PhotonCameraSim cameraSim;
+  private final PhotonPoseEstimator poseEstimator;
 
   public PhotonSimLocalizationCamera(CameraConfig config) {
     this.config = config;
@@ -35,7 +29,8 @@ public class PhotonSimLocalizationCamera implements LocalizationCameraIO {
 
     SimCameraProperties props = new SimCameraProperties();
     camera = new PhotonCamera(config.name());
-    cameraSim = new PhotonCameraSim(camera, props);
+    cameraSim = new PhotonCameraSim(camera, props, FieldConstants.aprilLayout);
+    poseEstimator = new PhotonPoseEstimator(FieldConstants.aprilLayout, config.robotToCamera());
 
     visionWorld.addCamera(cameraSim, config.robotToCamera());
     cameraSim.enableDrawWireframe(true);
@@ -70,23 +65,21 @@ public class PhotonSimLocalizationCamera implements LocalizationCameraIO {
         }
       }
 
-      final double avgTagDistance = totalTagDistance / result.targets.size();
-      result.multitagResult.ifPresent(
-          (pnpResult) -> {
-            Transform3d fieldToCamera = pnpResult.estimatedPose.best;
-						var robotPose = new Pose3d().plus(fieldToCamera).plus(config.robotToCamera().inverse());
-						int tags = pnpResult.fiducialIDsUsed.size();
-            observations.add(
-                new MultitagPoseEstimate(
-                    result.getTimestampSeconds(),
-                    robotPose,
-                    avgTagDistance,
-                    tags,
-                    tags > 1 ? 1.0 : 1.0 - pnpResult.estimatedPose.ambiguity,
-                    new double[] {0.1, 0.1, 0.1, 0.1, 0.1, 0.1}));
-          });
+      var multitagEst = poseEstimator.estimateCoprocMultiTagPose(result);
+      if (multitagEst.isEmpty()) {
+        multitagEst = poseEstimator.estimateLowestAmbiguityPose(result);
+      }
+
+      observations.add(
+          new MultitagPoseEstimate(
+              multitagEst.get().timestampSeconds,
+              multitagEst.get().estimatedPose,
+              totalTagDistance / multitagEst.get().targetsUsed.size(),
+              multitagEst.get().targetsUsed.size(),
+              1.0,
+              new double[] {0.1, 0.1, 0.1, 0.1, 0.1, 0.1}));
     }
-		inputs.globalPoseObservations = observations.toArray(MultitagPoseEstimate[]::new);
+    inputs.globalPoseObservations = observations.toArray(MultitagPoseEstimate[]::new);
     inputs.hubInView = hubInView;
   }
 }
