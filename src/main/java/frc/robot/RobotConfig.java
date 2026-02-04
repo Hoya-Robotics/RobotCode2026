@@ -80,7 +80,7 @@ public class RobotConfig {
     public static final boolean enableLimelightRewind = true;
     public static final List<CameraConfig> cameras = new ArrayList<>();
     public static final int matchImuMode = 4;
-    public static final Distance multitagTagDistanceThreshold = Meters.of(4.5);
+    public static final Distance multitagTagDistanceThreshold = Meters.of(3.25);
   }
 
   // Shooter Constants
@@ -103,6 +103,8 @@ public class RobotConfig {
             .withCustomModuleTranslations(DriveConstants.moduleTranslations)
             .withTrackLengthTrackWidth(trackWidthX, trackWidthY)
             .withGyro(COTS.ofPigeon2());
+
+    public static final double[] photonSimStdDevs = new double[] {0.015, 0.015, 0.015};
 
     public static final PIDGains simDriveMotorGains = new PIDGains(0.1, 0.0, 0.0);
     public static final PIDGains simSteerMotorGains = new PIDGains(10.0, 0.0, 0.0);

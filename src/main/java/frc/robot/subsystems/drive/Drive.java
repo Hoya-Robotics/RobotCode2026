@@ -81,7 +81,7 @@ public class Drive extends StateSubsystem<DriveState> {
             new Pose2d(
                 FieldConstants.Hub.nearFace.getX() - 0.5,
                 FieldConstants.fieldWidth / 2.0,
-                Rotation2d.kZero));
+                Rotation2d.fromDegrees(225)));
     var sim = new SwerveDriveSimulation(SimConstants.mapleSwerveConfig, startingPose);
     SimulatedArena.getInstance().addDriveTrainSimulation(sim);
     RobotState.getInstance().hardSetOdometry(startingPose);
@@ -98,6 +98,7 @@ public class Drive extends StateSubsystem<DriveState> {
               new ModuleIOSim(sim.getModules()[2]),
               new ModuleIOSim(sim.getModules()[3])
             });
+    sim.getGyroSimulation().setRotation(startingPose.getRotation());
     instance.setSimDrivetrain(sim);
 
     return instance;

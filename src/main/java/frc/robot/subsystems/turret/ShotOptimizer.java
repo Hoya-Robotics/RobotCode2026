@@ -20,10 +20,14 @@ public class ShotOptimizer {
 
   public static OptimalShot apply() {
     var localEstimate = RobotState.getInstance().getHubLocalizedRobotPose();
-    var robot = RobotState.getInstance().getOdometryPose();
-    if (localEstimate != null) {
+    var robot = RobotState.getInstance().getEstimatedRobotPose();
+    var target = AllianceFlip.apply(FieldConstants.Hub.topCenterPoint);
+    var initialDistance = robot.getTranslation().getDistance(target.toTranslation2d());
+
+    if (localEstimate != null && initialDistance > 1.4 && initialDistance < 3.0) {
       robot = localEstimate.toPose2d();
     }
+
     var v_robot = RobotState.getInstance().getChassisVelocity();
     var v_robot_field = RobotState.getInstance().getFieldVelocity();
 
@@ -35,7 +39,6 @@ public class ShotOptimizer {
                 v_robot.vyMetersPerSecond * ShooterConstants.lookaheadSeconds,
                 v_robot.omegaRadiansPerSecond * ShooterConstants.lookaheadSeconds));
     var turretPos = new Pose3d(future).transformBy(ShooterConstants.robotToTurret);
-    var target = AllianceFlip.apply(FieldConstants.Hub.topCenterPoint);
 
     // 2. Calculate field relative direction vector
     Translation3d trajectoryVector = target.minus(turretPos.getTranslation());
@@ -118,6 +121,7 @@ public class ShotOptimizer {
       }
     }
 
+    Logger.recordOutput("OptimalShot/horizontalDistance", funnelHorizontalDistance);
     Logger.recordOutput("OptimalShot/velocity", shot.turretVel());
     Logger.recordOutput("OptimalShot/pitch", shot.turretPitch());
     Logger.recordOutput("OptimalShot/yaw", shot.turretYaw());

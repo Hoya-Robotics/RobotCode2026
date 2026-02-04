@@ -133,7 +133,7 @@ public class RobotState {
     // We perform a kalman filter update step as a static state estimation
     // A=0, B=0, D=0, C=I
     // Kalman gain derived here:
-    // https://github.com/wpilibsuite/allwpilib/blob/main/wpimath/algorithms.lastModulePositions
+    // https://github.com/wpilibsuite/allwpilib/blob/main/wpimath/algorithms.md
     // K = q/(q + sqrt(qr))
     // Where:
     // 	q = process noise (covariance matrix)

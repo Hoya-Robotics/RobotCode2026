@@ -48,10 +48,10 @@ public class SwerveControl {
 
     var length = p1.getDistance(p2);
 
-    var c1 = new Translation2d();
-    var c2 = new Translation2d();
+    double delta = p2.minus(p1).getX();
+    var c = p2.minus(new Translation2d(delta * 2, 0.0));
 
-    var q = cubicBezier(p1, p2, c1, c2);
+    var q = quadBezier(p1, p2, c);
     List<Translation2d> points = new ArrayList<>();
     for (int i = 0; i < 20; ++i) {
       points.add(q.apply((double) i / 19));

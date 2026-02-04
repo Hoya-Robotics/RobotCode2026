@@ -36,7 +36,7 @@ public class Vision extends SubsystemBase {
         RobotState.getInstance().addHubObservation(inputs.hubObservation);
       }
 
-      for (var multiEst : inputs.globalPoseObservations) {
+      for (var multiEst : inputs.globalPoseEstimates) {
         tryProcessMultitagEstimate(multiEst)
             .ifPresent(
                 (visionEstimate) -> {
@@ -52,7 +52,8 @@ public class Vision extends SubsystemBase {
       return Optional.empty();
     }
 
-    double distanceFactor = Math.pow(Math.max(0.0, poseEstimate.avgTagDistance() - 1.75), 2);
+    double tooFarFactor = 1.0 + Math.max(0, poseEstimate.avgTagDistance() - 3.5);
+    double distanceFactor = Math.pow(tooFarFactor, 2);
 
     double qualityFactor = distanceFactor / poseEstimate.quality();
     double xStd = poseEstimate.stdDevs()[0] * qualityFactor;

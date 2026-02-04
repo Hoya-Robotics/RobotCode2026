@@ -19,7 +19,7 @@ public class RobotContainer {
   public final Vision vision;
 
   public RobotContainer() {
-    vision = new Vision(VisionProto.wideFOVFrontSetup());
+    vision = new Vision(VisionProto.wideFOVFrontSetupWithIntakeLocalizer());
     switch (RobotConfig.getMode()) {
       case SIM:
         drive = Drive.simulatedDrive(driveController);

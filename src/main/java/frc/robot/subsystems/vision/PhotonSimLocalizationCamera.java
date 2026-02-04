@@ -80,9 +80,9 @@ public class PhotonSimLocalizationCamera implements LocalizationCameraIO {
               totalTagDistance / multitagEst.get().targetsUsed.size(),
               multitagEst.get().targetsUsed.size(),
               1.0,
-              new double[] {0.03, 0.03, 0.03}));
+              SimConstants.photonSimStdDevs));
     }
     inputs.hubInView = hubInView;
-    inputs.globalPoseObservations = observations.toArray(MultitagPoseEstimate[]::new);
+    inputs.globalPoseEstimates = observations.toArray(MultitagPoseEstimate[]::new);
   }
 }

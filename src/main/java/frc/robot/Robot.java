@@ -65,7 +65,7 @@ public class Robot extends LoggedRobot {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
 
-    m_robotContainer.drive.driveToPose(new Pose2d(1.0, 1.0, Rotation2d.kZero));
+    m_robotContainer.drive.driveToPose(new Pose2d(1.0, 1.0, Rotation2d.fromDegrees(225)));
     var initialShots =
         new Notifier(
             () -> {
@@ -114,7 +114,7 @@ public class Robot extends LoggedRobot {
         RobotConfig.bumperWidthX.in(Meters),
         Units.inchesToMeters(3.0),
         RobotState.getInstance()::getSimulatedDrivePose,
-        m_robotContainer.drive::getChassisSpeeds);
+        RobotState.getInstance()::getFieldVelocity);
 
     fuelSim.enableAirResistance();
     fuelSim.start();

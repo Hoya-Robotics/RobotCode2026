@@ -15,7 +15,7 @@ public interface LocalizationCameraIO {
     public HubObservation hubObservation =
         new HubObservation(new Transform3d(), new Transform3d(), -1);
 
-    public MultitagPoseEstimate[] globalPoseObservations = new MultitagPoseEstimate[] {};
+    public MultitagPoseEstimate[] globalPoseEstimates = new MultitagPoseEstimate[] {};
   }
 
   public record MultitagPoseEstimate(
