@@ -52,7 +52,9 @@ public class Vision extends SubsystemBase {
       return Optional.empty();
     }
 
-    double qualityFactor = 1.0 / poseEstimate.quality();
+    double distanceFactor = Math.pow(Math.max(0.0, poseEstimate.avgTagDistance() - 1.75), 2);
+
+    double qualityFactor = distanceFactor / poseEstimate.quality();
     double xStd = poseEstimate.stdDevs()[0] * qualityFactor;
     double yStd = poseEstimate.stdDevs()[1] * qualityFactor;
     double omegaStd = poseEstimate.stdDevs()[2] * qualityFactor;

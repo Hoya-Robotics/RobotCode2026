@@ -59,8 +59,10 @@ public class RobotConfig {
     public static final Translation2d[] moduleTranslations = new Translation2d[4];
     public static final SwerveModuleState[] xBrakeStates = new SwerveModuleState[4];
 
-    public static final double maxDriveSpeedMps = 7.5;
+    public static final double maxDriveSpeedMps = 4.73;
+    public static final double maxDriveAccelMps = 9.0;
     public static final double maxRotationSpeedRps = 10.0;
+    public static final double maxRotationAccelRps = 15.0;
 
     public static final PIDGains toPoseLinearGains = new PIDGains(0.35, 0.0, 0.0);
     public static final double toPoseLinearTolerance = Units.inchesToMeters(2.0);
@@ -79,7 +81,6 @@ public class RobotConfig {
     public static final List<CameraConfig> cameras = new ArrayList<>();
     public static final int matchImuMode = 4;
     public static final Distance multitagTagDistanceThreshold = Meters.of(4.5);
-    public static final SimCameraProperties LL4CameraProperties = new SimCameraProperties();
   }
 
   // Shooter Constants
@@ -95,10 +96,19 @@ public class RobotConfig {
   }
 
   // Simulated Robot Constants
-  public static final DriveTrainSimulationConfig mapleSwerveConfig;
+  public static final class SimConstants {
+    public static final DriveTrainSimulationConfig mapleSwerveConfig =
+        DriveTrainSimulationConfig.Default()
+            .withRobotMass(robotMass)
+            .withCustomModuleTranslations(DriveConstants.moduleTranslations)
+            .withTrackLengthTrackWidth(trackWidthX, trackWidthY)
+            .withGyro(COTS.ofPigeon2());
 
-  public static final PIDGains simDriveMotorGains = new PIDGains(0.1, 0.0, 0.0);
-  public static final PIDGains simSteerMotorGains = new PIDGains(10.0, 0.0, 0.0);
+    public static final PIDGains simDriveMotorGains = new PIDGains(0.1, 0.0, 0.0);
+    public static final PIDGains simSteerMotorGains = new PIDGains(10.0, 0.0, 0.0);
+
+    public static final SimCameraProperties LL4CameraProperties = new SimCameraProperties();
+  }
 
   static {
     double dx = trackWidthX.in(Meters) / 2.0;
@@ -114,17 +124,10 @@ public class RobotConfig {
     DriveConstants.xBrakeStates[2] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(45));
     DriveConstants.xBrakeStates[3] = new SwerveModuleState(0.0, Rotation2d.fromDegrees(-45));
 
-    mapleSwerveConfig =
-        DriveTrainSimulationConfig.Default()
-            .withRobotMass(robotMass)
-            .withCustomModuleTranslations(DriveConstants.moduleTranslations)
-            .withTrackLengthTrackWidth(trackWidthX, trackWidthY)
-            .withGyro(COTS.ofPigeon2());
-
-    VisionConstants.LL4CameraProperties.setCalibration(1280, 800, Rotation2d.fromDegrees(90));
-    VisionConstants.LL4CameraProperties.setFPS(128);
-    VisionConstants.LL4CameraProperties.setAvgLatencyMs(5);
-    VisionConstants.LL4CameraProperties.setLatencyStdDevMs(2);
-    VisionConstants.LL4CameraProperties.setCalibError(0.25, 0.08);
+    SimConstants.LL4CameraProperties.setCalibration(1280, 800, Rotation2d.fromDegrees(90));
+    SimConstants.LL4CameraProperties.setFPS(128);
+    SimConstants.LL4CameraProperties.setAvgLatencyMs(5);
+    SimConstants.LL4CameraProperties.setLatencyStdDevMs(2);
+    SimConstants.LL4CameraProperties.setCalibError(0.25, 0.08);
   }
 }

@@ -3,7 +3,7 @@ package frc.robot.subsystems.drive;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.controller.PIDController;
-import frc.robot.RobotConfig;
+import frc.robot.RobotConfig.*;
 import org.ironmaple.simulation.drivesims.SwerveModuleSimulation;
 import org.ironmaple.simulation.motorsims.SimulatedMotorController;
 
@@ -15,14 +15,14 @@ public class ModuleIOSim implements ModuleIO {
 
   private final PIDController driveClosedLoop =
       new PIDController(
-          RobotConfig.simDriveMotorGains.kp(),
-          RobotConfig.simDriveMotorGains.ki(),
-          RobotConfig.simDriveMotorGains.kd());
+          SimConstants.simDriveMotorGains.kp(),
+          SimConstants.simDriveMotorGains.ki(),
+          SimConstants.simDriveMotorGains.kd());
   private final PIDController steerClosedLoop =
       new PIDController(
-          RobotConfig.simSteerMotorGains.kp(),
-          RobotConfig.simSteerMotorGains.ki(),
-          RobotConfig.simSteerMotorGains.kd());
+          SimConstants.simSteerMotorGains.kp(),
+          SimConstants.simSteerMotorGains.ki(),
+          SimConstants.simSteerMotorGains.kd());
 
   private double driveFFVolts = 0.0;
 

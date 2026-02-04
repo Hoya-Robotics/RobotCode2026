@@ -12,11 +12,10 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.FieldConstants;
-import frc.robot.RobotConfig;
-import frc.robot.RobotConfig.DriveConstants;
+import frc.robot.RobotConfig.*;
 import frc.robot.RobotState;
 import frc.robot.RobotState.*;
-import frc.robot.util.MiscUtil;
+import frc.robot.util.AllianceFlip;
 import frc.robot.util.StateSubsystem;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -78,12 +77,12 @@ public class Drive extends StateSubsystem<DriveState> {
 
   public static Drive simulatedDrive(XboxController controller) {
     var startingPose =
-        MiscUtil.AllianceFlip.apply(
+        AllianceFlip.apply(
             new Pose2d(
                 FieldConstants.Hub.nearFace.getX() - 0.5,
                 FieldConstants.fieldWidth / 2.0,
                 Rotation2d.kZero));
-    var sim = new SwerveDriveSimulation(RobotConfig.mapleSwerveConfig, startingPose);
+    var sim = new SwerveDriveSimulation(SimConstants.mapleSwerveConfig, startingPose);
     SimulatedArena.getInstance().addDriveTrainSimulation(sim);
     RobotState.getInstance().hardSetOdometry(startingPose);
     RobotState.getInstance().hardSetKalmanPose(startingPose);

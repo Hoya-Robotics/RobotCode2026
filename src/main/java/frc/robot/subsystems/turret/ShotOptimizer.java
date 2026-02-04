@@ -10,7 +10,7 @@ import edu.wpi.first.math.geometry.Twist2d;
 import frc.robot.FieldConstants;
 import frc.robot.RobotConfig.ShooterConstants;
 import frc.robot.RobotState;
-import frc.robot.util.MiscUtil;
+import frc.robot.util.AllianceFlip;
 import org.littletonrobotics.junction.Logger;
 
 public class ShotOptimizer {
@@ -35,7 +35,7 @@ public class ShotOptimizer {
                 v_robot.vyMetersPerSecond * ShooterConstants.lookaheadSeconds,
                 v_robot.omegaRadiansPerSecond * ShooterConstants.lookaheadSeconds));
     var turretPos = new Pose3d(future).transformBy(ShooterConstants.robotToTurret);
-    var target = MiscUtil.AllianceFlip.apply(FieldConstants.Hub.topCenterPoint);
+    var target = AllianceFlip.apply(FieldConstants.Hub.topCenterPoint);
 
     // 2. Calculate field relative direction vector
     Translation3d trajectoryVector = target.minus(turretPos.getTranslation());
@@ -51,7 +51,7 @@ public class ShotOptimizer {
             .plus(turret_radius_perp.times(v_robot_field.omegaRadiansPerSecond));
 
     double funnelHorizontalDistance =
-        MiscUtil.AllianceFlip.apply(FieldConstants.Hub.nearFace)
+        AllianceFlip.apply(FieldConstants.Hub.nearFace)
             .getTranslation()
             .getDistance(future.getTranslation());
 

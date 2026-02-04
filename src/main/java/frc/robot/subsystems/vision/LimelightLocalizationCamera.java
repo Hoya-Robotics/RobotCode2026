@@ -117,12 +117,13 @@ public class LimelightLocalizationCamera implements LocalizationCameraIO {
 
     // Read all updated megatag2 estimates
     List<MultitagPoseEstimate> observations = new ArrayList<>();
-    var stddevQueue = stdDevsSubscriber.readQueue();
+    var stdDevQueue = stdDevsSubscriber.readQueue();
     int i = 0;
     for (var megatagSample : megatag2Subscriber.readQueue()) {
       Pose3d pose = deserializeLLPose(megatagSample.value);
       int tags = (int) megatagSample.value[7];
       double ambiguity = rawFiducialSubscriber.get()[6];
+      double[] rawStdDevs = stdDevQueue[i].value;
       MultitagPoseEstimate observation =
           new MultitagPoseEstimate(
               megatagSample.timestamp - megatagSample.value[6],
@@ -130,7 +131,7 @@ public class LimelightLocalizationCamera implements LocalizationCameraIO {
               megatagSample.value[9],
               tags,
               tags > 1 ? 1.0 : 1.0 - ambiguity,
-              stddevQueue[i].value);
+              new double[] {rawStdDevs[6], rawStdDevs[7], rawStdDevs[11]});
       observations.add(observation);
       i += 1;
     }
