@@ -17,6 +17,7 @@ import frc.robot.RobotState;
 import frc.robot.RobotState.*;
 import frc.robot.util.AllianceFlip;
 import frc.robot.util.StateSubsystem;
+import java.util.Optional;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
@@ -24,7 +25,7 @@ import org.littletonrobotics.junction.Logger;
 enum DriveState {
   IDLE,
   TO_POSE,
-  TELEOP
+  TELEOP,
 }
 
 public class Drive extends StateSubsystem<DriveState> {
@@ -50,7 +51,6 @@ public class Drive extends StateSubsystem<DriveState> {
           DriveConstants.toPoseOmegaGains.kp(),
           DriveConstants.toPoseOmegaGains.ki(),
           DriveConstants.toPoseOmegaGains.kd());
-
   private Pose2d targetDrivePose = null;
 
   public Drive(XboxController controller, GyroIO gyro, ModuleIO[] moduleIOs) {
@@ -81,7 +81,7 @@ public class Drive extends StateSubsystem<DriveState> {
             new Pose2d(
                 FieldConstants.Hub.nearFace.getX() - 0.5,
                 FieldConstants.fieldWidth / 2.0,
-                Rotation2d.fromDegrees(225)));
+                Rotation2d.kZero));
     var sim = new SwerveDriveSimulation(SimConstants.mapleSwerveConfig, startingPose);
     SimulatedArena.getInstance().addDriveTrainSimulation(sim);
     RobotState.getInstance().hardSetOdometry(startingPose);
@@ -183,8 +183,9 @@ public class Drive extends StateSubsystem<DriveState> {
         runSetpoint(getControllerSpeeds());
         break;
       case TO_POSE:
-        var robotPose = RobotState.getInstance().getEstimatedRobotPose();
-        runSetpoint(getPidToPoseSetpoint(robotPose));
+        runSetpoint(
+            getPidToPoseSetpoint(
+                RobotState.getInstance().getEstimatedRobotPose(), Optional.empty()));
         break;
       case IDLE:
         xBrake();
@@ -192,8 +193,9 @@ public class Drive extends StateSubsystem<DriveState> {
     }
   }
 
-  private ChassisSpeeds getPidToPoseSetpoint(Pose2d robotPose) {
-    var robotToTarget = targetDrivePose.getTranslation().minus(robotPose.getTranslation());
+  private ChassisSpeeds getPidToPoseSetpoint(Pose2d robotPose, Optional<Pose2d> targetPose) {
+    var target = targetPose.orElse(targetDrivePose);
+    var robotToTarget = target.getTranslation().minus(robotPose.getTranslation());
     double distance = robotToTarget.getNorm();
     Rotation2d heading = robotToTarget.getAngle();
 
@@ -206,11 +208,11 @@ public class Drive extends StateSubsystem<DriveState> {
     double omega =
         MathUtil.clamp(
             omegaController.calculate(
-                robotPose.getRotation().getRadians(), targetDrivePose.getRotation().getRadians()),
+                robotPose.getRotation().getRadians(), target.getRotation().getRadians()),
             -DriveConstants.maxRotationSpeedRps,
             DriveConstants.maxRotationSpeedRps);
 
-    Logger.recordOutput("Drive/ToPose/TargetPose", targetDrivePose);
+    Logger.recordOutput("Drive/ToPose/TargetPose", target);
     Logger.recordOutput("Drive/ToPose/linearError", distance);
     Logger.recordOutput("Drive/ToPose/headingDeg", heading.getDegrees());
     Logger.recordOutput("Drive/ToPose/linearOutput", linearOutput);

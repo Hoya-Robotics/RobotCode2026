@@ -65,7 +65,8 @@ public class Robot extends LoggedRobot {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
 
-    m_robotContainer.drive.driveToPose(new Pose2d(1.0, 1.0, Rotation2d.fromDegrees(225)));
+    m_robotContainer.drive.driveToPose(new Pose2d(1.0, 1.0, Rotation2d.kZero));
+    // m_robotContainer.drive.followTrajectory(SwerveControl.testTrajectory());
     var initialShots =
         new Notifier(
             () -> {

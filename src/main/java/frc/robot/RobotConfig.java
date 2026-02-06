@@ -73,6 +73,8 @@ public class RobotConfig {
 
     public static final double driveKs = 0.05;
     public static final double driveKv = 4.0;
+
+    public static final double trajectoryLookeadDist = 0.35;
   }
 
   // Vision Constants
