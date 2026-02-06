@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -30,7 +31,11 @@ public class RobotConfig {
     SIM,
   }
 
-  public record PIDGains(double kp, double ki, double kd) {}
+  public record PIDGains(double kp, double ki, double kd) {
+    public PIDController toController() {
+      return new PIDController(kp, ki, kd);
+    }
+  }
 
   public enum CameraType {
     POSE_ESTIMATE,
@@ -68,6 +73,10 @@ public class RobotConfig {
     public static final double toPoseLinearTolerance = Units.inchesToMeters(2.0);
     public static final PIDGains toPoseOmegaGains = new PIDGains(0.8, 0.0, 0.0);
     public static final double toPoseThetaTolerance = Units.degreesToRadians(3.0);
+
+    public static final PIDGains choreoXGains = new PIDGains(10.0, 0.0, 0.0);
+    public static final PIDGains choreoYGains = new PIDGains(10.0, 0.0, 0.0);
+    public static final PIDGains choreoThetaGains = new PIDGains(7.0, 0.0, 0.0);
 
     public static final double controllerDeadband = 0.1;
 

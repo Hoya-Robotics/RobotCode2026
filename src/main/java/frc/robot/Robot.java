@@ -6,15 +6,16 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
+import choreo.Choreo;
+import choreo.trajectory.SwerveSample;
+import choreo.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.subsystems.drive.SwerveControl;
 import frc.robot.subsystems.vision.VisionProto;
 import frc.robot.util.FuelSim;
+import java.util.Optional;
 import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -25,6 +26,8 @@ public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
+  private Optional<Trajectory<SwerveSample>> maybeTraj =
+      Choreo.loadTrajectory("ToNeutralRightTrench");
 
   public Robot() {
     Logger.recordMetadata("ProjectName", "Rebuilt4152");
@@ -65,8 +68,13 @@ public class Robot extends LoggedRobot {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
 
-    m_robotContainer.drive.driveToPose(new Pose2d(1.0, 1.0, Rotation2d.kZero));
-    // m_robotContainer.drive.followTrajectory(SwerveControl.testTrajectory());
+    if (maybeTraj.isPresent()) {
+      var traj = maybeTraj.get();
+      var initial = traj.sampleAt(0.0, false).get().getPose();
+      m_robotContainer.drive.resetOdometry(initial);
+      m_robotContainer.drive.followTrajectory(traj);
+    }
+    // m_robotContainer.drive.driveToPose(new Pose2d(1.0, 1.0, Rotation2d.kZero));
     var initialShots =
         new Notifier(
             () -> {
@@ -127,7 +135,5 @@ public class Robot extends LoggedRobot {
     FuelSim.getInstance().updateSim();
     VisionProto.logCameras();
     Logger.recordOutput("estimatedPose", RobotState.getInstance().getEstimatedRobotPose());
-
-    SwerveControl.testTrajectory();
   }
 }

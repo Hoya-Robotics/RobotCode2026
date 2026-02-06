@@ -1,5 +1,7 @@
 package frc.robot.subsystems.drive;
 
+import choreo.trajectory.SwerveSample;
+import choreo.trajectory.Trajectory;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -12,6 +14,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.FieldConstants;
+import frc.robot.RobotConfig;
 import frc.robot.RobotConfig.*;
 import frc.robot.RobotState;
 import frc.robot.RobotState.*;
@@ -26,6 +29,7 @@ enum DriveState {
   IDLE,
   TO_POSE,
   TELEOP,
+  CHOREO_PATH
 }
 
 public class Drive extends StateSubsystem<DriveState> {
@@ -41,17 +45,15 @@ public class Drive extends StateSubsystem<DriveState> {
   private final SwerveDriveKinematics kinematics =
       new SwerveDriveKinematics(DriveConstants.moduleTranslations);
 
-  private PIDController linearController =
-      new PIDController(
-          DriveConstants.toPoseLinearGains.kp(),
-          DriveConstants.toPoseLinearGains.ki(),
-          DriveConstants.toPoseLinearGains.kd());
-  private PIDController omegaController =
-      new PIDController(
-          DriveConstants.toPoseOmegaGains.kp(),
-          DriveConstants.toPoseOmegaGains.ki(),
-          DriveConstants.toPoseOmegaGains.kd());
+  private PIDController linearController = DriveConstants.toPoseLinearGains.toController();
+  private PIDController omegaController = DriveConstants.toPoseOmegaGains.toController();
+  private PIDController choreoXController = DriveConstants.choreoXGains.toController();
+  private PIDController choreoYController = DriveConstants.choreoYGains.toController();
+  private PIDController choreoThetaController = DriveConstants.choreoThetaGains.toController();
+
   private Pose2d targetDrivePose = null;
+  private Optional<Trajectory<SwerveSample>> choreoTrajectory = Optional.empty();
+  private Timer choreoTimer = new Timer();
 
   public Drive(XboxController controller, GyroIO gyro, ModuleIO[] moduleIOs) {
     this.driveController = controller;
@@ -63,6 +65,8 @@ public class Drive extends StateSubsystem<DriveState> {
     linearController.setTolerance(DriveConstants.toPoseLinearTolerance);
     omegaController.setTolerance(DriveConstants.toPoseThetaTolerance);
     omegaController.enableContinuousInput(-Math.PI, Math.PI);
+
+    choreoThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
     setState(DriveState.IDLE);
   }
@@ -141,9 +145,22 @@ public class Drive extends StateSubsystem<DriveState> {
     Logger.recordOutput("Drive/simulatedPose", sim.getSimulatedDriveTrainPose());
   }
 
+  public void followTrajectory(Trajectory<SwerveSample> traj) {
+    choreoTrajectory = Optional.of(traj);
+    setState(DriveState.CHOREO_PATH);
+  }
+
   public void driveToPose(Pose2d target) {
     this.targetDrivePose = target;
     setState(DriveState.TO_POSE);
+  }
+
+  public void resetOdometry(Pose2d override) {
+    RobotState.getInstance().hardSetOdometry(override);
+    gyro.setYaw(override.getRotation());
+    if (RobotConfig.getMode() == OperationMode.SIM) {
+      sim.setSimulationWorldPose(override);
+    }
   }
 
   public void runSetpoint(ChassisSpeeds speeds) {
@@ -169,6 +186,12 @@ public class Drive extends StateSubsystem<DriveState> {
         linearController.reset();
         omegaController.reset();
         break;
+      case CHOREO_PATH:
+        choreoTimer.restart();
+        choreoXController.reset();
+        choreoYController.reset();
+        choreoThetaController.reset();
+        break;
       default:
         break;
     }
@@ -186,6 +209,25 @@ public class Drive extends StateSubsystem<DriveState> {
         runSetpoint(
             getPidToPoseSetpoint(
                 RobotState.getInstance().getEstimatedRobotPose(), Optional.empty()));
+        break;
+      case CHOREO_PATH:
+        if (choreoTrajectory.isPresent()) {
+          Optional<SwerveSample> sampleAt =
+              choreoTrajectory.get().sampleAt(choreoTimer.get(), false);
+          sampleAt.ifPresent(
+              (sample) -> {
+                var pose = RobotState.getInstance().getSimulatedDrivePose();
+                var setpoint =
+                    ChassisSpeeds.fromFieldRelativeSpeeds(
+                        sample.vx + choreoXController.calculate(pose.getX(), sample.x),
+                        sample.vy + choreoYController.calculate(pose.getY(), sample.y),
+                        sample.omega
+                            + choreoThetaController.calculate(
+                                pose.getRotation().getRadians(), sample.heading),
+                        gyroData.yaw);
+                runSetpoint(setpoint);
+              });
+        }
         break;
       case IDLE:
         xBrake();
