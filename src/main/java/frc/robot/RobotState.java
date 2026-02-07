@@ -39,7 +39,7 @@ public class RobotState {
   private Pose2d odometryPose = Pose2d.kZero;
   private ChassisSpeeds odometrySpeeds = new ChassisSpeeds();
   private Pose3d robotToHub;
-  private Supplier<Pose2d> simulatedDrivePoseSupplier;
+  private Supplier<Pose2d> simulatedDrivePoseSupplier = () -> Pose2d.kZero;
   private final Matrix<N3, N1> odometryStdDevs = VecBuilder.fill(0.003, 0.003, 0.002);
   private final Matrix<N3, N1> processVariance = odometryStdDevs.elementPower(2);
 

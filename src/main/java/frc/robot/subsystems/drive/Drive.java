@@ -2,27 +2,20 @@ package frc.robot.subsystems.drive;
 
 import choreo.trajectory.SwerveSample;
 import choreo.trajectory.Trajectory;
+import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
-import frc.robot.FieldConstants;
-import frc.robot.RobotConfig;
 import frc.robot.RobotConfig.*;
 import frc.robot.RobotState;
 import frc.robot.RobotState.*;
-import frc.robot.util.AllianceFlip;
 import frc.robot.util.StateSubsystem;
 import java.util.Optional;
-import org.ironmaple.simulation.SimulatedArena;
-import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
 
 enum DriveState {
@@ -33,17 +26,10 @@ enum DriveState {
 }
 
 public class Drive extends StateSubsystem<DriveState> {
+  private final DriveIO io;
+  private DriveIOInputsAutoLogged inputs = new DriveIOInputsAutoLogged();
 
-  private final GyroIO gyro;
-  private GyroIOInputsAutoLogged gyroData = new GyroIOInputsAutoLogged();
-
-  private final Module[] modules = new Module[4];
   private final XboxController driveController;
-
-  private SwerveDriveSimulation sim = null;
-
-  private final SwerveDriveKinematics kinematics =
-      new SwerveDriveKinematics(DriveConstants.moduleTranslations);
 
   private PIDController linearController = DriveConstants.toPoseLinearGains.toController();
   private PIDController omegaController = DriveConstants.toPoseOmegaGains.toController();
@@ -55,12 +41,12 @@ public class Drive extends StateSubsystem<DriveState> {
   private Optional<Trajectory<SwerveSample>> choreoTrajectory = Optional.empty();
   private Timer choreoTimer = new Timer();
 
-  public Drive(XboxController controller, GyroIO gyro, ModuleIO[] moduleIOs) {
+  private SwerveRequest.ApplyRobotSpeeds robotRelativeRequest =
+      new SwerveRequest.ApplyRobotSpeeds();
+
+  public Drive(XboxController controller, DriveIO io) {
     this.driveController = controller;
-    this.gyro = gyro;
-    for (int i = 0; i < 4; ++i) {
-      this.modules[i] = new Module(i, moduleIOs[i]);
-    }
+    this.io = io;
 
     linearController.setTolerance(DriveConstants.toPoseLinearTolerance);
     omegaController.setTolerance(DriveConstants.toPoseThetaTolerance);
@@ -71,78 +57,17 @@ public class Drive extends StateSubsystem<DriveState> {
     setState(DriveState.IDLE);
   }
 
-  public void setSimDrivetrain(SwerveDriveSimulation sim) {
-    this.sim = sim;
-  }
-
-  public static Drive empty() {
-    return new Drive(null, new GyroIO() {}, new ModuleIO[4]);
-  }
-
-  public static Drive simulatedDrive(XboxController controller) {
-    var startingPose =
-        AllianceFlip.apply(
-            new Pose2d(
-                FieldConstants.Hub.nearFace.getX() - 0.5,
-                FieldConstants.fieldWidth / 2.0,
-                Rotation2d.kZero));
-    var sim = new SwerveDriveSimulation(SimConstants.mapleSwerveConfig, startingPose);
-    SimulatedArena.getInstance().addDriveTrainSimulation(sim);
-    RobotState.getInstance().hardSetOdometry(startingPose);
-    RobotState.getInstance().hardSetKalmanPose(startingPose);
-    RobotState.getInstance().addSimPoseSupplier(sim::getSimulatedDriveTrainPose);
-
-    var instance =
-        new Drive(
-            controller,
-            new GyroIOSim(sim.getGyroSimulation()),
-            new ModuleIO[] {
-              new ModuleIOSim(sim.getModules()[0]),
-              new ModuleIOSim(sim.getModules()[1]),
-              new ModuleIOSim(sim.getModules()[2]),
-              new ModuleIOSim(sim.getModules()[3])
-            });
-    sim.getGyroSimulation().setRotation(startingPose.getRotation());
-    instance.setSimDrivetrain(sim);
-
-    return instance;
-  }
-
   @Override
   public void periodic() {
-    gyro.updateInputs(gyroData);
-    Logger.processInputs("Drive/Gyro", gyroData);
+    io.updateInputs(inputs);
+    Logger.processInputs("Drive", inputs);
     Logger.recordOutput("Drive/systemState", getCurrentState());
-
-    var chassisSpeeds = getChassisSpeeds();
-    Logger.recordOutput("Drive/chassisSpeeds", chassisSpeeds);
-    Logger.recordOutput(
-        "Drive/linearSpeed",
-        Math.hypot(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond));
 
     if (DriverStation.isTeleop() && getCurrentState() == DriveState.IDLE) {
       setState(DriveState.TELEOP);
     }
 
-    var modulePositions = new SwerveModulePosition[4];
-    for (int i = 0; i < 4; ++i) {
-      modules[i].periodic();
-      modulePositions[i] = modules[i].getPosition();
-    }
-
-    RobotState.getInstance()
-        .addOdometryObservation(
-            new OdometryObservation(
-                getChassisSpeeds(), modulePositions, gyroData.yaw, Timer.getFPGATimestamp()));
-
     applyState();
-
-    for (var m : modules) m.applyOutputs();
-  }
-
-  @Override
-  public void simulationPeriodic() {
-    Logger.recordOutput("Drive/simulatedPose", sim.getSimulatedDriveTrainPose());
   }
 
   public void followTrajectory(Trajectory<SwerveSample> traj) {
@@ -156,27 +81,12 @@ public class Drive extends StateSubsystem<DriveState> {
   }
 
   public void resetOdometry(Pose2d override) {
+    io.resetOdometry(override);
     RobotState.getInstance().hardSetOdometry(override);
-    gyro.setYaw(override.getRotation());
-    if (RobotConfig.getMode() == OperationMode.SIM) {
-      sim.setSimulationWorldPose(override);
-    }
   }
 
-  public void runSetpoint(ChassisSpeeds speeds) {
-    var discrete = ChassisSpeeds.discretize(speeds, 0.02);
-    var moduleStates = kinematics.toSwerveModuleStates(discrete);
-    SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, DriveConstants.maxDriveSpeedMps);
-
-    for (int i = 0; i < 4; ++i) {
-      modules[i].runSetpoint(moduleStates[i]);
-    }
-  }
-
-  public void xBrake() {
-    for (int i = 0; i < 4; ++i) {
-      modules[i].runSetpoint(DriveConstants.xBrakeStates[i]);
-    }
+  public void applyRequest(SwerveRequest request) {
+    io.applyRequest(request);
   }
 
   @Override
@@ -203,51 +113,53 @@ public class Drive extends StateSubsystem<DriveState> {
   public void applyState() {
     switch (getCurrentState()) {
       case TELEOP:
-        runSetpoint(getControllerSpeeds());
+        // applyRequest(getControllerRequest());
+        applyRequest(new SwerveRequest.ApplyFieldSpeeds().withSpeeds(new ChassisSpeeds(4.0, 0, 0)));
         break;
       case TO_POSE:
-        runSetpoint(
-            getPidToPoseSetpoint(
-                RobotState.getInstance().getEstimatedRobotPose(), Optional.empty()));
+        applyRequest(
+            getPidToPoseRequest(
+                RobotState.getInstance().getSimulatedDrivePose(), Optional.empty()));
         break;
-      case CHOREO_PATH:
-        if (choreoTrajectory.isPresent()) {
-          if (!choreoTimer.isRunning()) choreoTimer.restart();
-          Optional<SwerveSample> sampleAt =
-              choreoTrajectory.get().sampleAt(choreoTimer.get(), false);
-          Logger.recordOutput("Drive/Choreo/Time", choreoTimer.get());
-          Logger.recordOutput("Drive/Choreo/Total Time", choreoTrajectory.get().getTotalTime());
-          Logger.recordOutput("Drive/Choreo/Traj Name", choreoTrajectory.get().name());
-          Logger.recordOutput("Drive/Choreo/isSample", sampleAt.isPresent());
+        /*
+        case CHOREO_PATH:
+          if (choreoTrajectory.isPresent()) {
+            if (!choreoTimer.isRunning()) choreoTimer.restart();
+            Optional<SwerveSample> sampleAt =
+                choreoTrajectory.get().sampleAt(choreoTimer.get(), false);
+            Logger.recordOutput("Drive/Choreo/Time", choreoTimer.get());
+            Logger.recordOutput("Drive/Choreo/Total Time", choreoTrajectory.get().getTotalTime());
+            Logger.recordOutput("Drive/Choreo/Traj Name", choreoTrajectory.get().name());
+            Logger.recordOutput("Drive/Choreo/isSample", sampleAt.isPresent());
 
-          if (choreoTimer.get() > choreoTrajectory.get().getTotalTime()) {
-            setState(DriveState.IDLE);
+            if (choreoTimer.get() > choreoTrajectory.get().getTotalTime()) {
+              setState(DriveState.IDLE);
+            }
+
+            sampleAt.ifPresent(
+                (sample) -> {
+                  var pose = RobotState.getInstance().getSimulatedDrivePose();
+                  Logger.recordOutput("Drive/Choreo/feedforwardVx", sample.vx);
+                  Logger.recordOutput("Drive/Choreo/feedforwardVy", sample.vy);
+                  var setpoint =
+                      ChassisSpeeds.fromFieldRelativeSpeeds(
+                          sample.vx + choreoXController.calculate(pose.getX(), sample.x),
+                          sample.vy + choreoYController.calculate(pose.getY(), sample.y),
+                          sample.omega
+                              + choreoThetaController.calculate(
+                                  pose.getRotation().getRadians(), sample.heading),
+                          gyroData.yaw);
+            io.applyRequest(new SwerveRequest.ApplyRobotSpeeds().withSpeeds(setpoint));
+                });
           }
-
-          sampleAt.ifPresent(
-              (sample) -> {
-                var pose = RobotState.getInstance().getSimulatedDrivePose();
-                Logger.recordOutput("Drive/Choreo/feedforwardVx", sample.vx);
-                Logger.recordOutput("Drive/Choreo/feedforwardVy", sample.vy);
-                var setpoint =
-                    ChassisSpeeds.fromFieldRelativeSpeeds(
-                        sample.vx + choreoXController.calculate(pose.getX(), sample.x),
-                        sample.vy + choreoYController.calculate(pose.getY(), sample.y),
-                        sample.omega
-                            + choreoThetaController.calculate(
-                                pose.getRotation().getRadians(), sample.heading),
-                        gyroData.yaw);
-                runSetpoint(setpoint);
-              });
-        }
-        break;
+          break;*/
       case IDLE:
-        xBrake();
+        applyRequest(new SwerveRequest.SwerveDriveBrake());
         break;
     }
   }
 
-  private ChassisSpeeds getPidToPoseSetpoint(Pose2d robotPose, Optional<Pose2d> targetPose) {
+  private SwerveRequest getPidToPoseRequest(Pose2d robotPose, Optional<Pose2d> targetPose) {
     var target = targetPose.orElse(targetDrivePose);
     var robotToTarget = target.getTranslation().minus(robotPose.getTranslation());
     double distance = robotToTarget.getNorm();
@@ -266,22 +178,19 @@ public class Drive extends StateSubsystem<DriveState> {
             -DriveConstants.maxRotationSpeedRps,
             DriveConstants.maxRotationSpeedRps);
 
+    var speeds = ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, omega, inputs.gyroYaw);
+
     Logger.recordOutput("Drive/ToPose/TargetPose", target);
     Logger.recordOutput("Drive/ToPose/linearError", distance);
     Logger.recordOutput("Drive/ToPose/headingDeg", heading.getDegrees());
     Logger.recordOutput("Drive/ToPose/linearOutput", linearOutput);
     Logger.recordOutput("Drive/ToPose/OmegaOutput", omega);
+    Logger.recordOutput("Drive/ToPose/speeds", speeds);
 
-    /*
-    if (linearController.atSetpoint() && omegaController.atSetpoint()) {
-      setState(DriveState.IDLE);
-      return new ChassisSpeeds();
-    }*/
-
-    return ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, omega, gyroData.yaw);
+    return robotRelativeRequest.withSpeeds(speeds);
   }
 
-  private ChassisSpeeds getControllerSpeeds() {
+  private SwerveRequest getControllerRequest() {
     double sx = -driveController.getLeftY();
     double sy = -driveController.getLeftX();
     double omega = -driveController.getRightX();
@@ -293,14 +202,13 @@ public class Drive extends StateSubsystem<DriveState> {
     var magnitude = MathUtil.applyDeadband(Math.hypot(sx, sy), DriveConstants.controllerDeadband);
     magnitude = magnitude * magnitude; // heuristic
 
-    return ChassisSpeeds.fromFieldRelativeSpeeds(
-        magnitude * heading.getCos(), magnitude * heading.getSin(), omega, gyroData.yaw);
+    return new SwerveRequest.FieldCentric()
+        .withVelocityX(magnitude * heading.getCos())
+        .withVelocityY(magnitude * heading.getSin())
+        .withRotationalRate(omega);
   }
 
   public ChassisSpeeds getChassisSpeeds() {
-    SwerveModuleState[] moduleStates = new SwerveModuleState[4];
-    for (int i = 0; i < 4; ++i) moduleStates[i] = modules[i].getState();
-
-    return kinematics.toChassisSpeeds(moduleStates);
+    return inputs.Speeds;
   }
 }

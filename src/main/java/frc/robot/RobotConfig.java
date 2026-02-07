@@ -18,8 +18,6 @@ import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.RobotBase;
 import java.util.ArrayList;
 import java.util.List;
-import org.ironmaple.simulation.drivesims.COTS;
-import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.photonvision.simulation.SimCameraProperties;
 
 /*
@@ -72,9 +70,9 @@ public class RobotConfig {
     public static final double maxRotationSpeedRps = 10.0;
     public static final double maxRotationAccelRps = 15.0;
 
-    public static final PIDGains toPoseLinearGains = new PIDGains(0.35, 0.0, 0.0);
+    public static final PIDGains toPoseLinearGains = new PIDGains(5.0, 0.0, 0.0);
     public static final double toPoseLinearTolerance = Units.inchesToMeters(2.0);
-    public static final PIDGains toPoseOmegaGains = new PIDGains(0.8, 0.0, 0.0);
+    public static final PIDGains toPoseOmegaGains = new PIDGains(8.0, 0.0, 0.0);
     public static final double toPoseThetaTolerance = Units.degreesToRadians(3.0);
 
     public static final PIDGains choreoXGains = new PIDGains(4.0, 0.0, 0.0);
@@ -111,18 +109,9 @@ public class RobotConfig {
 
   // Simulated Robot Constants
   public static final class SimConstants {
-    public static final DriveTrainSimulationConfig mapleSwerveConfig =
-        DriveTrainSimulationConfig.Default()
-            .withRobotMass(robotMass)
-            .withCustomModuleTranslations(DriveConstants.moduleTranslations)
-            .withTrackLengthTrackWidth(trackWidthX, trackWidthY)
-            .withGyro(COTS.ofPigeon2());
+    public static final double drivetrainSimLoopPeriod = 0.002;
 
     public static final double[] photonSimStdDevs = new double[] {0.015, 0.015, 0.015};
-
-    public static final PIDGains simDriveMotorGains = new PIDGains(0.1, 0.0, 0.0);
-    public static final PIDGains simSteerMotorGains = new PIDGains(10.0, 0.0, 0.0);
-
     public static final SimCameraProperties LL4CameraProperties = new SimCameraProperties();
   }
 
