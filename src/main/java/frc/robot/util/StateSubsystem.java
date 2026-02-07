@@ -18,11 +18,7 @@ public abstract class StateSubsystem<E extends Enum<E>> extends SubsystemBase {
 
   public void setState(E state) {
     this.requestedState = state;
-  }
-
-  protected final void statePeriodic() {
     this.currentState = handleStateTransitions();
-    applyState();
   }
 
   protected abstract void applyState();

@@ -31,6 +31,7 @@ public class RobotConfig {
     SIM,
   }
 
+  // TODO: make this be tunable in advantage scope using 'LoggedTunableNumber'
   public record PIDGains(double kp, double ki, double kd) {
     public PIDController toController() {
       return new PIDController(kp, ki, kd);
@@ -51,6 +52,8 @@ public class RobotConfig {
 
   // Robot dimensions / specs
   public static final Mass robotMass = Kilograms.of(65.0);
+
+  // TODO: inertia, https://choreo.autos/usage/estimating-moi/
 
   public static final Distance bumperWidthX = Inches.of(30.0);
   public static final Distance bumperWidthY = Inches.of(30.0);
@@ -74,9 +77,9 @@ public class RobotConfig {
     public static final PIDGains toPoseOmegaGains = new PIDGains(0.8, 0.0, 0.0);
     public static final double toPoseThetaTolerance = Units.degreesToRadians(3.0);
 
-    public static final PIDGains choreoXGains = new PIDGains(10.0, 0.0, 0.0);
-    public static final PIDGains choreoYGains = new PIDGains(10.0, 0.0, 0.0);
-    public static final PIDGains choreoThetaGains = new PIDGains(7.0, 0.0, 0.0);
+    public static final PIDGains choreoXGains = new PIDGains(4.0, 0.0, 0.0);
+    public static final PIDGains choreoYGains = new PIDGains(4.0, 0.0, 0.0);
+    public static final PIDGains choreoThetaGains = new PIDGains(4.0, 0.0, 0.0);
 
     public static final double controllerDeadband = 0.1;
 

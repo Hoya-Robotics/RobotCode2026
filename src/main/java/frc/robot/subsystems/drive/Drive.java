@@ -135,7 +135,7 @@ public class Drive extends StateSubsystem<DriveState> {
             new OdometryObservation(
                 getChassisSpeeds(), modulePositions, gyroData.yaw, Timer.getFPGATimestamp()));
 
-    statePeriodic();
+    applyState();
 
     for (var m : modules) m.applyOutputs();
   }
@@ -187,7 +187,7 @@ public class Drive extends StateSubsystem<DriveState> {
         omegaController.reset();
         break;
       case CHOREO_PATH:
-        choreoTimer.restart();
+        choreoTimer.stop();
         choreoXController.reset();
         choreoYController.reset();
         choreoThetaController.reset();
@@ -212,11 +212,23 @@ public class Drive extends StateSubsystem<DriveState> {
         break;
       case CHOREO_PATH:
         if (choreoTrajectory.isPresent()) {
+          if (!choreoTimer.isRunning()) choreoTimer.restart();
           Optional<SwerveSample> sampleAt =
               choreoTrajectory.get().sampleAt(choreoTimer.get(), false);
+          Logger.recordOutput("Drive/Choreo/Time", choreoTimer.get());
+          Logger.recordOutput("Drive/Choreo/Total Time", choreoTrajectory.get().getTotalTime());
+          Logger.recordOutput("Drive/Choreo/Traj Name", choreoTrajectory.get().name());
+          Logger.recordOutput("Drive/Choreo/isSample", sampleAt.isPresent());
+
+          if (choreoTimer.get() > choreoTrajectory.get().getTotalTime()) {
+            setState(DriveState.IDLE);
+          }
+
           sampleAt.ifPresent(
               (sample) -> {
                 var pose = RobotState.getInstance().getSimulatedDrivePose();
+                Logger.recordOutput("Drive/Choreo/feedforwardVx", sample.vx);
+                Logger.recordOutput("Drive/Choreo/feedforwardVy", sample.vy);
                 var setpoint =
                     ChassisSpeeds.fromFieldRelativeSpeeds(
                         sample.vx + choreoXController.calculate(pose.getX(), sample.x),

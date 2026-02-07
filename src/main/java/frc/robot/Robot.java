@@ -10,7 +10,6 @@ import choreo.Choreo;
 import choreo.trajectory.SwerveSample;
 import choreo.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.subsystems.vision.VisionProto;
@@ -75,12 +74,13 @@ public class Robot extends LoggedRobot {
       m_robotContainer.drive.followTrajectory(traj);
     }
     // m_robotContainer.drive.driveToPose(new Pose2d(1.0, 1.0, Rotation2d.kZero));
+    /*
     var initialShots =
         new Notifier(
             () -> {
               m_robotContainer.turret.letShoot();
             });
-    initialShots.startPeriodic(0.25);
+    initialShots.startPeriodic(0.25);*/
   }
 
   @Override

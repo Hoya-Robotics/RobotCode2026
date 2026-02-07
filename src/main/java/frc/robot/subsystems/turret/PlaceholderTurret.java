@@ -27,7 +27,7 @@ public class PlaceholderTurret extends StateSubsystem<TurretState> {
 
   @Override
   public void periodic() {
-    statePeriodic();
+    applyState();
   }
 
   public void letShoot() {
