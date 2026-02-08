@@ -20,8 +20,10 @@ public class PlaceholderTurret extends StateSubsystem<TurretState> {
   private int fuelRemaining = 8;
   private Rotation2d turretYaw;
   private BooleanSupplier fuelLoaded;
+  private final FuelSim fuelSim;
 
-  public PlaceholderTurret() {
+  public PlaceholderTurret(FuelSim fuelSim) {
+    this.fuelSim = fuelSim;
     setState(TurretState.SHOOT);
   }
 
@@ -44,12 +46,11 @@ public class PlaceholderTurret extends StateSubsystem<TurretState> {
         }
         var shot = ShotOptimizer.apply();
         turretYaw = shot.turretYaw();
-        FuelSim.getInstance()
-            .launchFuel(
-                MetersPerSecond.of(shot.turretVel()),
-                shot.turretPitch().getMeasure(),
-                shot.turretYaw().getMeasure(),
-                RobotConfig.ShooterConstants.robotToTurret.getMeasureZ());
+        fuelSim.launchFuel(
+            MetersPerSecond.of(shot.turretVel()),
+            shot.turretPitch().getMeasure(),
+            shot.turretYaw().getMeasure(),
+            RobotConfig.ShooterConstants.robotToTurret.getMeasureZ());
         fuelRemaining -= 1;
         Logger.recordOutput("Turret/fuelRemaining", fuelRemaining);
         setState(TurretState.HOLD);

@@ -1,7 +1,5 @@
 package frc.robot.subsystems.drive;
 
-import choreo.trajectory.SwerveSample;
-import choreo.trajectory.Trajectory;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -9,7 +7,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.RobotConfig.*;
 import frc.robot.RobotState;
@@ -22,7 +19,6 @@ enum DriveState {
   IDLE,
   TO_POSE,
   TELEOP,
-  CHOREO_PATH
 }
 
 public class Drive extends StateSubsystem<DriveState> {
@@ -33,13 +29,9 @@ public class Drive extends StateSubsystem<DriveState> {
 
   private PIDController linearController = DriveConstants.toPoseLinearGains.toController();
   private PIDController omegaController = DriveConstants.toPoseOmegaGains.toController();
-  private PIDController choreoXController = DriveConstants.choreoXGains.toController();
-  private PIDController choreoYController = DriveConstants.choreoYGains.toController();
   private PIDController choreoThetaController = DriveConstants.choreoThetaGains.toController();
 
   private Pose2d targetDrivePose = null;
-  private Optional<Trajectory<SwerveSample>> choreoTrajectory = Optional.empty();
-  private Timer choreoTimer = new Timer();
 
   private SwerveRequest.ApplyRobotSpeeds robotRelativeRequest =
       new SwerveRequest.ApplyRobotSpeeds();
@@ -60,7 +52,7 @@ public class Drive extends StateSubsystem<DriveState> {
   @Override
   public void periodic() {
     io.updateInputs(inputs);
-    Logger.processInputs("Drive", inputs);
+    Logger.processInputs("DriveInputs", inputs);
     Logger.recordOutput("Drive/systemState", getCurrentState());
 
     if (DriverStation.isTeleop() && getCurrentState() == DriveState.IDLE) {
@@ -68,11 +60,6 @@ public class Drive extends StateSubsystem<DriveState> {
     }
 
     applyState();
-  }
-
-  public void followTrajectory(Trajectory<SwerveSample> traj) {
-    choreoTrajectory = Optional.of(traj);
-    setState(DriveState.CHOREO_PATH);
   }
 
   public void driveToPose(Pose2d target) {
@@ -96,12 +83,6 @@ public class Drive extends StateSubsystem<DriveState> {
         linearController.reset();
         omegaController.reset();
         break;
-      case CHOREO_PATH:
-        choreoTimer.stop();
-        choreoXController.reset();
-        choreoYController.reset();
-        choreoThetaController.reset();
-        break;
       default:
         break;
     }
@@ -113,50 +94,13 @@ public class Drive extends StateSubsystem<DriveState> {
   public void applyState() {
     switch (getCurrentState()) {
       case TELEOP:
-        // applyRequest(getControllerRequest());
-        applyRequest(
-            new SwerveRequest.ApplyFieldSpeeds()
-                .withSpeeds(
-                    ChassisSpeeds.fromRobotRelativeSpeeds(
-                        new ChassisSpeeds(4.0, 0.0, 0.0), inputs.gyroYaw)));
+        applyRequest(getControllerRequest());
         break;
       case TO_POSE:
         applyRequest(
             getPidToPoseRequest(
                 RobotState.getInstance().getSimulatedDrivePose(), Optional.empty()));
         break;
-        /*
-        case CHOREO_PATH:
-          if (choreoTrajectory.isPresent()) {
-            if (!choreoTimer.isRunning()) choreoTimer.restart();
-            Optional<SwerveSample> sampleAt =
-                choreoTrajectory.get().sampleAt(choreoTimer.get(), false);
-            Logger.recordOutput("Drive/Choreo/Time", choreoTimer.get());
-            Logger.recordOutput("Drive/Choreo/Total Time", choreoTrajectory.get().getTotalTime());
-            Logger.recordOutput("Drive/Choreo/Traj Name", choreoTrajectory.get().name());
-            Logger.recordOutput("Drive/Choreo/isSample", sampleAt.isPresent());
-
-            if (choreoTimer.get() > choreoTrajectory.get().getTotalTime()) {
-              setState(DriveState.IDLE);
-            }
-
-            sampleAt.ifPresent(
-                (sample) -> {
-                  var pose = RobotState.getInstance().getSimulatedDrivePose();
-                  Logger.recordOutput("Drive/Choreo/feedforwardVx", sample.vx);
-                  Logger.recordOutput("Drive/Choreo/feedforwardVy", sample.vy);
-                  var setpoint =
-                      ChassisSpeeds.fromFieldRelativeSpeeds(
-                          sample.vx + choreoXController.calculate(pose.getX(), sample.x),
-                          sample.vy + choreoYController.calculate(pose.getY(), sample.y),
-                          sample.omega
-                              + choreoThetaController.calculate(
-                                  pose.getRotation().getRadians(), sample.heading),
-                          gyroData.yaw);
-            io.applyRequest(new SwerveRequest.ApplyRobotSpeeds().withSpeeds(setpoint));
-                });
-          }
-          break;*/
       case IDLE:
         applyRequest(new SwerveRequest.SwerveDriveBrake());
         break;

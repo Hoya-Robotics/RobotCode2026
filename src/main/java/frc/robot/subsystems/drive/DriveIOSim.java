@@ -10,6 +10,7 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.RobotConfig;
+import frc.robot.RobotState;
 import frc.robot.util.MapleSimSwerveDrivetrain;
 import org.littletonrobotics.junction.Logger;
 
@@ -23,10 +24,6 @@ public class DriveIOSim extends DriveIOHardware {
           moduleConstants) {
     super(constants, regulateForSim(moduleConstants));
 
-    // This might be the problem
-    /*
-    RobotState.getInstance()
-        .addSimPoseSupplier(mapleSimSwerve.mapleSimDrive::getSimulatedDriveTrainPose);*/
     startSimThread(moduleConstants);
   }
 
@@ -51,6 +48,9 @@ public class DriveIOSim extends DriveIOHardware {
             getPigeon2(),
             getModules(),
             moduleConstants);
+    RobotState.getInstance()
+        .addSimPoseSupplier(mapleSimSwerve.mapleSimDrive::getSimulatedDriveTrainPose);
+
     simThread = new Notifier(mapleSimSwerve::update);
     simThread.startPeriodic(RobotConfig.SimConstants.drivetrainSimLoopPeriod);
   }

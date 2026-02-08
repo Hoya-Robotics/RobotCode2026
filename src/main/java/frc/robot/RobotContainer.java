@@ -15,6 +15,7 @@ import frc.robot.util.FuelSim;
 public class RobotContainer {
   public final XboxController driveController = new XboxController(0);
   public final Drive drive;
+  public FuelSim fuelSim = null;
 
   // public final PlaceholderTurret turret = new PlaceholderTurret();
 
@@ -45,7 +46,7 @@ public class RobotContainer {
   private void configureBindings() {}
 
   private void configureFuelSim() {
-    var fuelSim = FuelSim.getInstance();
+    fuelSim = new FuelSim();
     fuelSim.spawnStartingFuel();
     fuelSim.registerRobot(
         RobotConfig.bumperWidthY.in(Units.Meters),

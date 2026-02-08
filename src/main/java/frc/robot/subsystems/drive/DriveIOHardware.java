@@ -16,25 +16,23 @@ public class DriveIOHardware extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder
     implements DriveIO {
   AtomicReference<SwerveDriveState> telemetryCache = new AtomicReference<>();
 
-  private RobotState robotState_;
-
   public DriveIOHardware(
       SwerveDrivetrainConstants swerveConstants,
       SwerveModuleConstants<?, ?, ?>... moduleConstants) {
     super(TalonFX::new, TalonFX::new, CANcoder::new, swerveConstants, 250.0, moduleConstants);
-    robotState_ = RobotState.getInstance();
 
     this.getOdometryThread().setThreadPriority(99);
 
     Consumer<SwerveDriveState> telemetryConsumer =
         swerveDriveState -> {
           telemetryCache.set(swerveDriveState.clone());
-          robotState_.addOdometryObservation(
-              new OdometryObservation(
-                  swerveDriveState.Speeds,
-                  swerveDriveState.ModulePositions,
-                  swerveDriveState.Pose.getRotation(),
-                  swerveDriveState.Timestamp));
+          RobotState.getInstance()
+              .addOdometryObservation(
+                  new OdometryObservation(
+                      swerveDriveState.Speeds,
+                      swerveDriveState.ModulePositions,
+                      swerveDriveState.Pose.getRotation(),
+                      swerveDriveState.Timestamp));
         };
     registerTelemetry(telemetryConsumer);
   }

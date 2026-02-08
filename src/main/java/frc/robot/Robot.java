@@ -13,7 +13,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.util.FuelSim;
 import java.util.Optional;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -66,15 +65,7 @@ public class Robot extends LoggedRobot {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
 
-    /*
-    if (maybeTraj.isPresent()) {
-      var traj = maybeTraj.get();
-      var initial = traj.sampleAt(0.0, false).get().getPose();
-      m_robotContainer.drive.resetOdometry(initial);
-      m_robotContainer.drive.followTrajectory(traj);
-    }*/
-    // m_robotContainer.drive.driveToPose(new Pose2d(1.0, 1.0, Rotation2d.kZero));
-    m_robotContainer.drive.resetOdometry(new Pose2d(2.0, 2.0, Rotation2d.kZero));
+    m_robotContainer.drive.driveToPose(new Pose2d(1.0, 1.0, Rotation2d.kZero));
     /*
     var initialShots =
         new Notifier(
@@ -115,14 +106,15 @@ public class Robot extends LoggedRobot {
   public void testExit() {}
 
   @Override
-  public void simulationInit() {}
+  public void simulationInit() {
+    m_robotContainer.drive.resetOdometry(new Pose2d(3.0, 3.0, Rotation2d.kZero));
+  }
 
   @Override
   public void simulationPeriodic() {
     /*
-      SimulatedArena.getInstance().simulationPeriodic();
       VisionProto.logCameras();
     */
-    FuelSim.getInstance().updateSim();
+    m_robotContainer.fuelSim.updateSim();
   }
 }
