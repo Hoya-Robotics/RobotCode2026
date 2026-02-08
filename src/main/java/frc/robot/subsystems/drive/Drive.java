@@ -114,7 +114,11 @@ public class Drive extends StateSubsystem<DriveState> {
     switch (getCurrentState()) {
       case TELEOP:
         // applyRequest(getControllerRequest());
-        applyRequest(new SwerveRequest.ApplyFieldSpeeds().withSpeeds(new ChassisSpeeds(4.0, 0, 0)));
+        applyRequest(
+            new SwerveRequest.ApplyFieldSpeeds()
+                .withSpeeds(
+                    ChassisSpeeds.fromRobotRelativeSpeeds(
+                        new ChassisSpeeds(4.0, 0.0, 0.0), inputs.gyroYaw)));
         break;
       case TO_POSE:
         applyRequest(

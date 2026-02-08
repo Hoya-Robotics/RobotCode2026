@@ -10,21 +10,34 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.RobotConfig;
-import frc.robot.RobotConfig.SimConstants;
-import frc.robot.RobotState;
 import frc.robot.util.MapleSimSwerveDrivetrain;
 import org.littletonrobotics.junction.Logger;
 
 public class DriveIOSim extends DriveIOHardware {
-  public final MapleSimSwerveDrivetrain mapleSimSwerve;
-  private Notifier simThread;
+  public MapleSimSwerveDrivetrain mapleSimSwerve = null;
+  private Notifier simThread = null;
 
   public DriveIOSim(
       SwerveDrivetrainConstants constants,
       SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>...
           moduleConstants) {
-    super(constants, moduleConstants);
+    super(constants, regulateForSim(moduleConstants));
 
+    // This might be the problem
+    /*
+    RobotState.getInstance()
+        .addSimPoseSupplier(mapleSimSwerve.mapleSimDrive::getSimulatedDriveTrainPose);*/
+    startSimThread(moduleConstants);
+  }
+
+  private static SwerveModuleConstants[] regulateForSim(SwerveModuleConstants... moduleConstants) {
+    MapleSimSwerveDrivetrain.regulateModuleConstantsForSimulation(moduleConstants);
+    return moduleConstants;
+  }
+
+  public void startSimThread(
+      SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>...
+          moduleConstants) {
     mapleSimSwerve =
         new MapleSimSwerveDrivetrain(
             Units.Seconds.of(RobotConfig.SimConstants.drivetrainSimLoopPeriod),
@@ -39,10 +52,7 @@ public class DriveIOSim extends DriveIOHardware {
             getModules(),
             moduleConstants);
     simThread = new Notifier(mapleSimSwerve::update);
-    simThread.startPeriodic(SimConstants.drivetrainSimLoopPeriod);
-
-    RobotState.getInstance()
-        .addSimPoseSupplier(mapleSimSwerve.mapleSimDrive::getSimulatedDriveTrainPose);
+    simThread.startPeriodic(RobotConfig.SimConstants.drivetrainSimLoopPeriod);
   }
 
   @Override

@@ -45,7 +45,7 @@ public class RobotState {
 
   private static RobotState instance;
 
-  public static RobotState getInstance() {
+  public static synchronized RobotState getInstance() {
     if (instance == null) {
       instance = new RobotState();
     }

@@ -109,7 +109,7 @@ public class RobotConfig {
 
   // Simulated Robot Constants
   public static final class SimConstants {
-    public static final double drivetrainSimLoopPeriod = 0.002;
+    public static final double drivetrainSimLoopPeriod = 0.005; // 5ms
 
     public static final double[] photonSimStdDevs = new double[] {0.015, 0.015, 0.015};
     public static final SimCameraProperties LL4CameraProperties = new SimCameraProperties();

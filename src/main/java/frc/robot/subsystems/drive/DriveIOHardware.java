@@ -1,7 +1,5 @@
 package frc.robot.subsystems.drive;
 
-import com.ctre.phoenix6.configs.CANcoderConfiguration;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
@@ -16,26 +14,27 @@ import java.util.function.Consumer;
 
 public class DriveIOHardware extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder>
     implements DriveIO {
-  private AtomicReference<SwerveDriveState> telemetryCache = new AtomicReference<>();
+  AtomicReference<SwerveDriveState> telemetryCache = new AtomicReference<>();
+
+  private RobotState robotState_;
 
   public DriveIOHardware(
       SwerveDrivetrainConstants swerveConstants,
-      SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>...
-          moduleConstants) {
-    super(TalonFX::new, TalonFX::new, CANcoder::new, swerveConstants, moduleConstants);
+      SwerveModuleConstants<?, ?, ?>... moduleConstants) {
+    super(TalonFX::new, TalonFX::new, CANcoder::new, swerveConstants, 250.0, moduleConstants);
+    robotState_ = RobotState.getInstance();
 
     this.getOdometryThread().setThreadPriority(99);
 
     Consumer<SwerveDriveState> telemetryConsumer =
         swerveDriveState -> {
           telemetryCache.set(swerveDriveState.clone());
-          RobotState.getInstance()
-              .addOdometryObservation(
-                  new OdometryObservation(
-                      swerveDriveState.Speeds,
-                      swerveDriveState.ModulePositions,
-                      swerveDriveState.Pose.getRotation(),
-                      swerveDriveState.Timestamp));
+          robotState_.addOdometryObservation(
+              new OdometryObservation(
+                  swerveDriveState.Speeds,
+                  swerveDriveState.ModulePositions,
+                  swerveDriveState.Pose.getRotation(),
+                  swerveDriveState.Timestamp));
         };
     registerTelemetry(telemetryConsumer);
   }
