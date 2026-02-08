@@ -6,14 +6,11 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
-import choreo.Choreo;
-import choreo.trajectory.SwerveSample;
-import choreo.trajectory.Trajectory;
+import com.therekrab.autopilot.APTarget;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import java.util.Optional;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
@@ -23,8 +20,6 @@ public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
-  private Optional<Trajectory<SwerveSample>> maybeTraj =
-      Choreo.loadTrajectory("ToNeutralRightTrench");
 
   public Robot() {
     Logger.recordMetadata("ProjectName", "Rebuilt4152");
@@ -65,7 +60,9 @@ public class Robot extends LoggedRobot {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
 
-    m_robotContainer.drive.driveToPose(new Pose2d(1.0, 1.0, Rotation2d.kZero));
+    m_robotContainer.drive.autopilotTo(
+        new APTarget(new Pose2d(1.0, 1.0, Rotation2d.kZero)).withEntryAngle(Rotation2d.kCW_90deg));
+    // m_robotContainer.drive.driveToPose(new Pose2d(1.0, 1.0, Rotation2d.k180deg));
     /*
     var initialShots =
         new Notifier(

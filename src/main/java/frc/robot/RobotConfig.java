@@ -75,10 +75,6 @@ public class RobotConfig {
     public static final PIDGains toPoseOmegaGains = new PIDGains(8.0, 0.0, 0.0);
     public static final double toPoseThetaTolerance = Units.degreesToRadians(3.0);
 
-    public static final PIDGains choreoXGains = new PIDGains(4.0, 0.0, 0.0);
-    public static final PIDGains choreoYGains = new PIDGains(4.0, 0.0, 0.0);
-    public static final PIDGains choreoThetaGains = new PIDGains(4.0, 0.0, 0.0);
-
     public static final double controllerDeadband = 0.1;
 
     public static final double driveKs = 0.05;

@@ -1,11 +1,16 @@
 package frc.robot.subsystems.drive;
 
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
+import com.therekrab.autopilot.*;
+import com.therekrab.autopilot.Autopilot.APResult;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.RobotConfig.*;
@@ -19,6 +24,7 @@ enum DriveState {
   IDLE,
   TO_POSE,
   TELEOP,
+  AUTOPILOT
 }
 
 public class Drive extends StateSubsystem<DriveState> {
@@ -29,12 +35,27 @@ public class Drive extends StateSubsystem<DriveState> {
 
   private PIDController linearController = DriveConstants.toPoseLinearGains.toController();
   private PIDController omegaController = DriveConstants.toPoseOmegaGains.toController();
-  private PIDController choreoThetaController = DriveConstants.choreoThetaGains.toController();
 
   private Pose2d targetDrivePose = null;
+  private APTarget autopilotTarget = null;
 
   private SwerveRequest.ApplyRobotSpeeds robotRelativeRequest =
       new SwerveRequest.ApplyRobotSpeeds();
+
+  private SwerveRequest.FieldCentricFacingAngle driveAtAngle =
+      new SwerveRequest.FieldCentricFacingAngle()
+          .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance)
+          .withDriveRequestType(DriveRequestType.Velocity)
+          .withHeadingPID(4, 0, 0);
+
+  private static final APConstraints apConstraints =
+      new APConstraints().withVelocity(4.0).withAcceleration(11.0).withJerk(2.0);
+
+  private static final APProfile apProfile =
+      new APProfile(apConstraints)
+          .withErrorXY(Units.Centimeter.of(2))
+          .withErrorTheta(Units.Degrees.of(0.5));
+  private static final Autopilot autopilot = new Autopilot(apProfile);
 
   public Drive(XboxController controller, DriveIO io) {
     this.driveController = controller;
@@ -43,8 +64,6 @@ public class Drive extends StateSubsystem<DriveState> {
     linearController.setTolerance(DriveConstants.toPoseLinearTolerance);
     omegaController.setTolerance(DriveConstants.toPoseThetaTolerance);
     omegaController.enableContinuousInput(-Math.PI, Math.PI);
-
-    choreoThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
     setState(DriveState.IDLE);
   }
@@ -60,6 +79,11 @@ public class Drive extends StateSubsystem<DriveState> {
     }
 
     applyState();
+  }
+
+  public void autopilotTo(APTarget target) {
+    this.autopilotTarget = target;
+    setState(DriveState.AUTOPILOT);
   }
 
   public void driveToPose(Pose2d target) {
@@ -93,6 +117,11 @@ public class Drive extends StateSubsystem<DriveState> {
   @Override
   public void applyState() {
     switch (getCurrentState()) {
+      case AUTOPILOT:
+        if (autopilotTarget != null) {
+          applyRequest(autopilotRequest(RobotState.getInstance().getSimulatedDrivePose()));
+        }
+        break;
       case TELEOP:
         applyRequest(getControllerRequest());
         break;
@@ -105,6 +134,19 @@ public class Drive extends StateSubsystem<DriveState> {
         applyRequest(new SwerveRequest.SwerveDriveBrake());
         break;
     }
+  }
+
+  private SwerveRequest autopilotRequest(Pose2d robotPose) {
+    APResult output = autopilot.calculate(robotPose, inputs.Speeds, autopilotTarget);
+
+    Logger.recordOutput("Drive/autopilot/vx", output.vx());
+    Logger.recordOutput("Drive/autopilot/vy", output.vy());
+    Logger.recordOutput("Drive/autopilot/heading", output.targetAngle());
+
+    return driveAtAngle
+        .withVelocityX(output.vx())
+        .withVelocityY(output.vy())
+        .withTargetDirection(output.targetAngle());
   }
 
   private SwerveRequest getPidToPoseRequest(Pose2d robotPose, Optional<Pose2d> targetPose) {
