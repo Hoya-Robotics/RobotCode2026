@@ -17,6 +17,7 @@ import frc.robot.RobotConfig.*;
 import frc.robot.RobotState;
 import frc.robot.RobotState.*;
 import frc.robot.util.StateSubsystem;
+import java.util.List;
 import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
@@ -37,7 +38,8 @@ public class Drive extends StateSubsystem<DriveState> {
   private PIDController omegaController = DriveConstants.toPoseOmegaGains.toController();
 
   private Pose2d targetDrivePose = null;
-  private APTarget autopilotTarget = null;
+  private int apIndex = 0;
+  private Optional<List<APTarget>> apTargets = Optional.empty();
 
   private SwerveRequest.ApplyRobotSpeeds robotRelativeRequest =
       new SwerveRequest.ApplyRobotSpeeds();
@@ -48,13 +50,18 @@ public class Drive extends StateSubsystem<DriveState> {
           .withDriveRequestType(DriveRequestType.Velocity)
           .withHeadingPID(4, 0, 0);
 
+  private SwerveRequest.FieldCentric fieldRequest =
+      new SwerveRequest.FieldCentric().withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+
+  private SwerveRequest.SwerveDriveBrake brakeRequest = new SwerveRequest.SwerveDriveBrake();
+
   private static final APConstraints apConstraints =
       new APConstraints().withVelocity(4.0).withAcceleration(11.0).withJerk(2.0);
 
   private static final APProfile apProfile =
       new APProfile(apConstraints)
-          .withErrorXY(Units.Centimeter.of(2))
-          .withErrorTheta(Units.Degrees.of(0.5));
+          .withErrorXY(Units.Centimeter.of(4))
+          .withErrorTheta(Units.Degrees.of(1.5));
   private static final Autopilot autopilot = new Autopilot(apProfile);
 
   public Drive(XboxController controller, DriveIO io) {
@@ -81,8 +88,9 @@ public class Drive extends StateSubsystem<DriveState> {
     applyState();
   }
 
-  public void autopilotTo(APTarget target) {
-    this.autopilotTarget = target;
+  public void autopilotTo(List<APTarget> targets) {
+    this.apTargets = Optional.of(targets);
+    apIndex = 0;
     setState(DriveState.AUTOPILOT);
   }
 
@@ -118,8 +126,11 @@ public class Drive extends StateSubsystem<DriveState> {
   public void applyState() {
     switch (getCurrentState()) {
       case AUTOPILOT:
-        if (autopilotTarget != null) {
-          applyRequest(autopilotRequest(RobotState.getInstance().getSimulatedDrivePose()));
+        if (apTargets.isPresent()) {
+          applyRequest(autopilotRequest(inputs.Pose));
+          // applyRequest(autopilotRequest(RobotState.getInstance().getSimulatedDrivePose()));
+        } else {
+          setState(DriveState.TELEOP);
         }
         break;
       case TELEOP:
@@ -131,14 +142,26 @@ public class Drive extends StateSubsystem<DriveState> {
                 RobotState.getInstance().getSimulatedDrivePose(), Optional.empty()));
         break;
       case IDLE:
-        applyRequest(new SwerveRequest.SwerveDriveBrake());
+        applyRequest(brakeRequest);
         break;
     }
   }
 
   private SwerveRequest autopilotRequest(Pose2d robotPose) {
-    APResult output = autopilot.calculate(robotPose, inputs.Speeds, autopilotTarget);
+    var target = apTargets.get().get(apIndex);
 
+    if (autopilot.atTarget(robotPose, target)) {
+      apIndex += 1;
+      if (apIndex == apTargets.get().size()) {
+        setState(DriveState.IDLE);
+        return brakeRequest;
+      }
+      target = apTargets.get().get(apIndex);
+    }
+
+    APResult output = autopilot.calculate(robotPose, inputs.Speeds, target);
+
+    Logger.recordOutput("Drive/autopilot/targetPose", target.getReference());
     Logger.recordOutput("Drive/autopilot/vx", output.vx());
     Logger.recordOutput("Drive/autopilot/vy", output.vy());
     Logger.recordOutput("Drive/autopilot/heading", output.targetAngle());
@@ -192,7 +215,7 @@ public class Drive extends StateSubsystem<DriveState> {
     var magnitude = MathUtil.applyDeadband(Math.hypot(sx, sy), DriveConstants.controllerDeadband);
     magnitude = magnitude * magnitude; // heuristic
 
-    return new SwerveRequest.FieldCentric()
+    return fieldRequest
         .withVelocityX(magnitude * heading.getCos())
         .withVelocityY(magnitude * heading.getSin())
         .withRotationalRate(omega);

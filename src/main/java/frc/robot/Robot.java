@@ -9,8 +9,10 @@ import static edu.wpi.first.units.Units.*;
 import com.therekrab.autopilot.APTarget;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import java.util.List;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
@@ -61,7 +63,13 @@ public class Robot extends LoggedRobot {
     }
 
     m_robotContainer.drive.autopilotTo(
-        new APTarget(new Pose2d(1.0, 1.0, Rotation2d.kZero)).withEntryAngle(Rotation2d.kCW_90deg));
+        List.of(
+            new APTarget(new Pose2d(3.6, 0.7, Rotation2d.kZero))
+                .withEntryAngle(Rotation2d.kZero)
+                .withVelocity(4.0),
+            new APTarget(new Pose2d(5.6, 0.7, Rotation2d.kZero)).withVelocity(4.0),
+            new APTarget(new Pose2d(7.77, 2.1, Rotation2d.kCCW_90deg))
+                .withEntryAngle(Rotation2d.kCCW_90deg)));
     // m_robotContainer.drive.driveToPose(new Pose2d(1.0, 1.0, Rotation2d.k180deg));
     /*
     var initialShots =
@@ -104,14 +112,11 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void simulationInit() {
-    m_robotContainer.drive.resetOdometry(new Pose2d(3.0, 3.0, Rotation2d.kZero));
+    m_robotContainer.drive.resetOdometry(new Pose2d(3.0, 3.0, Rotation2d.kCW_90deg));
   }
 
   @Override
   public void simulationPeriodic() {
-    /*
-      VisionProto.logCameras();
-    */
     m_robotContainer.fuelSim.updateSim();
   }
 }

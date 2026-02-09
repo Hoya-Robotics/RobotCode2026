@@ -42,7 +42,8 @@ public class RobotConfig {
     HUB_ESTIMATE
   }
 
-  public record CameraConfig(String name, Transform3d robotToCamera, CameraType type) {}
+  public record CameraConfig(
+      String name, Transform3d robotToCamera, CameraType type, SimCameraProperties simProps) {}
 
   public static OperationMode getMode() {
     return RobotBase.isReal() ? OperationMode.REAL : OperationMode.SIM;
