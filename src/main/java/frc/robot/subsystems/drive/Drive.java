@@ -1,5 +1,7 @@
 package frc.robot.subsystems.drive;
 
+import choreo.trajectory.SwerveSample;
+import choreo.trajectory.Trajectory;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
@@ -10,9 +12,10 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
+import frc.robot.RobotConfig;
 import frc.robot.RobotConfig.*;
 import frc.robot.RobotState;
 import frc.robot.RobotState.*;
@@ -25,7 +28,8 @@ enum DriveState {
   IDLE,
   TO_POSE,
   TELEOP,
-  AUTOPILOT
+  AUTOPILOT,
+  CHOREO
 }
 
 public class Drive extends StateSubsystem<DriveState> {
@@ -55,14 +59,14 @@ public class Drive extends StateSubsystem<DriveState> {
 
   private SwerveRequest.SwerveDriveBrake brakeRequest = new SwerveRequest.SwerveDriveBrake();
 
-  private static final APConstraints apConstraints =
-      new APConstraints().withVelocity(4.0).withAcceleration(11.0).withJerk(2.0);
+  private PIDController choreoXController = DriveConstants.choreoLinearGains.toController();
+  private PIDController choreoYController = DriveConstants.choreoLinearGains.toController();
+  private PIDController choreoThetaController = DriveConstants.choreoThetaGains.toController();
 
-  private static final APProfile apProfile =
-      new APProfile(apConstraints)
-          .withErrorXY(Units.Centimeter.of(4))
-          .withErrorTheta(Units.Degrees.of(1.5));
-  private static final Autopilot autopilot = new Autopilot(apProfile);
+  private Optional<Trajectory<SwerveSample>> choreoTrajectory = Optional.empty();
+  private Timer choreoTimer = new Timer();
+
+  private static final Autopilot autopilot = new Autopilot(RobotConfig.DriveConstants.apProfile);
 
   public Drive(XboxController controller, DriveIO io) {
     this.driveController = controller;
@@ -71,6 +75,8 @@ public class Drive extends StateSubsystem<DriveState> {
     linearController.setTolerance(DriveConstants.toPoseLinearTolerance);
     omegaController.setTolerance(DriveConstants.toPoseThetaTolerance);
     omegaController.enableContinuousInput(-Math.PI, Math.PI);
+
+    choreoThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
     setState(DriveState.IDLE);
   }
@@ -94,6 +100,11 @@ public class Drive extends StateSubsystem<DriveState> {
     setState(DriveState.AUTOPILOT);
   }
 
+  public void followChoreoTrajectory(Trajectory<SwerveSample> traj) {
+    choreoTrajectory = Optional.of(traj);
+    setState(DriveState.CHOREO);
+  }
+
   public void driveToPose(Pose2d target) {
     this.targetDrivePose = target;
     setState(DriveState.TO_POSE);
@@ -115,6 +126,12 @@ public class Drive extends StateSubsystem<DriveState> {
         linearController.reset();
         omegaController.reset();
         break;
+      case CHOREO:
+        choreoYController.reset();
+        choreoXController.reset();
+        choreoThetaController.reset();
+        ;
+        break;
       default:
         break;
     }
@@ -128,7 +145,6 @@ public class Drive extends StateSubsystem<DriveState> {
       case AUTOPILOT:
         if (apTargets.isPresent()) {
           applyRequest(autopilotRequest(inputs.Pose));
-          // applyRequest(autopilotRequest(RobotState.getInstance().getSimulatedDrivePose()));
         } else {
           setState(DriveState.TELEOP);
         }
@@ -136,15 +152,49 @@ public class Drive extends StateSubsystem<DriveState> {
       case TELEOP:
         applyRequest(getControllerRequest());
         break;
+      case CHOREO:
+        if (choreoTrajectory.isPresent()) {
+          applyRequest(choreoRequest(inputs.Pose));
+        }
+        break;
       case TO_POSE:
-        applyRequest(
-            getPidToPoseRequest(
-                RobotState.getInstance().getSimulatedDrivePose(), Optional.empty()));
+        applyRequest(getPidToPoseRequest(inputs.Pose, Optional.empty()));
         break;
       case IDLE:
         applyRequest(brakeRequest);
         break;
     }
+  }
+
+  private SwerveRequest choreoRequest(Pose2d robotPose) {
+    if (!choreoTimer.isRunning()) {
+      choreoTimer.restart();
+    }
+    var sampleAt = choreoTrajectory.get().sampleAt(choreoTimer.get(), false);
+    if (sampleAt.isEmpty()) {
+      choreoTrajectory = Optional.empty();
+      setState(DriveState.TELEOP);
+      choreoTimer.stop();
+      return brakeRequest;
+    }
+
+    var sample = sampleAt.get();
+
+    Logger.recordOutput("Drive/choreo/elapsedTime", choreoTimer.get());
+    Logger.recordOutput("Drive/choreo/totalTime", choreoTrajectory.get().getTotalTime());
+    Logger.recordOutput("Drive/choreo/trajectoryName", choreoTrajectory.get().name());
+    Logger.recordOutput("Drive/choreo/vx", sample.vx);
+    Logger.recordOutput("Drive/choreo/vy", sample.vy);
+    Logger.recordOutput("Drive/choreo/omega", sample.omega);
+    Logger.recordOutput("Drive/choreo/target", sample.getPose());
+
+    return fieldRequest
+        .withVelocityX(sample.vx + choreoXController.calculate(robotPose.getX(), sample.x))
+        .withVelocityY(sample.vy + choreoYController.calculate(robotPose.getY(), sample.y))
+        .withRotationalRate(
+            sample.omega
+                + choreoThetaController.calculate(
+                    robotPose.getRotation().getRadians(), sample.heading));
   }
 
   private SwerveRequest autopilotRequest(Pose2d robotPose) {

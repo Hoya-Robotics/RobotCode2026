@@ -2,6 +2,8 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.therekrab.autopilot.APConstraints;
+import com.therekrab.autopilot.APProfile;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.controller.PIDController;
@@ -76,12 +78,19 @@ public class RobotConfig {
     public static final PIDGains toPoseOmegaGains = new PIDGains(8.0, 0.0, 0.0);
     public static final double toPoseThetaTolerance = Units.degreesToRadians(3.0);
 
+    public static final PIDGains choreoLinearGains = new PIDGains(7.0, 0.0, 0.0);
+    public static final PIDGains choreoThetaGains = new PIDGains(10.0, 0.0, 0.0);
+
     public static final double controllerDeadband = 0.1;
 
     public static final double driveKs = 0.05;
     public static final double driveKv = 4.0;
 
     public static final double trajectoryLookeadDist = 0.35;
+
+    public static final APConstraints apConstraints = new APConstraints(4.0, 11.0, 2.0);
+    public static final APProfile apProfile =
+        new APProfile(apConstraints).withErrorXY(Inches.of(2.0)).withErrorTheta(Degrees.of(2.0));
   }
 
   // Vision Constants
@@ -93,7 +102,6 @@ public class RobotConfig {
   }
 
   // Shooter Constants
-
   public static final class ShooterConstants {
     public static final Vector<N3> trajectoryWeights =
         VecBuilder.fill(0.8, 10.0, 0.1); // Weights: { shot speed, pitch error, time of flight }

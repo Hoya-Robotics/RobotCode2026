@@ -10,14 +10,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.drive.TunerConstants;
-import frc.robot.subsystems.vision.Vision;
-import frc.robot.subsystems.vision.VisionProto;
 import frc.robot.util.FuelSim;
 
 public class RobotContainer {
   public final XboxController driveController = new XboxController(0);
   public final Drive drive;
   public FuelSim fuelSim = null;
+
   // public final Vision vision;
 
   // public final PlaceholderTurret turret = new PlaceholderTurret();
