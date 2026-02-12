@@ -88,9 +88,9 @@ public class RobotConfig {
 
     public static final double trajectoryLookeadDist = 0.35;
 
-    public static final APConstraints apConstraints = new APConstraints(4.0, 11.0, 2.0);
+    public static final APConstraints apConstraints = new APConstraints(4.0, 10.0, 2.0);
     public static final APProfile apProfile =
-        new APProfile(apConstraints).withErrorXY(Inches.of(2.0)).withErrorTheta(Degrees.of(2.0));
+        new APProfile(apConstraints).withErrorXY(Inches.of(4.0)).withErrorTheta(Degrees.of(2.0));
   }
 
   // Vision Constants

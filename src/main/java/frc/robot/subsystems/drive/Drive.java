@@ -6,7 +6,6 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import com.therekrab.autopilot.*;
-import com.therekrab.autopilot.Autopilot.APResult;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -15,21 +14,23 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
+import frc.robot.FieldConstants;
 import frc.robot.RobotConfig;
 import frc.robot.RobotConfig.*;
 import frc.robot.RobotState;
 import frc.robot.RobotState.*;
 import frc.robot.util.StateSubsystem;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Optional;
+import java.util.Queue;
 import org.littletonrobotics.junction.Logger;
 
 enum DriveState {
   IDLE,
   TO_POSE,
   TELEOP,
-  AUTOPILOT,
-  CHOREO
+  CHOREO,
+  AUTOPILOT
 }
 
 public class Drive extends StateSubsystem<DriveState> {
@@ -37,36 +38,29 @@ public class Drive extends StateSubsystem<DriveState> {
   private DriveIOInputsAutoLogged inputs = new DriveIOInputsAutoLogged();
 
   private final XboxController driveController;
+  private static final Autopilot autopilot = new Autopilot(RobotConfig.DriveConstants.apProfile);
 
   private PIDController linearController = DriveConstants.toPoseLinearGains.toController();
   private PIDController omegaController = DriveConstants.toPoseOmegaGains.toController();
+  private PIDController choreoXController = DriveConstants.choreoLinearGains.toController();
+  private PIDController choreoYController = DriveConstants.choreoLinearGains.toController();
+  private PIDController choreoThetaController = DriveConstants.choreoThetaGains.toController();
 
   private Pose2d targetDrivePose = null;
-  private int apIndex = 0;
-  private Optional<List<APTarget>> apTargets = Optional.empty();
+  private Optional<Trajectory<SwerveSample>> choreoTrajectory = Optional.empty();
+  private Queue<APTarget> autopilotPath;
+  private Timer choreoTimer = new Timer();
 
   private SwerveRequest.ApplyRobotSpeeds robotRelativeRequest =
       new SwerveRequest.ApplyRobotSpeeds();
-
   private SwerveRequest.FieldCentricFacingAngle driveAtAngle =
       new SwerveRequest.FieldCentricFacingAngle()
           .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance)
           .withDriveRequestType(DriveRequestType.Velocity)
           .withHeadingPID(4, 0, 0);
-
   private SwerveRequest.FieldCentric fieldRequest =
       new SwerveRequest.FieldCentric().withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
-
   private SwerveRequest.SwerveDriveBrake brakeRequest = new SwerveRequest.SwerveDriveBrake();
-
-  private PIDController choreoXController = DriveConstants.choreoLinearGains.toController();
-  private PIDController choreoYController = DriveConstants.choreoLinearGains.toController();
-  private PIDController choreoThetaController = DriveConstants.choreoThetaGains.toController();
-
-  private Optional<Trajectory<SwerveSample>> choreoTrajectory = Optional.empty();
-  private Timer choreoTimer = new Timer();
-
-  private static final Autopilot autopilot = new Autopilot(RobotConfig.DriveConstants.apProfile);
 
   public Drive(XboxController controller, DriveIO io) {
     this.driveController = controller;
@@ -98,15 +92,24 @@ public class Drive extends StateSubsystem<DriveState> {
     applyState();
   }
 
-  public void autopilotTo(List<APTarget> targets) {
-    this.apTargets = Optional.of(targets);
-    apIndex = 0;
-    setState(DriveState.AUTOPILOT);
-  }
-
   public void followChoreoTrajectory(Trajectory<SwerveSample> traj) {
     choreoTrajectory = Optional.of(traj);
     setState(DriveState.CHOREO);
+  }
+
+  public void traverseTrench() {
+    var poses = FieldConstants.nearestTrenchWaypoints(inputs.Pose);
+    APTarget entrance =
+        new APTarget(poses.getFirst())
+            .withEntryAngle(poses.getFirst().getRotation())
+            .withVelocity(3.0);
+    APTarget exit = new APTarget(poses.getSecond()).withVelocity(4.0);
+
+    autopilotPath = new LinkedList<>();
+    autopilotPath.add(entrance);
+    autopilotPath.add(exit);
+
+    setState(DriveState.AUTOPILOT);
   }
 
   public void driveToPose(Pose2d target) {
@@ -150,13 +153,6 @@ public class Drive extends StateSubsystem<DriveState> {
   public void applyState() {
     Pose2d robotPose = inputs.Pose;
     switch (getCurrentState()) {
-      case AUTOPILOT:
-        if (apTargets.isPresent()) {
-          applyRequest(autopilotRequest(robotPose));
-        } else {
-          setState(DriveState.TELEOP);
-        }
-        break;
       case TELEOP:
         applyRequest(getControllerRequest());
         break;
@@ -168,10 +164,31 @@ public class Drive extends StateSubsystem<DriveState> {
       case TO_POSE:
         applyRequest(getPidToPoseRequest(robotPose, Optional.empty()));
         break;
+      case AUTOPILOT:
+        var target = autopilotPath.peek();
+        while (target != null && autopilot.atTarget(robotPose, target)) {
+          autopilotPath.remove();
+          target = autopilotPath.peek();
+        }
+        if (target == null) {
+          setState(DriveState.IDLE);
+        } else {
+          applyRequest(autopilotRequest(target, robotPose));
+        }
+        break;
       case IDLE:
         applyRequest(brakeRequest);
         break;
     }
+  }
+
+  private SwerveRequest autopilotRequest(APTarget target, Pose2d robotPose) {
+    var output = autopilot.calculate(robotPose, inputs.Speeds, target);
+
+    return driveAtAngle
+        .withVelocityX(output.vx())
+        .withVelocityY(output.vy())
+        .withTargetDirection(output.targetAngle());
   }
 
   private SwerveRequest choreoRequest(Pose2d robotPose) {
@@ -203,31 +220,6 @@ public class Drive extends StateSubsystem<DriveState> {
             sample.omega
                 + choreoThetaController.calculate(
                     robotPose.getRotation().getRadians(), sample.heading));
-  }
-
-  private SwerveRequest autopilotRequest(Pose2d robotPose) {
-    var target = apTargets.get().get(apIndex);
-
-    if (autopilot.atTarget(robotPose, target)) {
-      apIndex += 1;
-      if (apIndex == apTargets.get().size()) {
-        setState(DriveState.IDLE);
-        return brakeRequest;
-      }
-      target = apTargets.get().get(apIndex);
-    }
-
-    APResult output = autopilot.calculate(robotPose, inputs.Speeds, target);
-
-    Logger.recordOutput("Drive/autopilot/targetPose", target.getReference());
-    Logger.recordOutput("Drive/autopilot/vx", output.vx());
-    Logger.recordOutput("Drive/autopilot/vy", output.vy());
-    Logger.recordOutput("Drive/autopilot/heading", output.targetAngle());
-
-    return driveAtAngle
-        .withVelocityX(output.vx())
-        .withVelocityY(output.vy())
-        .withTargetDirection(output.targetAngle());
   }
 
   private SwerveRequest getPidToPoseRequest(Pose2d robotPose, Optional<Pose2d> targetPose) {
