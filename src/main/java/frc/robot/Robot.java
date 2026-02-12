@@ -68,24 +68,6 @@ public class Robot extends LoggedRobot {
     if (traj.isPresent()) {
       m_robotContainer.drive.followChoreoTrajectory(traj.get());
     }
-    /*
-    m_robotContainer.drive.resetOdometry(new Pose2d(3.0, 3.0, Rotation2d.kCCW_90deg));
-    m_robotContainer.drive.autopilotTo(
-        List.of(
-            new APTarget(new Pose2d(3.6, 0.7, Rotation2d.kCCW_90deg))
-                .withEntryAngle(Rotation2d.kZero)
-                .withVelocity(4.0),
-            new APTarget(new Pose2d(5.6, 0.7, Rotation2d.kCCW_90deg)).withVelocity(4.0),
-            new APTarget(new Pose2d(7.77, 2.1, Rotation2d.kCCW_90deg))
-                .withEntryAngle(Rotation2d.kCCW_90deg)));*/
-    // m_robotContainer.drive.driveToPose(new Pose2d(1.0, 1.0, Rotation2d.k180deg));
-    /*
-    var initialShots =
-        new Notifier(
-            () -> {
-              m_robotContainer.turret.letShoot();
-            });
-    initialShots.startPeriodic(0.25);*/
   }
 
   @Override

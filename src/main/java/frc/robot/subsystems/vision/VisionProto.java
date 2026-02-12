@@ -17,7 +17,7 @@ public class VisionProto {
               Units.inchesToMeters(-6.194),
               Units.inchesToMeters(13.0),
               Units.inchesToMeters(20.125),
-              new Rotation3d(0, Units.degreesToRadians(-30), Units.degreesToRadians(-25 + 180))),
+              new Rotation3d(0, Units.degreesToRadians(-15), Units.degreesToRadians(-25 + 180))),
           CameraType.HUB_ESTIMATE,
           RobotConfig.SimConstants.LL4CameraProperties);
   public static final CameraConfig turretLeft =
@@ -27,7 +27,7 @@ public class VisionProto {
               Units.inchesToMeters(-6.194),
               Units.inchesToMeters(-13.0),
               Units.inchesToMeters(20.125),
-              new Rotation3d(0, Units.degreesToRadians(-30), Units.degreesToRadians(25 + 180))),
+              new Rotation3d(0, Units.degreesToRadians(-15), Units.degreesToRadians(25 + 180))),
           CameraType.HUB_ESTIMATE,
           RobotConfig.SimConstants.LL4CameraProperties);
   public static final CameraConfig intakeConfig =

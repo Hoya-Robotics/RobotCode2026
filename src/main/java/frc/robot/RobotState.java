@@ -55,7 +55,7 @@ public class RobotState {
 
   @AutoLogOutput(key = "RobotState/estimatedPose")
   public Pose2d getEstimatedPose() {
-    return driveInputs.Pose;
+    return new Pose2d(driveInputs.Pose.getTranslation(), driveInputs.gyroYaw);
   }
 
   public Pose2d getSimulatedPose() {

@@ -7,6 +7,7 @@ import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.RobotState;
 import frc.robot.RobotState.*;
 import frc.robot.subsystems.vision.VisionIO.MultitagPoseEstimate;
+import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
@@ -32,17 +33,21 @@ public class Vision extends SubsystemBase {
     }
 
     for (var input : inputs) {
-      RobotState.getInstance()
-          .addVisionMeasurement(
-              new VisionObservation(
-                  input.poseEstimate.pose(),
-                  estimateStdDevs(input.poseEstimate),
-                  input.poseEstimate.timestamp()));
+      if (input.poseEstimate == null) continue;
+      estimateStdDevs(input.poseEstimate)
+          .ifPresent(
+              stdDevs -> {
+                RobotState.getInstance()
+                    .addVisionMeasurement(
+                        new VisionObservation(
+                            input.poseEstimate.pose(), stdDevs, input.poseEstimate.timestamp()));
+              });
     }
   }
 
   // TODO: implement
-  private static Vector<N3> estimateStdDevs(MultitagPoseEstimate estimate) {
-    return estimate.stdDevs();
+  private static Optional<Vector<N3>> estimateStdDevs(MultitagPoseEstimate estimate) {
+    if (estimate.tags() == 0) return Optional.empty();
+    return Optional.of(estimate.stdDevs());
   }
 }

@@ -24,6 +24,12 @@ public class VisionIOPhotonSim implements VisionIO {
     this.config = config;
     camera = new PhotonCamera(config.name());
     cameraSim = new PhotonCameraSim(camera, config.simProps(), FieldConstants.aprilLayout);
+
+    cameraSim.setMaxSightRange(5.0);
+    cameraSim.enableProcessedStream(false);
+    cameraSim.enableRawStream(false);
+    cameraSim.enableDrawWireframe(false);
+
     if (visionSim == null) {
       visionSim = new VisionSystemSim("main");
       visionSim.addAprilTags(FieldConstants.aprilLayout);
