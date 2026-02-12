@@ -49,7 +49,7 @@ public class DriveIOSim extends DriveIOHardware {
             getModules(),
             moduleConstants);
     RobotState.getInstance()
-        .addSimPoseSupplier(mapleSimSwerve.mapleSimDrive::getSimulatedDriveTrainPose);
+        .registerSimPoseSupplier(mapleSimSwerve.mapleSimDrive::getSimulatedDriveTrainPose);
 
     simThread = new Notifier(mapleSimSwerve::update);
     simThread.startPeriodic(RobotConfig.SimConstants.drivetrainSimLoopPeriod);

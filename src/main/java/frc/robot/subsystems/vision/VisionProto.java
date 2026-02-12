@@ -10,7 +10,7 @@ import frc.robot.RobotState;
 import org.littletonrobotics.junction.Logger;
 
 public class VisionProto {
-  private static final CameraConfig turretRight =
+  public static final CameraConfig turretRight =
       new CameraConfig(
           "turretRight",
           new Transform3d(
@@ -20,7 +20,7 @@ public class VisionProto {
               new Rotation3d(0, Units.degreesToRadians(-30), Units.degreesToRadians(-25 + 180))),
           CameraType.HUB_ESTIMATE,
           RobotConfig.SimConstants.LL4CameraProperties);
-  private static final CameraConfig turretLeft =
+  public static final CameraConfig turretLeft =
       new CameraConfig(
           "turretLeft",
           new Transform3d(
@@ -30,8 +30,7 @@ public class VisionProto {
               new Rotation3d(0, Units.degreesToRadians(-30), Units.degreesToRadians(25 + 180))),
           CameraType.HUB_ESTIMATE,
           RobotConfig.SimConstants.LL4CameraProperties);
-
-  private static final CameraConfig intakeConfig =
+  public static final CameraConfig intakeConfig =
       new CameraConfig(
           "intake",
           new Transform3d(
@@ -42,8 +41,13 @@ public class VisionProto {
           CameraType.FUEL_DETECT,
           RobotConfig.SimConstants.LL4CameraProperties);
 
+  static {
+    RobotConfig.VisionConstants.cameras.add(turretLeft);
+    RobotConfig.VisionConstants.cameras.add(turretRight);
+  }
+
   public static void logCameras() {
-    var robot = new Pose3d(RobotState.getInstance().getSimulatedDrivePose());
+    var robot = new Pose3d(RobotState.getInstance().getSimulatedPose());
     for (var cam : RobotConfig.VisionConstants.cameras) {
       Logger.recordOutput("VisionProto/" + cam.name(), robot.transformBy(cam.robotToCamera()));
     }

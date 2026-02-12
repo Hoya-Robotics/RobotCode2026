@@ -79,6 +79,8 @@ public class Drive extends StateSubsystem<DriveState> {
     choreoThetaController.enableContinuousInput(-Math.PI, Math.PI);
 
     setState(DriveState.IDLE);
+
+    RobotState.getInstance().registerDrivetrain(this);
   }
 
   @Override
@@ -86,6 +88,8 @@ public class Drive extends StateSubsystem<DriveState> {
     io.updateInputs(inputs);
     Logger.processInputs("DriveInputs", inputs);
     Logger.recordOutput("Drive/systemState", getCurrentState());
+
+    RobotState.getInstance().addDriveInputs(inputs);
 
     if (DriverStation.isTeleop() && getCurrentState() == DriveState.IDLE) {
       setState(DriveState.TELEOP);
@@ -110,9 +114,12 @@ public class Drive extends StateSubsystem<DriveState> {
     setState(DriveState.TO_POSE);
   }
 
+  public void addVisionMeasurement(VisionObservation observation) {
+    io.addVisionMeasurement(observation.pose(), observation.timestamp(), observation.stdDevs());
+  }
+
   public void resetOdometry(Pose2d override) {
     io.resetOdometry(override);
-    RobotState.getInstance().hardSetOdometry(override);
   }
 
   public void applyRequest(SwerveRequest request) {
@@ -141,10 +148,11 @@ public class Drive extends StateSubsystem<DriveState> {
 
   @Override
   public void applyState() {
+    Pose2d robotPose = inputs.Pose;
     switch (getCurrentState()) {
       case AUTOPILOT:
         if (apTargets.isPresent()) {
-          applyRequest(autopilotRequest(inputs.Pose));
+          applyRequest(autopilotRequest(robotPose));
         } else {
           setState(DriveState.TELEOP);
         }
@@ -154,11 +162,11 @@ public class Drive extends StateSubsystem<DriveState> {
         break;
       case CHOREO:
         if (choreoTrajectory.isPresent()) {
-          applyRequest(choreoRequest(inputs.Pose));
+          applyRequest(choreoRequest(robotPose));
         }
         break;
       case TO_POSE:
-        applyRequest(getPidToPoseRequest(inputs.Pose, Optional.empty()));
+        applyRequest(getPidToPoseRequest(robotPose, Optional.empty()));
         break;
       case IDLE:
         applyRequest(brakeRequest);
@@ -171,7 +179,7 @@ public class Drive extends StateSubsystem<DriveState> {
       choreoTimer.restart();
     }
     var sampleAt = choreoTrajectory.get().sampleAt(choreoTimer.get(), false);
-    if (sampleAt.isEmpty()) {
+    if (sampleAt.isEmpty() || choreoTimer.get() > choreoTrajectory.get().getTotalTime()) {
       choreoTrajectory = Optional.empty();
       setState(DriveState.TELEOP);
       choreoTimer.stop();

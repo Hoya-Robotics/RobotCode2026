@@ -6,8 +6,9 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
-import frc.robot.RobotState;
+import edu.wpi.first.math.numbers.N3;
 import frc.robot.RobotState.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -26,13 +27,14 @@ public class DriveIOHardware extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder
     Consumer<SwerveDriveState> telemetryConsumer =
         swerveDriveState -> {
           telemetryCache.set(swerveDriveState.clone());
+          /*
           RobotState.getInstance()
               .addOdometryObservation(
                   new OdometryObservation(
                       swerveDriveState.Speeds,
                       swerveDriveState.ModulePositions,
                       swerveDriveState.Pose.getRotation(),
-                      swerveDriveState.Timestamp));
+                      swerveDriveState.Timestamp));*/
         };
     registerTelemetry(telemetryConsumer);
   }
@@ -46,6 +48,11 @@ public class DriveIOHardware extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder
   @Override
   public void applyRequest(SwerveRequest request) {
     super.setControl(request);
+  }
+
+  @Override
+  public void addVisionMeasurement(Pose2d pose, double timestamp, Vector<N3> stdDevs) {
+    super.addVisionMeasurement(pose, timestamp, stdDevs);
   }
 
   @Override

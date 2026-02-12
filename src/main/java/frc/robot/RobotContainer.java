@@ -10,16 +10,14 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.drive.TunerConstants;
+import frc.robot.subsystems.vision.*;
 import frc.robot.util.FuelSim;
 
 public class RobotContainer {
   public final XboxController driveController = new XboxController(0);
   public final Drive drive;
+  public final Vision vision;
   public FuelSim fuelSim = null;
-
-  // public final Vision vision;
-
-  // public final PlaceholderTurret turret = new PlaceholderTurret();
 
   public RobotContainer() {
     switch (RobotConfig.getMode()) {
@@ -34,9 +32,14 @@ public class RobotContainer {
                     TunerConstants.BackLeft,
                     TunerConstants.BackRight));
         configureFuelSim();
+        vision =
+            new Vision(
+                new VisionIOPhotonSim(VisionProto.turretLeft),
+                new VisionIOPhotonSim(VisionProto.turretRight));
         break;
       default:
         drive = new Drive(driveController, new DriveIO() {});
+        vision = new Vision(new VisionIO() {});
         break;
     }
 
@@ -52,7 +55,7 @@ public class RobotContainer {
         RobotConfig.bumperWidthY.in(Units.Meters),
         RobotConfig.bumperWidthX.in(Units.Meters),
         edu.wpi.first.math.util.Units.inchesToMeters(3.0),
-        RobotState.getInstance()::getSimulatedDrivePose,
+        RobotState.getInstance()::getSimulatedPose,
         RobotState.getInstance()::getFieldVelocity);
 
     fuelSim.enableAirResistance();
