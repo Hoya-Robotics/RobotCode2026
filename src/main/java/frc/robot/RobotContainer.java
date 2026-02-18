@@ -9,14 +9,13 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.*;
-import frc.robot.subsystems.drive.TunerConstants;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.FuelSim;
 
 public class RobotContainer {
   public final XboxController driveController = new XboxController(0);
   public final Drive drive;
-  public final Vision vision;
+  // public final Vision vision;
   public FuelSim fuelSim = null;
 
   public RobotContainer() {
@@ -32,14 +31,20 @@ public class RobotContainer {
                     TunerConstants.BackLeft,
                     TunerConstants.BackRight));
         configureFuelSim();
-        vision =
-            new Vision(
-                new VisionIOPhotonSim(VisionProto.turretLeft),
-                new VisionIOPhotonSim(VisionProto.turretRight));
+        break;
+      case REAL:
+        drive = new Drive(driveController, new DriveIO() {});
         break;
       default:
-        drive = new Drive(driveController, new DriveIO() {});
-        vision = new Vision(new VisionIO() {});
+        drive =
+            new Drive(
+                driveController,
+                new DriveIOHardware(
+                    TunerConstants.DrivetrainConstants,
+                    TunerConstants.FrontRight,
+                    TunerConstants.FrontLeft,
+                    TunerConstants.BackRight,
+                    TunerConstants.BackLeft));
         break;
     }
 

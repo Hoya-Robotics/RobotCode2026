@@ -58,10 +58,11 @@ public class RobotConfig {
 
   public static final Distance bumperWidthX = Inches.of(30.0);
   public static final Distance bumperWidthY = Inches.of(30.0);
-  public static final Distance trackWidthX = Inches.of(24.4);
-  public static final Distance trackWidthY = Inches.of(24.4);
+  public static final Distance trackWidthX = Inches.of(21.75);
+  public static final Distance trackWidthY = Inches.of(21.75);
 
-  public static final Distance wheelRadius = Inches.of(1.75);
+  public static final Distance wheelRadius = Inches.of(1.897);
+  public static final Distance drivetrainRadius = Inches.of(15.38);
 
   // Drivebase Constants/Config
   public static final class DriveConstants {
@@ -70,23 +71,21 @@ public class RobotConfig {
 
     public static final double maxDriveSpeedMps = 4.73;
     public static final double maxDriveAccelMps = 9.0;
-    public static final double maxRotationSpeedRps = 10.0;
-    public static final double maxRotationAccelRps = 15.0;
+    public static final double maxRotationSpeedRadPerSec =
+        maxDriveSpeedMps / drivetrainRadius.in(Meters);
 
     public static final PIDGains toPoseLinearGains = new PIDGains(5.0, 0.0, 0.0);
     public static final double toPoseLinearTolerance = Units.inchesToMeters(2.0);
     public static final PIDGains toPoseOmegaGains = new PIDGains(8.0, 0.0, 0.0);
     public static final double toPoseThetaTolerance = Units.degreesToRadians(3.0);
 
-    public static final PIDGains choreoLinearGains = new PIDGains(6.0, 0.0, 0.0);
-    public static final PIDGains choreoThetaGains = new PIDGains(10.0, 0.0, 0.0);
+    public static final PIDGains choreoLinearGains = new PIDGains(7.0, 0.0, 0.0);
+    public static final PIDGains choreoThetaGains = new PIDGains(5.0, 0.0, 0.0);
 
     public static final double controllerDeadband = 0.1;
 
     public static final double driveKs = 0.05;
     public static final double driveKv = 4.0;
-
-    public static final double trajectoryLookeadDist = 0.35;
 
     public static final APConstraints apConstraints = new APConstraints(4.0, 10.0, 2.0);
     public static final APProfile apProfile =

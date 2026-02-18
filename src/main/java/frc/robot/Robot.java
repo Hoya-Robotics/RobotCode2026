@@ -24,7 +24,7 @@ public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
-  private Optional<Trajectory<SwerveSample>> traj = Choreo.loadTrajectory("NeutralToCenter");
+  private Optional<Trajectory<SwerveSample>> traj = Choreo.loadTrajectory("NeutralHalfCycle");
 
   public Robot() {
     Logger.recordMetadata("ProjectName", "Rebuilt4152");

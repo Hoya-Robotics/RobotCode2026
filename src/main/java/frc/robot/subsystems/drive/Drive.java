@@ -3,6 +3,7 @@ package frc.robot.subsystems.drive;
 import choreo.trajectory.SwerveSample;
 import choreo.trajectory.Trajectory;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import com.therekrab.autopilot.*;
@@ -59,7 +60,12 @@ public class Drive extends StateSubsystem<DriveState> {
           .withDriveRequestType(DriveRequestType.Velocity)
           .withHeadingPID(4, 0, 0);
   private SwerveRequest.FieldCentric fieldRequest =
-      new SwerveRequest.FieldCentric().withForwardPerspective(ForwardPerspectiveValue.BlueAlliance);
+      new SwerveRequest.FieldCentric()
+          .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance)
+          .withDriveRequestType(DriveRequestType.Velocity)
+          .withSteerRequestType(SteerRequestType.Position)
+          .withDeadband(0.1 * DriveConstants.maxDriveSpeedMps)
+          .withRotationalDeadband(0.1 * DriveConstants.maxRotationSpeedRadPerSec);
   private SwerveRequest.SwerveDriveBrake brakeRequest = new SwerveRequest.SwerveDriveBrake();
 
   public Drive(XboxController controller, DriveIO io) {
@@ -208,18 +214,20 @@ public class Drive extends StateSubsystem<DriveState> {
     Logger.recordOutput("Drive/choreo/elapsedTime", choreoTimer.get());
     Logger.recordOutput("Drive/choreo/totalTime", choreoTrajectory.get().getTotalTime());
     Logger.recordOutput("Drive/choreo/trajectoryName", choreoTrajectory.get().name());
-    Logger.recordOutput("Drive/choreo/vx", sample.vx);
-    Logger.recordOutput("Drive/choreo/vy", sample.vy);
-    Logger.recordOutput("Drive/choreo/omega", sample.omega);
     Logger.recordOutput("Drive/choreo/target", sample.getPose());
 
-    return fieldRequest
-        .withVelocityX(sample.vx + choreoXController.calculate(robotPose.getX(), sample.x))
-        .withVelocityY(sample.vy + choreoYController.calculate(robotPose.getY(), sample.y))
-        .withRotationalRate(
-            sample.omega
-                + choreoThetaController.calculate(
-                    robotPose.getRotation().getRadians(), sample.heading));
+    double vx = sample.vx + choreoXController.calculate(robotPose.getX(), sample.x);
+    double vy = sample.vy + choreoYController.calculate(robotPose.getY(), sample.y);
+    double omega =
+        sample.omega
+            + choreoThetaController.calculate(robotPose.getRotation().getRadians(), sample.heading);
+    var requestedSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, omega, inputs.gyroYaw);
+
+    Logger.recordOutput("Drive/choreo/vx", requestedSpeeds.vxMetersPerSecond);
+    Logger.recordOutput("Drive/choreo/vy", requestedSpeeds.vyMetersPerSecond);
+    Logger.recordOutput("Drive/choreo/omega", requestedSpeeds.omegaRadiansPerSecond);
+
+    return fieldRequest.withVelocityX(vx).withVelocityY(vy).withRotationalRate(omega);
   }
 
   private SwerveRequest getPidToPoseRequest(Pose2d robotPose, Optional<Pose2d> targetPose) {
@@ -238,8 +246,8 @@ public class Drive extends StateSubsystem<DriveState> {
         MathUtil.clamp(
             omegaController.calculate(
                 robotPose.getRotation().getRadians(), target.getRotation().getRadians()),
-            -DriveConstants.maxRotationSpeedRps,
-            DriveConstants.maxRotationSpeedRps);
+            -DriveConstants.maxRotationSpeedRadPerSec,
+            DriveConstants.maxRotationSpeedRadPerSec);
 
     var speeds = ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, omega, inputs.gyroYaw);
 
@@ -258,12 +266,13 @@ public class Drive extends StateSubsystem<DriveState> {
     double sy = -driveController.getLeftX();
     double omega = -driveController.getRightX();
 
-    omega = MathUtil.applyDeadband(omega, DriveConstants.controllerDeadband);
-    omega = omega * omega * Math.signum(omega); // heuristic
+    omega = Math.copySign(omega * omega, omega);
+    omega *= DriveConstants.maxRotationSpeedRadPerSec;
 
     var heading = new Rotation2d(sx, sy);
-    var magnitude = MathUtil.applyDeadband(Math.hypot(sx, sy), DriveConstants.controllerDeadband);
+    var magnitude = Math.hypot(sx, sy);
     magnitude = magnitude * magnitude; // heuristic
+    magnitude *= DriveConstants.maxDriveSpeedMps;
 
     return fieldRequest
         .withVelocityX(magnitude * heading.getCos())
