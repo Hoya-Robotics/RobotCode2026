@@ -9,12 +9,14 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.*;
+import frc.robot.subsystems.spindexer.*;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.FuelSim;
 
 public class RobotContainer {
   public final XboxController driveController = new XboxController(0);
   public final Drive drive;
+  public final Spindexer spindexer;
   // public final Vision vision;
   public FuelSim fuelSim = null;
 
@@ -30,12 +32,10 @@ public class RobotContainer {
                     TunerConstants.FrontRight,
                     TunerConstants.BackLeft,
                     TunerConstants.BackRight));
+        spindexer = new Spindexer(new SpindexerIO() {});
         configureFuelSim();
         break;
       case REAL:
-        drive = new Drive(driveController, new DriveIO() {});
-        break;
-      default:
         drive =
             new Drive(
                 driveController,
@@ -45,6 +45,15 @@ public class RobotContainer {
                     TunerConstants.FrontLeft,
                     TunerConstants.BackRight,
                     TunerConstants.BackLeft));
+        spindexer =
+            new Spindexer(
+                new SpindexerIOHardware(
+                    RobotConfig.SpindexerConstants.spinMotorId,
+                    RobotConfig.SpindexerConstants.rampMotorId));
+        break;
+      default:
+        drive = new Drive(driveController, new DriveIO() {});
+        spindexer = new Spindexer(new SpindexerIO() {});
         break;
     }
 
