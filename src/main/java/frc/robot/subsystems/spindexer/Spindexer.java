@@ -26,6 +26,7 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
     Logger.processInputs("Superstructure/Spindexer", inputs);
 
     applyState();
+		io.applyOutputs(outputs);
   }
 
   @Override

@@ -29,29 +29,13 @@ public class SpindexerIOHardware implements SpindexerIO {
     spinController = spinMotor.getClosedLoopController();
     rampController = rampMotor.getClosedLoopController();
 
+		// TODO: configure PID + ff if using closed loop
+
     SparkFlexConfig spinConfig = new SparkFlexConfig();
-    spinConfig.idleMode(IdleMode.kBrake).inverted(false).smartCurrentLimit(60);
-    /*
-    spinConfig.closedLoop
-      .p(0.0)
-      .i(0.0)
-      .d(0.0)
-      .outputRange(-1.0, 1.0);
-    spinConfig.closedLoop.feedForward
-      .kV(0.0).kS(0.0);
-    */
+    spinConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(60);
 
     SparkFlexConfig rampConfig = new SparkFlexConfig();
-    rampConfig.idleMode(IdleMode.kBrake).inverted(false).smartCurrentLimit(60);
-    /*
-    rampConfig.closedLoop
-      .p(0.0)
-      .i(0.0)
-      .d(0.0)
-      .outputRange(-1.0, 1.0);
-    rampConfig.closedLoop.feedForward
-      .kV(0.0).kS(0.0);
-    */
+    rampConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(60);
 
     spinMotor.configure(
         spinConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
