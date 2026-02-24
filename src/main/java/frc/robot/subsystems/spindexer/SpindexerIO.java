@@ -17,19 +17,9 @@ public interface SpindexerIO {
     public double rampMotorVelocityRadsPerSec = 0.0;
   }
 
-  enum SpindexerOutputMode {
-    VOLTAGE,
-    CLOSED_LOOP
-  }
-
   public class SpindexerIOOutputs {
-    public SpindexerOutputMode mode = SpindexerOutputMode.VOLTAGE;
-
     public double spinMotorVoltageRequested = 0.0;
     public double rampMotorVoltageRequested = 0.0;
-
-    public AngularVelocity spinMotorSpeedRequested = Units.RadiansPerSecond.of(0.0);
-    public LinearVelocity rampMotorSpeedRequested = Units.MetersPerSecond.of(0.0);
   }
 
   public default void updateInputs(SpindexerIOInputs inputs) {}

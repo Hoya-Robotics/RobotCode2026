@@ -9,7 +9,6 @@ enum SpindexerState {
   FEED,
 }
 
-// TODO: probably move this into superstructure
 public class Spindexer extends StateSubsystem<SpindexerState> {
   private final SpindexerIO io;
   private final SpindexerIOInputsAutoLogged inputs = new SpindexerIOInputsAutoLogged();
@@ -29,10 +28,20 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
 		io.applyOutputs(outputs);
   }
 
+	public void hold() {
+		setState(SpindexerState.HOLD);
+	}
+
+	public void feed() {
+		setState(SpindexerState.FEED);
+	}
+
   @Override
   public void applyState() {
     switch (getCurrentState()) {
       case HOLD:
+        outputs.spinMotorVoltageRequested = 0.0;
+        outputs.rampMotorVoltageRequested = 0.0;
         break;
       case FEED:
         outputs.spinMotorVoltageRequested = 3.0;
