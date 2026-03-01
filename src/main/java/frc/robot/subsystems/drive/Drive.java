@@ -8,22 +8,23 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import com.therekrab.autopilot.*;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.FieldConstants;
-import frc.robot.RobotConfig;
 import frc.robot.RobotConfig.*;
 import frc.robot.RobotState;
 import frc.robot.RobotState.*;
 import frc.robot.util.StateSubsystem;
-import java.util.LinkedList;
 import java.util.Optional;
-import java.util.Queue;
 import org.littletonrobotics.junction.Logger;
 
 enum DriveState {
@@ -31,7 +32,7 @@ enum DriveState {
   TO_POSE,
   TELEOP,
   CHOREO,
-  AUTOPILOT
+  TRENCH,
 }
 
 public class Drive extends StateSubsystem<DriveState> {
@@ -39,17 +40,17 @@ public class Drive extends StateSubsystem<DriveState> {
   private DriveIOInputsAutoLogged inputs = new DriveIOInputsAutoLogged();
 
   private final XboxController driveController;
-  private static final Autopilot autopilot = new Autopilot(RobotConfig.DriveConstants.apProfile);
 
-  private PIDController linearController = DriveConstants.toPoseLinearGains.toController();
-  private PIDController omegaController = DriveConstants.toPoseOmegaGains.toController();
-  private PIDController choreoXController = DriveConstants.choreoLinearGains.toController();
-  private PIDController choreoYController = DriveConstants.choreoLinearGains.toController();
-  private PIDController choreoThetaController = DriveConstants.choreoThetaGains.toController();
+  private final PIDController linearController = DriveConstants.toPoseLinearGains.toController();
+  private final PIDController omegaController = DriveConstants.toPoseOmegaGains.toController();
+  private final PIDController choreoXController = DriveConstants.choreoLinearGains.toController();
+  private final PIDController choreoYController = DriveConstants.choreoLinearGains.toController();
+  private final PIDController choreoThetaController =
+      DriveConstants.choreoThetaGains.toController();
+  private final PIDController trenchYController = DriveConstants.trenchYGains.toController();
 
   private Pose2d targetDrivePose = null;
   private Optional<Trajectory<SwerveSample>> choreoTrajectory = Optional.empty();
-  private Queue<APTarget> autopilotPath;
   private Timer choreoTimer = new Timer();
 
   private SwerveRequest.ApplyRobotSpeeds robotRelativeRequest =
@@ -103,21 +104,6 @@ public class Drive extends StateSubsystem<DriveState> {
     setState(DriveState.CHOREO);
   }
 
-  public void traverseTrench() {
-    var poses = FieldConstants.nearestTrenchWaypoints(inputs.Pose);
-    APTarget entrance =
-        new APTarget(poses.getFirst())
-            .withEntryAngle(poses.getFirst().getRotation())
-            .withVelocity(3.0);
-    APTarget exit = new APTarget(poses.getSecond()).withVelocity(4.0);
-
-    autopilotPath = new LinkedList<>();
-    autopilotPath.add(entrance);
-    autopilotPath.add(exit);
-
-    setState(DriveState.AUTOPILOT);
-  }
-
   public void driveToPose(Pose2d target) {
     this.targetDrivePose = target;
     setState(DriveState.TO_POSE);
@@ -160,27 +146,25 @@ public class Drive extends StateSubsystem<DriveState> {
     Pose2d robotPose = inputs.Pose;
     switch (getCurrentState()) {
       case TELEOP:
-        applyRequest(getControllerRequest());
+        var speeds = getInputVector();
+        applyRequest(
+            fieldRequest
+                .withVelocityX(speeds.get(0))
+                .withVelocityY(speeds.get(1))
+                .withRotationalRate(speeds.get(2)));
+        if (shouldAlignTrench(robotPose)) setState(DriveState.TRENCH);
         break;
       case CHOREO:
-        if (choreoTrajectory.isPresent()) {
-          applyRequest(choreoRequest(robotPose));
-        }
+        if (choreoTrajectory.isPresent()) applyRequest(choreoRequest(robotPose));
+        break;
+      case TRENCH:
+        Pose2d trenchPose = robotPose.nearest(FieldConstants.trenchPoses);
+        applyRequest(trenchRequest(robotPose, trenchPose));
+        if (robotPose.getTranslation().getDistance(trenchPose.getTranslation())
+            < Units.inchesToMeters(2.0)) setState(DriveState.TELEOP);
         break;
       case TO_POSE:
         applyRequest(getPidToPoseRequest(robotPose, Optional.empty()));
-        break;
-      case AUTOPILOT:
-        var target = autopilotPath.peek();
-        while (target != null && autopilot.atTarget(robotPose, target)) {
-          autopilotPath.remove();
-          target = autopilotPath.peek();
-        }
-        if (target == null) {
-          setState(DriveState.IDLE);
-        } else {
-          applyRequest(autopilotRequest(target, robotPose));
-        }
         break;
       case IDLE:
         applyRequest(brakeRequest);
@@ -188,19 +172,30 @@ public class Drive extends StateSubsystem<DriveState> {
     }
   }
 
-  private SwerveRequest autopilotRequest(APTarget target, Pose2d robotPose) {
-    var output = autopilot.calculate(robotPose, inputs.Speeds, target);
+  // TODO: how do we decide when to align?
+  // - Maybe align sooner if we are pointing in trench direction
+  // / dont align if we arent driving very fast
+  private boolean shouldAlignTrench(Pose2d robotPose) {
+    Pose2d trenchPose = robotPose.nearest(FieldConstants.trenchPoses);
+    return robotPose.getTranslation().getDistance(trenchPose.getTranslation())
+        < Units.inchesToMeters(30);
+  }
 
-    return driveAtAngle
-        .withVelocityX(output.vx())
-        .withVelocityY(output.vy())
-        .withTargetDirection(output.targetAngle());
+  // Match requested x joystick with output y to align to center of trench
+  private SwerveRequest trenchRequest(Pose2d robotPose, Pose2d trenchPose) {
+    double xOutput = getInputVector().get(0);
+    var robotToTrench = trenchPose.minus(robotPose);
+
+    double yOutput = trenchYController.calculate(robotToTrench.getY());
+    double omega =
+        omegaController.calculate(
+            robotPose.getRotation().getRadians(), trenchPose.getRotation().getRadians());
+
+    return fieldRequest.withVelocityX(xOutput).withVelocityY(yOutput).withRotationalRate(omega);
   }
 
   private SwerveRequest choreoRequest(Pose2d robotPose) {
-    if (!choreoTimer.isRunning()) {
-      choreoTimer.restart();
-    }
+    if (!choreoTimer.isRunning()) choreoTimer.restart();
     var sampleAt = choreoTrajectory.get().sampleAt(choreoTimer.get(), false);
     if (sampleAt.isEmpty() || choreoTimer.get() > choreoTrajectory.get().getTotalTime()) {
       choreoTrajectory = Optional.empty();
@@ -261,7 +256,7 @@ public class Drive extends StateSubsystem<DriveState> {
     return robotRelativeRequest.withSpeeds(speeds);
   }
 
-  private SwerveRequest getControllerRequest() {
+  private Vector<N3> getInputVector() {
     double sx = -driveController.getLeftY();
     double sy = -driveController.getLeftX();
     double omega = -driveController.getRightX();
@@ -274,10 +269,7 @@ public class Drive extends StateSubsystem<DriveState> {
     magnitude = magnitude * magnitude; // heuristic
     magnitude *= DriveConstants.maxDriveSpeedMps;
 
-    return fieldRequest
-        .withVelocityX(magnitude * heading.getCos())
-        .withVelocityY(magnitude * heading.getSin())
-        .withRotationalRate(omega);
+    return VecBuilder.fill(magnitude * heading.getCos(), magnitude * heading.getSin(), omega);
   }
 
   public ChassisSpeeds getChassisSpeeds() {

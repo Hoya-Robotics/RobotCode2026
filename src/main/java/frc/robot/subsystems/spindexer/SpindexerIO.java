@@ -1,8 +1,5 @@
 package frc.robot.subsystems.spindexer;
 
-import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.LinearVelocity;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface SpindexerIO {

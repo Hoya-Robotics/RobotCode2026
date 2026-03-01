@@ -6,8 +6,6 @@ import com.revrobotics.PersistMode;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
-import com.revrobotics.spark.SparkBase.ControlType;
-import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -43,17 +41,17 @@ public class SpindexerIOHardware implements SpindexerIO {
     inputs.spinMotorVoltsApplied = spinMotor.getAppliedOutput() * spinMotor.getBusVoltage();
     inputs.spinMotorVelocityRadsPerSec =
         Units.rotationsPerMinuteToRadiansPerSecond(spinEncoder.getVelocity() / 3.0);
-		inputs.spinConnected = spinMotor.getLastError() == REVLibError.kOk;
+    inputs.spinConnected = spinMotor.getLastError() == REVLibError.kOk;
 
     inputs.rampMotorVoltsApplied = rampMotor.getAppliedOutput() * rampMotor.getBusVoltage();
     inputs.rampMotorVelocityRadsPerSec =
         Units.rotationsPerMinuteToRadiansPerSecond(rampEncoder.getVelocity());
-		inputs.rampConnected = rampMotor.getLastError() == REVLibError.kOk;
+    inputs.rampConnected = rampMotor.getLastError() == REVLibError.kOk;
   }
 
   @Override
   public void applyOutputs(SpindexerIOOutputs outputs) {
-			spinMotor.setVoltage(outputs.spinMotorVoltageRequested);
-			rampMotor.setVoltage(outputs.rampMotorVoltageRequested);
+    spinMotor.setVoltage(outputs.spinMotorVoltageRequested);
+    rampMotor.setVoltage(outputs.rampMotorVoltageRequested);
   }
 }

@@ -25,16 +25,16 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
     Logger.processInputs("Superstructure/Spindexer", inputs);
 
     applyState();
-		io.applyOutputs(outputs);
+    io.applyOutputs(outputs);
   }
 
-	public void hold() {
-		setState(SpindexerState.HOLD);
-	}
+  public void hold() {
+    setState(SpindexerState.HOLD);
+  }
 
-	public void feed() {
-		setState(SpindexerState.FEED);
-	}
+  public void feed() {
+    setState(SpindexerState.FEED);
+  }
 
   @Override
   public void applyState() {

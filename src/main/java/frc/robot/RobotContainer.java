@@ -12,6 +12,7 @@ import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.spindexer.*;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.FuelSim;
+import frc.robot.util.PhoenixSync;
 
 public class RobotContainer {
   public final XboxController driveController = new XboxController(0);
@@ -56,6 +57,7 @@ public class RobotContainer {
         spindexer = new Spindexer(new SpindexerIO() {});
         break;
     }
+    PhoenixSync.optimizeAll();
 
     configureBindings();
   }

@@ -2,8 +2,6 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
-import com.therekrab.autopilot.APConstraints;
-import com.therekrab.autopilot.APProfile;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -16,6 +14,8 @@ import frc.robot.subsystems.drive.TunerConstants;
 import java.util.ArrayList;
 import java.util.List;
 import org.photonvision.simulation.SimCameraProperties;
+
+import com.ctre.phoenix6.configs.Slot0Configs;
 
 /*
  * Complete description of physical and virtual robot configuration
@@ -31,6 +31,12 @@ public class RobotConfig {
     public PIDController toController() {
       return new PIDController(kp, ki, kd);
     }
+		public Slot0Configs toSlot0Configs() {
+			return new Slot0Configs()
+				.withKP(kp)
+				.withKI(ki)
+				.withKD(kd);
+		}
   }
 
   public record CameraConfig(
@@ -68,18 +74,22 @@ public class RobotConfig {
     public static final PIDGains toPoseOmegaGains = new PIDGains(8.0, 0.0, 0.0);
     public static final double toPoseThetaTolerance = Units.degreesToRadians(3.0);
 
+    public static final PIDGains trenchYGains = new PIDGains(0.0, 0.0, 0.0);
+
     public static final PIDGains choreoLinearGains = new PIDGains(7.0, 0.0, 0.0);
     public static final PIDGains choreoThetaGains = new PIDGains(5.0, 0.0, 0.0);
-
-    public static final APConstraints apConstraints = new APConstraints(4.0, 10.0, 2.0);
-    public static final APProfile apProfile =
-        new APProfile(apConstraints).withErrorXY(Inches.of(4.0)).withErrorTheta(Degrees.of(2.0));
   }
 
   public static final class SpindexerConstants {
     public static final int spinMotorId = 20;
     public static final int rampMotorId = 21;
   }
+
+	public static final class TurretConstants {
+		public static final PIDGains hoodGains = new PIDGains(0.0, 0.0, 0.0);
+		public static final PIDGains yawGains = new PIDGains(0.0, 0.0, 0.0);
+		public static final PIDGains shootGains = new PIDGains(0.0, 0.0, 0.0);
+	}
 
   // Vision Constants
   public static final class VisionConstants {

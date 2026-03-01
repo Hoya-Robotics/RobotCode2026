@@ -1,10 +1,8 @@
 package frc.robot;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -31,29 +29,6 @@ public class FieldConstants {
     }
   }
 
-  public static Pair<Pose2d, Pose2d> nearestTrenchWaypoints(Pose2d robotPose) {
-    boolean rightSide = robotPose.getY() < fieldWidth / 2.0;
-    boolean neutralStart = inNeutralZone(robotPose);
-
-    var allianceEntrance = rightTrenchAllianceZoneEntrance;
-    var neutralEntrance = rightTrenchNeutralZoneEntrance;
-    if (!rightSide) {
-      allianceEntrance =
-          new Translation2d(allianceEntrance.getX(), fieldWidth - allianceEntrance.getY());
-      neutralEntrance =
-          new Translation2d(neutralEntrance.getX(), fieldWidth - neutralEntrance.getY());
-    }
-
-    Rotation2d heading = neutralStart ? Rotation2d.k180deg : Rotation2d.kZero;
-    var translations =
-        neutralStart
-            ? List.of(neutralEntrance, allianceEntrance)
-            : List.of(allianceEntrance, neutralEntrance);
-    var path =
-        translations.stream().map(AllianceFlip::apply).map(t -> new Pose2d(t, heading)).toList();
-    return Pair.of(path.get(0), path.get(1));
-  }
-
   public static boolean inNeutralZone(Pose2d robotPose) {
     Distance robotX = robotPose.getMeasureX();
     return robotX.lt(startingLineLengthX.plus(neutralZoneLengthX))
@@ -69,9 +44,18 @@ public class FieldConstants {
 
   public static final Distance trenchLengthX = Units.Inches.of(65.65);
   public static final Distance trenchWidthY = Units.Inches.of(47.0);
+  public static final Distance trenchCenter = trenchWidthY.div(2.0);
 
-  public static final Translation2d rightTrenchAllianceZoneEntrance =
-      new Translation2d(startingLineLengthX, trenchWidthY.div(2.0));
-  public static final Translation2d rightTrenchNeutralZoneEntrance =
-      new Translation2d(startingLineLengthX.plus(trenchLengthX), trenchWidthY.div(2.0));
+  public static final List<Pose2d> trenchPoses;
+
+  static {
+    List<Pose2d> blueTrenchPoses =
+        List.of(
+            new Pose2d(startingLineLengthX, trenchCenter, Rotation2d.kZero),
+            new Pose2d(
+                startingLineLengthX,
+                Units.Meters.of(fieldWidth).minus(trenchCenter),
+                Rotation2d.kZero));
+    trenchPoses = blueTrenchPoses.stream().map(AllianceFlip::apply).toList();
+  }
 }
