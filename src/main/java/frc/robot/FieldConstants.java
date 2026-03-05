@@ -46,6 +46,8 @@ public class FieldConstants {
   public static final Distance trenchWidthY = Units.Inches.of(47.0);
   public static final Distance trenchCenter = trenchWidthY.div(2.0);
 
+	public static final Pose2d hubCenterPoint = new Pose2d();
+
   public static final List<Pose2d> trenchPoses;
 
   static {
