@@ -76,6 +76,12 @@ public class RobotState {
     return simulatedDrivePoseSupplier.get();
   }
 
+  /*public ShotParameters getTurretSetpoints() {
+    var info = getCompensatedTurretInfo();
+    Pose2d turretPose = info.getFirst();
+    Translation2d turretVelocity = info.getSecond();
+  }*/
+
   public Pair<Pose2d, Translation2d> getCompensatedTurretInfo() {
     var robotPose = getEstimatedPose();
     var speeds = getFieldVelocity();

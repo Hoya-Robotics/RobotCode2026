@@ -16,7 +16,7 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
 
   public Spindexer(SpindexerIO io) {
     this.io = io;
-    setState(SpindexerState.FEED);
+    setState(SpindexerState.HOLD);
   }
 
   @Override

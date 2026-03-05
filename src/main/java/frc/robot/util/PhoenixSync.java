@@ -21,13 +21,15 @@ public class PhoenixSync {
       StatusSignal<AngularAcceleration> acceleration,
       StatusSignal<Voltage> voltage,
       StatusSignal<Temperature> temp,
-      StatusSignal<Current> current) {
+      StatusSignal<Current> current,
+      double gearRatio) {
     public double getPositionRads() {
-      return BaseStatusSignal.getLatencyCompensatedValueAsDouble(position, velocity);
+      return BaseStatusSignal.getLatencyCompensatedValueAsDouble(position, velocity) / gearRatio;
     }
 
     public double getVelocityRadsPerSec() {
-      return BaseStatusSignal.getLatencyCompensatedValueAsDouble(velocity, acceleration);
+      return BaseStatusSignal.getLatencyCompensatedValueAsDouble(velocity, acceleration)
+          / gearRatio;
     }
 
     public double getVoltage() {
@@ -50,7 +52,8 @@ public class PhoenixSync {
   private static final List<StatusSignalCollection> signalGroups = new ArrayList<>();
   private static final List<ParentDevice> devices = new ArrayList<>();
 
-  public static TalonFXSignals registerTalonFX(TalonFX motor, double updateFreqHz) {
+  public static TalonFXSignals registerTalonFX(
+      TalonFX motor, double gearRatio, double updateFreqHz) {
     var signals =
         new TalonFXSignals(
             motor.getPosition(),
@@ -58,7 +61,8 @@ public class PhoenixSync {
             motor.getAcceleration(),
             motor.getMotorVoltage(),
             motor.getDeviceTemp(),
-            motor.getSupplyCurrent());
+            motor.getSupplyCurrent(),
+            gearRatio);
     StatusSignalCollection group =
         new StatusSignalCollection(
             signals.position(),

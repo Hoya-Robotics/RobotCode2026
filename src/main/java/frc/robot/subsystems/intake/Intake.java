@@ -18,6 +18,7 @@ public class Intake extends StateSubsystem<IntakeState> {
 
   public Intake(IntakeIO io) {
     this.io = io;
+    setState(IntakeState.IDLE);
   }
 
   @Override
@@ -33,12 +34,14 @@ public class Intake extends StateSubsystem<IntakeState> {
     setState(IntakeState.INTAKE);
   }
 
+  public void retract() {
+    setState(IntakeState.RETRACT);
+  }
+
   @Override
   public void applyState() {
     switch (getCurrentState()) {
       case IDLE:
-        outputs.extendMeters = 0.0;
-        outputs.spinVoltage = 4.0;
         break;
       case RETRACT:
         outputs.extendMeters = 0.0;

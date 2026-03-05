@@ -40,15 +40,14 @@ public class IntakeIOHardware implements IntakeIO {
     extendConfig.withSlot0(IntakeConstants.extendGains.toSlot0Configs());
     extendMotor.getConfigurator().apply(extendConfig);
 
-    extendSignals = PhoenixSync.registerTalonFX(extendMotor, 50);
+    extendSignals = PhoenixSync.registerTalonFX(extendMotor, IntakeConstants.extendGearRatio, 50);
   }
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
     inputs.extendConnected = extendSignals.isConnected();
-    inputs.extendPositionRads = extendSignals.getPositionRads() / IntakeConstants.extendGearRatio;
-    inputs.extendVelocityRadsPerSec =
-        extendSignals.getVelocityRadsPerSec() / IntakeConstants.extendGearRatio;
+    inputs.extendPositionRads = extendSignals.getPositionRads();
+    inputs.extendVelocityRadsPerSec = extendSignals.getVelocityRadsPerSec();
     inputs.extendVoltageApplied = extendSignals.getVoltage();
 
     inputs.spinConnected = spinMotor.getLastError() == REVLibError.kOk;
@@ -63,7 +62,8 @@ public class IntakeIOHardware implements IntakeIO {
     Logger.recordOutput("Intake/extensionSetpoint", outputs.extendMeters);
     Logger.recordOutput("Intake/spinSetpoint", outputs.spinVoltage);
 
-    double extendRadians = outputs.extendMeters / IntakeConstants.extensionRadius;
+    double extendRadians =
+        outputs.extendMeters / IntakeConstants.extensionRadius * IntakeConstants.extendGearRatio;
     extendMotor.setControl(extendRequest.withPosition(extendRadians));
     spinMotor.setVoltage(outputs.spinVoltage);
   }
