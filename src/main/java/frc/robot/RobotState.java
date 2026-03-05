@@ -12,6 +12,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.*;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.subsystems.drive.Drive;
@@ -23,8 +24,6 @@ public class RobotState {
   private Supplier<Pose2d> simulatedDrivePoseSupplier = () -> Pose2d.kZero;
   private Drive drive;
   private DriveIOInputsAutoLogged driveInputs;
-  private TurretState turretState =
-      new TurretState(Radians.of(0.0), Radians.of(0.0), MetersPerSecond.of(0.0));
 
   private static RobotState instance;
 
@@ -76,13 +75,7 @@ public class RobotState {
     return simulatedDrivePoseSupplier.get();
   }
 
-  /*public ShotParameters getTurretSetpoints() {
-    var info = getCompensatedTurretInfo();
-    Pose2d turretPose = info.getFirst();
-    Translation2d turretVelocity = info.getSecond();
-  }*/
-
-  public Pair<Pose2d, Translation2d> getCompensatedTurretInfo() {
+  public TurretState getTurretSetpoints(TurretState turretState) {
     var robotPose = getEstimatedPose();
     var speeds = getFieldVelocity();
     var futurePose = robotPose.exp(speeds.toTwist2d(0.003));
@@ -109,10 +102,9 @@ public class RobotState {
                 robotToTurret.getY(),
                 robotToTurret.getRotation().toRotation2d()));
 
-    return Pair.of(turretPose, new Translation2d(turretVx, turretVy));
+		return new TurretState(Radians.of(0), Radians.of(0), RadiansPerSecond.of(0));
   }
 
   public record VisionObservation(Pose2d pose, Vector<N3> stdDevs, double timestamp) {}
-
-  public record TurretState(Angle hoodAngle, Angle yawAngle, LinearVelocity flywheelSpeed) {}
+  public record TurretState(Angle azimuthAngle, Angle hoodAngle, AngularVelocity launchSpeed) {}
 }

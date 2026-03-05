@@ -1,5 +1,9 @@
 package frc.robot.subsystems;
 
+import javax.print.attribute.SetOfIntegerSyntax;
+
+import frc.robot.RobotState;
+import frc.robot.RobotState.TurretState;
 import frc.robot.subsystems.azimuth.Azimuth;
 import frc.robot.subsystems.hood.Hood;
 import frc.robot.subsystems.intake.Intake;
@@ -10,7 +14,6 @@ import frc.robot.util.StateSubsystem;
 enum SuperStructureState {
   IDLE,
   INTAKE,
-  SHOOT_AND_INTAKE,
   SHOOT
 }
 
@@ -35,26 +38,29 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
 
   @Override
   public void applyState() {
-    var state = getCurrentState();
-    switch (state) {
-      case IDLE:
-      case INTAKE:
-        spindexer.hold();
-        // TODO: tracking logic with hood, azimuth, launcher
-        if (state == SuperStructureState.INTAKE) intake.run();
-        break;
-      case SHOOT:
-      case SHOOT_AND_INTAKE:
-        spindexer.feed();
-        // TODO: shooting logic with hood, azimuth, launcher
-        if (state == SuperStructureState.SHOOT_AND_INTAKE) {
-          intake.run();
-        } else {
-          intake.retract();
-        }
-        break;
-      default:
-        break;
+		TurretState setpoints = RobotState.getInstance().getTurretSetpoints(
+			new TurretState(azimuth.getAngle(), hood.getAngle(), launcher.getSpeed())
+		);
+
+		// Always track hub
+		azimuth.setAngle(setpoints.azimuthAngle());
+		hood.setAngle(setpoints.hoodAngle());
+
+    switch (getCurrentState()) {
+			case IDLE:
+				intake.retract();
+				spindexer.hold();
+				break;
+			case INTAKE:
+				intake.run();
+				spindexer.hold();
+				break;
+			case SHOOT:
+				// TODO: Ensure azimuth + hood are within tolerance to shoot
+				launcher.setSpeed(setpoints.launchSpeed());
+				intake.retract();
+				spindexer.feed();
+				break;
     }
   }
 }
