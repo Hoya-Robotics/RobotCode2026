@@ -109,11 +109,11 @@ public class RobotConfig {
 
     public static final Angle azimuthTolerance = Degrees.of(1.5);
     public static final Angle hoodTolerance = Degrees.of(0.5);
-    public static final AngularVelocity shooterWarmupThreshold = RotationsPerSecond.of(15);
+    public static final AngularVelocity shooterWarmupThreshold = RotationsPerSecond.of(25);
 
     public static final Transform3d robotToTurret =
         new Transform3d(
-            Units.inchesToMeters(6.0),
+            Units.inchesToMeters(-6.0),
             Units.inchesToMeters(-6.0),
             Units.inchesToMeters(12.0),
             Rotation3d.kZero);

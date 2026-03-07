@@ -23,7 +23,7 @@ public class LauncherIOHardware implements LauncherIO {
 
     // Configure motor
     var config = new TalonFXConfiguration();
-    config.withSlot0(TurretConstants.shootGains.toSlot0Configs().withKV(1.12).withKA(0.04));
+    config.withSlot0(TurretConstants.shootGains.toSlot0Configs().withKV(1.11).withKA(0.04));
     config.Feedback.withSensorToMechanismRatio(TurretConstants.launcherGearRatio);
     config.CurrentLimits.withStatorCurrentLimit(60);
     config.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive)

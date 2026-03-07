@@ -52,13 +52,13 @@ public class Intake extends StateSubsystem<IntakeState> {
         break;
       case RETRACT:
         // TODO: run intake slowly while retracting, unstuck balls
-        outputs.extendVoltage = Volts.of(-6.0);
+        outputs.extendVoltage = Volts.of(-8.0);
         outputs.intakeVoltage = Volts.of(1.5);
         break;
       case INTAKE:
-        outputs.extendVoltage = Volts.of(6.0);
+        outputs.extendVoltage = Volts.of(8.0);
         if (inputs.extendPosition.gt(Inches.of(5.5))) {
-          outputs.intakeVoltage = Volts.of(8.0);
+          outputs.intakeVoltage = Volts.of(10.0);
         } else {
           outputs.intakeVoltage = Volts.zero();
         }
