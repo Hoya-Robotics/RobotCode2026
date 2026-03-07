@@ -1,8 +1,9 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.*;
+
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.PersistMode;
@@ -26,9 +27,6 @@ public class IntakeIOHardware implements IntakeIO {
 
   private final SparkFlex intakeMotor;
   private final RelativeEncoder intakeEncoder;
-
-  // private PositionTorqueCurrentFOC extendRequest = new PositionTorqueCurrentFOC(0.0);
-  private PositionVoltage extendRequest = new PositionVoltage(0.0);
 
   public IntakeIOHardware(int extendId, int intakeId) {
     this.extendMotor = new TalonFX(extendId);
@@ -62,14 +60,17 @@ public class IntakeIOHardware implements IntakeIO {
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
     inputs.extendConnected = extendSignals.isConnected();
-    inputs.extendPositionInches = extendSignals.getPositionRads();
-    inputs.extendVelocityRadsPerSec = extendSignals.getVelocityRadsPerSec();
+    // Position is in inches due to SensorToMechanismRatio converting rotations to inches
+    inputs.extendPosition = Inches.of(extendSignals.getPosition().in(Rotations));
+    inputs.extendVelocity = extendSignals.getVelocity();
     inputs.extendVoltageApplied = extendSignals.getVoltage();
+    inputs.extendCurrent = extendSignals.getCurrent();
 
     inputs.intakeConnected = intakeMotor.getLastError() == REVLibError.kOk;
-    inputs.intakeVoltageApplied = intakeMotor.getAppliedOutput() * intakeMotor.getBusVoltage();
-    inputs.intakeVelocityRadsPerSec =
-        Units.rotationsPerMinuteToRadiansPerSecond(intakeEncoder.getVelocity());
+    inputs.intakeVoltageApplied =
+        Volts.of(intakeMotor.getAppliedOutput() * intakeMotor.getBusVoltage());
+    inputs.intakeCurrent = Amps.of(intakeMotor.getOutputCurrent());
+    inputs.intakeVelocity = RPM.of(intakeEncoder.getVelocity());
   }
 
   @Override
@@ -83,11 +84,10 @@ public class IntakeIOHardware implements IntakeIO {
           .getConfigurator()
           .apply(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake));
     }
-    // Logger.recordOutput("Intake/extensionSetpoint", outputs.extendMeters);
+    Logger.recordOutput("Intake/extensionSetpoint", outputs.extendVoltage);
     Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVoltage);
 
-    // extendMotor.setControl(extendRequest.withPosition(Units.metersToInches(outputs.extendMeters)));
-    extendMotor.setVoltage(outputs.extendVoltage);
-    intakeMotor.setVoltage(outputs.intakeVoltage);
+    extendMotor.setVoltage(outputs.extendVoltage.in(Volts));
+    intakeMotor.setVoltage(outputs.intakeVoltage.in(Volts));
   }
 }

@@ -56,8 +56,9 @@ public class AzimuthIOHardware implements AzimuthIO {
   public void updateInputs(AzimuthIOInputs inputs) {
     inputs.isConnected = signals.isConnected();
     inputs.voltageApplied = signals.getVoltage();
-    inputs.velocityRadsPerSec = signals.getVelocityRadsPerSec();
-    inputs.positionRads = signals.getPositionRads();
+    inputs.current = signals.getCurrent();
+    inputs.velocity = signals.getVelocity();
+    inputs.position = signals.getPosition();
   }
 
   @Override

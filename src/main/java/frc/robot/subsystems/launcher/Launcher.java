@@ -1,6 +1,5 @@
 package frc.robot.subsystems.launcher;
 
-import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.littletonrobotics.junction.Logger;
@@ -14,7 +13,7 @@ public class Launcher extends SubsystemBase {
   }
 
   public AngularVelocity getSpeed() {
-    return Units.RadiansPerSecond.of(inputs.velocityRadsPerSec);
+    return inputs.velocity;
   }
 
   public void setSpeed(AngularVelocity velocity) {

@@ -5,7 +5,6 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.util.PhoenixSync;
@@ -39,8 +38,9 @@ public class LauncherIOHardware implements LauncherIO {
   public void updateInputs(LauncherIOInputs inputs) {
     inputs.isConnected = signals.isConnected();
     inputs.voltageApplied = signals.getVoltage();
-    inputs.velocityRadsPerSec = signals.getVelocity().in(Units.RadiansPerSecond);
-    inputs.positionRads = signals.getPositionRads();
+    inputs.current = signals.getCurrent();
+    inputs.velocity = signals.getVelocity();
+    inputs.position = signals.getPosition();
   }
 
   @Override

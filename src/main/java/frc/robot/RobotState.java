@@ -15,6 +15,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.*;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Time;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOInputsAutoLogged;
@@ -139,7 +140,11 @@ public class RobotState {
         azimuth.getMeasure(), hoodAngle.getMeasure(), RadiansPerSecond.of(launchSpeed));
   }
 
-  public record VisionObservation(Pose2d pose, Vector<N3> stdDevs, double timestamp) {}
+  public record VisionObservation(Pose2d pose, Vector<N3> stdDevs, Time timestamp) {
+    public double timestampSeconds() {
+      return timestamp.in(Seconds);
+    }
+  }
 
   public record TurretState(Angle azimuthAngle, Angle hoodAngle, AngularVelocity launchSpeed) {}
 }

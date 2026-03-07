@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
@@ -12,9 +11,6 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.subsystems.drive.TunerConstants;
-import java.util.ArrayList;
-import java.util.List;
-import org.photonvision.simulation.SimCameraProperties;
 
 /*
  * Complete description of physical and virtual robot configuration
@@ -36,8 +32,7 @@ public class RobotConfig {
     }
   }
 
-  public record CameraConfig(
-      String name, Transform3d robotToCamera, SimCameraProperties simProps) {}
+  public record CameraConfig(String name, Transform3d robotToCamera) {}
 
   public static OperationMode getMode() {
     return RobotBase.isReal() ? OperationMode.REAL : OperationMode.SIM;
@@ -118,25 +113,7 @@ public class RobotConfig {
             Rotation3d.kZero);
   }
 
-  public static final class VisionConstants {
-    public static final boolean enableLimelightRewind = true;
-    public static final List<CameraConfig> cameras = new ArrayList<>();
-    public static final int matchImuMode = 4;
-    public static final Distance multitagTagDistanceThreshold = Meters.of(3.25);
-  }
-
   public static final class SimConstants {
     public static final double drivetrainSimLoopPeriod = 0.005; // 5ms
-
-    public static final double[] photonSimStdDevs = new double[] {0.015, 0.015, 0.015};
-    public static final SimCameraProperties LL4CameraProperties = new SimCameraProperties();
-  }
-
-  static {
-    SimConstants.LL4CameraProperties.setCalibration(1280, 800, Rotation2d.fromDegrees(90));
-    SimConstants.LL4CameraProperties.setFPS(128);
-    SimConstants.LL4CameraProperties.setAvgLatencyMs(5);
-    SimConstants.LL4CameraProperties.setLatencyStdDevMs(2);
-    SimConstants.LL4CameraProperties.setCalibError(0.25, 0.08);
   }
 }

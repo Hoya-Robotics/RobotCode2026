@@ -1,5 +1,7 @@
 package frc.robot.subsystems.spindexer;
 
+import static edu.wpi.first.units.Units.*;
+
 import frc.robot.subsystems.spindexer.SpindexerIO.SpindexerIOOutputs;
 import frc.robot.util.StateSubsystem;
 import org.littletonrobotics.junction.Logger;
@@ -40,12 +42,12 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
   public void applyState() {
     switch (getCurrentState()) {
       case HOLD:
-        outputs.indexMotorVoltageRequested = 0.0;
-        outputs.feedMotorVoltageRequested = 0.0;
+        outputs.indexMotorVoltage = Volts.zero();
+        outputs.feedMotorVoltage = Volts.zero();
         break;
       case FEED:
-        outputs.indexMotorVoltageRequested = 6.0;
-        outputs.feedMotorVoltageRequested = 6.0;
+        outputs.indexMotorVoltage = Volts.of(6.0);
+        outputs.feedMotorVoltage = Volts.of(6.0);
         break;
     }
   }

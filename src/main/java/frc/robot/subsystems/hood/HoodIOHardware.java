@@ -43,8 +43,9 @@ public class HoodIOHardware implements HoodIO {
   public void updateInputs(HoodIOInputs inputs) {
     inputs.isConnected = signals.isConnected();
     inputs.voltageApplied = signals.getVoltage();
-    inputs.velocityRadsPerSec = signals.getVelocityRadsPerSec();
-    inputs.positionRads = signals.getPositionRads();
+    inputs.current = signals.getCurrent();
+    inputs.velocity = signals.getVelocity();
+    inputs.position = signals.getPosition();
   }
 
   public void setAngle(Angle angle) {

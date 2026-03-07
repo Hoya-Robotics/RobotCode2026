@@ -1,5 +1,7 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.*;
+
 import frc.robot.subsystems.intake.IntakeIO.IntakeIOOutputs;
 import frc.robot.util.StateSubsystem;
 import org.littletonrobotics.junction.Logger;
@@ -45,23 +47,20 @@ public class Intake extends StateSubsystem<IntakeState> {
   public void applyState() {
     switch (getCurrentState()) {
       case IDLE:
-        // outputs.extendMeters = Units.inchesToMeters(inputs.extendPositionInches);
-        outputs.extendVoltage = 0.0;
-        outputs.intakeVoltage = 0.0;
+        outputs.extendVoltage = Volts.zero();
+        outputs.intakeVoltage = Volts.zero();
         break;
       case RETRACT:
         // TODO: run intake slowly while retracting, unstuck balls
-        outputs.extendVoltage = -6.0;
-        // outputs.extendMeters = IntakeConstants.maxRetractionMeters;
-        outputs.intakeVoltage = 1.5;
+        outputs.extendVoltage = Volts.of(-6.0);
+        outputs.intakeVoltage = Volts.of(1.5);
         break;
       case INTAKE:
-        outputs.extendVoltage = 6.0;
-        // outputs.extendMeters = IntakeConstants.maxExtensionMeters;
-        if (inputs.extendPositionInches > 5.5) {
-          outputs.intakeVoltage = 8.0;
+        outputs.extendVoltage = Volts.of(6.0);
+        if (inputs.extendPosition.gt(Inches.of(5.5))) {
+          outputs.intakeVoltage = Volts.of(8.0);
         } else {
-          outputs.intakeVoltage = 0.0;
+          outputs.intakeVoltage = Volts.zero();
         }
         break;
     }

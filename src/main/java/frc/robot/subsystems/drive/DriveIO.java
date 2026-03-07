@@ -6,6 +6,7 @@ import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.measure.Time;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface DriveIO {
@@ -33,7 +34,7 @@ public interface DriveIO {
 
   public default void applyRequest(SwerveRequest request) {}
 
-  public default void addVisionMeasurement(Pose2d pose, double timestamp, Vector<N3> stdDevs) {}
+  public default void addVisionMeasurement(Pose2d pose, Time timestamp, Vector<N3> stdDevs) {}
 
   public default void resetOdometry(Pose2d override) {}
 }

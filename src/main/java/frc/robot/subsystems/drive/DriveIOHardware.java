@@ -1,5 +1,7 @@
 package frc.robot.subsystems.drive;
 
+import static edu.wpi.first.units.Units.*;
+
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
@@ -9,6 +11,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.measure.Time;
 import frc.robot.RobotState.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -51,8 +54,8 @@ public class DriveIOHardware extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder
   }
 
   @Override
-  public void addVisionMeasurement(Pose2d pose, double timestamp, Vector<N3> stdDevs) {
-    super.addVisionMeasurement(pose, timestamp, stdDevs);
+  public void addVisionMeasurement(Pose2d pose, Time timestamp, Vector<N3> stdDevs) {
+    super.addVisionMeasurement(pose, timestamp.in(Seconds), stdDevs);
   }
 
   @Override

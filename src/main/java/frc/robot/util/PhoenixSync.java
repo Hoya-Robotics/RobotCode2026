@@ -5,6 +5,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.StatusSignalCollection;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -22,28 +23,27 @@ public class PhoenixSync {
       StatusSignal<Voltage> voltage,
       StatusSignal<Temperature> temp,
       StatusSignal<Current> current) {
-    public double getPositionRads() {
-      return BaseStatusSignal.getLatencyCompensatedValueAsDouble(position, velocity);
+
+    public Angle getPosition() {
+      return Units.Rotations.of(
+          BaseStatusSignal.getLatencyCompensatedValueAsDouble(position, velocity));
     }
 
     public AngularVelocity getVelocity() {
-      return BaseStatusSignal.getLatencyCompensatedValue(velocity, acceleration);
+      return Units.RotationsPerSecond.of(
+          BaseStatusSignal.getLatencyCompensatedValueAsDouble(velocity, acceleration));
     }
 
-    public double getVelocityRadsPerSec() {
-      return BaseStatusSignal.getLatencyCompensatedValueAsDouble(velocity, acceleration);
+    public Voltage getVoltage() {
+      return voltage.getValue();
     }
 
-    public double getVoltage() {
-      return voltage.getValueAsDouble();
+    public Temperature getTemp() {
+      return temp.getValue();
     }
 
-    public double getTempCelsius() {
-      return temp.getValueAsDouble();
-    }
-
-    public double getCurrentAmps() {
-      return current.getValueAsDouble();
+    public Current getCurrent() {
+      return current.getValue();
     }
 
     public boolean isConnected() {

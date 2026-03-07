@@ -1,24 +1,31 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.*;
+
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Voltage;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface IntakeIO {
   @AutoLog
   public class IntakeIOInputs {
     public boolean extendConnected = false;
-    public double extendPositionInches = 0.0;
-    public double extendVoltageApplied = 0.0;
-    public double extendVelocityRadsPerSec = 0.0;
+    public Distance extendPosition = Inches.zero();
+    public Voltage extendVoltageApplied = Volts.zero();
+    public Current extendCurrent = Amps.zero();
+    public AngularVelocity extendVelocity = RadiansPerSecond.zero();
 
     public boolean intakeConnected = false;
-    public double intakeVoltageApplied = 0.0;
-    public double intakeVelocityRadsPerSec = 0.0;
+    public Voltage intakeVoltageApplied = Volts.zero();
+    public Current intakeCurrent = Amps.zero();
+    public AngularVelocity intakeVelocity = RadiansPerSecond.zero();
   }
 
   public class IntakeIOOutputs {
-    public double intakeVoltage = 0.0;
-    public double extendVoltage = 0.0;
-    // public double extendMeters = 0.0;
+    public Voltage intakeVoltage = Volts.zero();
+    public Voltage extendVoltage = Volts.zero();
   }
 
   public default void updateInputs(IntakeIOInputs inputs) {}
