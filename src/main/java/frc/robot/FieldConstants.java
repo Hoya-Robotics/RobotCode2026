@@ -48,7 +48,18 @@ public class FieldConstants {
   public static final Distance trenchWidthY = Units.Inches.of(47.0);
   public static final Distance trenchCenter = trenchWidthY.div(2.0);
 
-  public static final Pose2d hubCenterPoint = new Pose2d();
+  // Hub center points calculated from April tag positions
+  // Blue hub: tags 9 & 10 at x≈12.519m, y≈3.679m and y≈4.035m
+  // Red hub: tags 25 & 26 at x≈4.022m, y≈4.390m and y≈4.035m
+  private static final Pose2d blueHubCenter =
+      new Pose2d(12.519, (3.679 + 4.035) / 2.0, Rotation2d.kZero);
+
+  public static Pose2d getHubCenter() {
+    return AllianceFlip.apply(blueHubCenter);
+  }
+
+  @Deprecated // Use getHubCenter() for alliance-aware hub position
+  public static final Pose2d hubCenterPoint = blueHubCenter;
 
   public static final List<Pose2d> trenchPoses;
 

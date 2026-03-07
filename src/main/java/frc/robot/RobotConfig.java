@@ -120,8 +120,23 @@ public class RobotConfig {
   }
 
   public static final class VisionConstants {
+    // Hub detection tags (blue: 9,10 | red: 25,26)
     public static final List<Integer> hubTags = List.of(9, 10, 25, 26);
     public static final boolean rewindEnabled = false;
+
+    // Hybrid stddev tuning
+    public static final double baseStddevMultiplier = 1.0;
+    public static final double maxReliableDistance = 5.0; // meters
+    public static final double distanceScalingExponent = 2.0;
+    public static final double singleTagPenalty = 2.5;
+
+    // Filtering thresholds
+    public static final double maxAcceptableDistance = 6.0; // meters
+    public static final double maxAcceptableStddev = 2.0; // meters
+
+    // Hub-relative blending
+    public static final double hubRelativeMaxDistance = 3.5; // prefer hub-relative under this
+    public static final double hubObservationTimeout = 0.5; // seconds
   }
 
   public static final class SimConstants {

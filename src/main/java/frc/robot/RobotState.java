@@ -2,8 +2,10 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -16,11 +18,15 @@ import edu.wpi.first.math.numbers.*;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Time;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.RobotConfig.TurretConstants;
+import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOInputsAutoLogged;
+import java.util.Optional;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
 
 public class RobotState {
   private static final InterpolatingTreeMap<Double, Rotation2d> hoodAngleMap =
@@ -40,6 +46,9 @@ public class RobotState {
   private Supplier<Pose2d> simulatedDrivePoseSupplier = () -> Pose2d.kZero;
   private Drive drive;
   private DriveIOInputsAutoLogged driveInputs;
+
+  // Hub-relative vision state for turret aiming
+  private HubObservation latestHubObservation = null;
 
   private static RobotState instance;
 
@@ -68,6 +77,25 @@ public class RobotState {
     if (drive != null) {
       drive.addVisionMeasurement(estimate);
     }
+  }
+
+  public void addHubObservation(HubObservation observation) {
+    this.latestHubObservation = observation;
+    Logger.recordOutput("RobotState/hubObservation/tagId", observation.tagId());
+    Logger.recordOutput("RobotState/hubObservation/confidence", observation.confidence());
+    Logger.recordOutput(
+        "RobotState/hubObservation/distance", observation.robotToHub().getTranslation().getNorm());
+  }
+
+  public Optional<HubObservation> getLatestHubObservation() {
+    if (latestHubObservation == null) {
+      return Optional.empty();
+    }
+    double age = Timer.getFPGATimestamp() - latestHubObservation.timestamp();
+    if (age > VisionConstants.hubObservationTimeout) {
+      return Optional.empty();
+    }
+    return Optional.of(latestHubObservation);
   }
 
   public void addDriveInputs(DriveIOInputsAutoLogged inputs) {
@@ -100,7 +128,9 @@ public class RobotState {
                 robotToTurret.getX(),
                 robotToTurret.getY(),
                 robotToTurret.getRotation().toRotation2d()));
-    Translation2d target = FieldConstants.hubCenterPoint.getTranslation();
+
+    // Get blended hub target (combines global pose with hub-relative vision when available)
+    Translation2d target = calculateBlendedHubTarget(robotPose);
     double targetDistance = turretPose.getTranslation().getDistance(target);
 
     // v_turret = v_robot + w x r_turret
@@ -140,11 +170,50 @@ public class RobotState {
         azimuth.getMeasure(), hoodAngle.getMeasure(), RadiansPerSecond.of(launchSpeed));
   }
 
+  private Translation2d calculateBlendedHubTarget(Pose2d robotPose) {
+    Translation2d globalHubTarget = FieldConstants.getHubCenter().getTranslation();
+
+    Optional<HubObservation> hubObs = getLatestHubObservation();
+    if (hubObs.isEmpty()) {
+      Logger.recordOutput("RobotState/hubBlend/factor", 0.0);
+      Logger.recordOutput("RobotState/hubBlend/usingVision", false);
+      return globalHubTarget;
+    }
+
+    HubObservation obs = hubObs.get();
+
+    // Calculate hub position from hub-relative measurement
+    // robotToHub gives us the tag position relative to robot origin
+    // Transform to field coordinates: fieldHub = robotPose + rotate(robotToHub, robotYaw)
+    Translation2d hubFromVision =
+        robotPose
+            .getTranslation()
+            .plus(
+                new Translation2d(obs.robotToHub().getX(), obs.robotToHub().getY())
+                    .rotateBy(robotPose.getRotation()));
+
+    // Linear interpolation based on confidence
+    // confidence = 1.0 at close range -> use hub-relative
+    // confidence = 0.0 at far range -> use global pose
+    double blendFactor = MathUtil.clamp(obs.confidence(), 0.0, 1.0);
+
+    Logger.recordOutput("RobotState/hubBlend/factor", blendFactor);
+    Logger.recordOutput("RobotState/hubBlend/usingVision", true);
+    Logger.recordOutput(
+        "RobotState/hubBlend/visionTarget", new Pose2d(hubFromVision, Rotation2d.kZero));
+    Logger.recordOutput(
+        "RobotState/hubBlend/globalTarget", new Pose2d(globalHubTarget, Rotation2d.kZero));
+
+    return globalHubTarget.interpolate(hubFromVision, blendFactor);
+  }
+
   public record VisionObservation(Pose2d pose, Vector<N3> stdDevs, Time timestamp) {
     public double timestampSeconds() {
       return timestamp.in(Seconds);
     }
   }
+
+  public record HubObservation(Pose3d robotToHub, int tagId, double timestamp, double confidence) {}
 
   public record TurretState(Angle azimuthAngle, Angle hoodAngle, AngularVelocity launchSpeed) {}
 }
