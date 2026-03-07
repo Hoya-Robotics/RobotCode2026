@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotState.TurretState;
 import frc.robot.subsystems.azimuth.Azimuth;
 import frc.robot.subsystems.hood.Hood;
@@ -82,11 +83,12 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         spindexer.hold();
         break;
       case SHOOT:
-        // TODO: Ensure azimuth + hood are within tolerance to shoot
-        launcher.setSpeed(turretParams.launchSpeed());
         intake.retract();
-        // TODO: Wait until shooter up to speed before feeding
-        if (launcher.getSpeed().gt(RotationsPerSecond.of(15))) {
+        if (azimuth.getAngle().isNear(turretParams.azimuthAngle(), TurretConstants.azimuthTolerance)
+            && hood.getAngle().isNear(turretParams.hoodAngle(), TurretConstants.hoodTolerance)) {
+          launcher.setSpeed(turretParams.launchSpeed());
+        }
+        if (launcher.getSpeed().gt(TurretConstants.shooterWarmupThreshold)) {
           spindexer.feed();
         }
         break;

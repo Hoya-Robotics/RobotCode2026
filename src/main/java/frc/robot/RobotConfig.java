@@ -7,10 +7,13 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.subsystems.drive.TunerConstants;
+import java.util.List;
 
 /*
  * Complete description of physical and virtual robot configuration
@@ -42,7 +45,6 @@ public class RobotConfig {
   public static final Mass robotMass = Kilograms.of(65.0);
 
   // TODO: inertia, https://choreo.autos/usage/estimating-moi/
-
   public static final Distance bumperWidthX = Inches.of(30.0);
   public static final Distance bumperWidthY = Inches.of(30.0);
   public static final Distance trackWidthX = Inches.of(21.75);
@@ -101,16 +103,25 @@ public class RobotConfig {
     public static final double azimuthGearRatio = 42.0;
     public static final double launcherGearRatio = 3.0;
 
-    // TODO: gains + transform
     public static final PIDGains hoodGains = new PIDGains(180.0, 0.0, 0.0);
     public static final PIDGains azimuthGains = new PIDGains(100.0, 0.0, 5.0);
     public static final PIDGains shootGains = new PIDGains(0.0, 0.0, 0.0);
+
+    public static final Angle azimuthTolerance = Degrees.of(1.5);
+    public static final Angle hoodTolerance = Degrees.of(0.5);
+    public static final AngularVelocity shooterWarmupThreshold = RotationsPerSecond.of(15);
+
     public static final Transform3d robotToTurret =
         new Transform3d(
             Units.inchesToMeters(6.0),
-            Units.inchesToMeters(6.0),
+            Units.inchesToMeters(-6.0),
             Units.inchesToMeters(12.0),
             Rotation3d.kZero);
+  }
+
+  public static final class VisionConstants {
+    public static final List<Integer> hubTags = List.of(9, 10, 25, 26);
+    public static final boolean rewindEnabled = false;
   }
 
   public static final class SimConstants {
