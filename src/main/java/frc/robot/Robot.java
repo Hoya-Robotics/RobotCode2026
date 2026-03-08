@@ -6,15 +6,11 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
-import choreo.Choreo;
-import choreo.trajectory.SwerveSample;
-import choreo.trajectory.Trajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.util.PhoenixSync;
-import java.util.Optional;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
@@ -24,7 +20,6 @@ public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
-  private Optional<Trajectory<SwerveSample>> traj = Choreo.loadTrajectory("VisionTest");
 
   public Robot() {
     Logger.recordMetadata("ProjectName", "Rebuilt4152");
@@ -65,10 +60,6 @@ public class Robot extends LoggedRobot {
     if (m_autonomousCommand != null) {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
-
-    if (traj.isPresent()) {
-      m_robotContainer.drive.followChoreoTrajectory(traj.get());
-    }
   }
 
   @Override
@@ -104,12 +95,6 @@ public class Robot extends LoggedRobot {
   @Override
   public void simulationInit() {
     m_robotContainer.drive.resetOdometry(new Pose2d(3.0, 3.0, Rotation2d.kZero));
-    if (traj.isPresent()) {
-      var initialPose = traj.get().getInitialPose(false);
-      if (initialPose.isPresent()) {
-        m_robotContainer.drive.resetOdometry(initialPose.get());
-      }
-    }
   }
 
   @Override

@@ -19,6 +19,12 @@ import java.util.List;
  * Complete description of physical and virtual robot configuration
  */
 public class RobotConfig {
+  public enum SuperStructureState {
+    IDLE,
+    INTAKE,
+    SHOOT
+  }
+
   public enum OperationMode {
     REAL,
     SIM,
@@ -120,7 +126,7 @@ public class RobotConfig {
 
     public static final Transform3d turretToCamera =
         new Transform3d(
-            Units.inchesToMeters(7.0733),
+            Units.inchesToMeters(0),
             Units.inchesToMeters(0),
             Units.inchesToMeters(0),
             new Rotation3d(0.0, Units.degreesToRadians(30), 0.0));

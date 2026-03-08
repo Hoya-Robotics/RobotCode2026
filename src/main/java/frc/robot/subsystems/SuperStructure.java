@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotState.TurretState;
 import frc.robot.subsystems.azimuth.Azimuth;
@@ -14,12 +15,6 @@ import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.util.StateSubsystem;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
-
-enum SuperStructureState {
-  IDLE,
-  INTAKE,
-  SHOOT
-}
 
 public class SuperStructure extends StateSubsystem<SuperStructureState> {
   private final Spindexer spindexer;

@@ -8,6 +8,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.RobotConfig.*;
 import frc.robot.RobotState;
 import frc.robot.util.LimelightHelpers;
@@ -15,9 +16,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 public class VisionIOLimelight implements VisionIO {
-  // Default stddevs when Limelight NT entry is missing. Indices 6,7,11 are X,Y,Yaw.
-  // Using sensible defaults (0.5m for position, 0.1rad for yaw) to prevent zero stddevs
-  // which cause numerical issues in the Kalman filter.
   private static final double[] kdefaultStddevs =
       new double[] {0, 0, 0, 0, 0, 0, 0.5, 0.5, 0, 0, 0, 0.1};
 
@@ -37,6 +35,14 @@ public class VisionIOLimelight implements VisionIO {
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
+    if (DriverStation.isDisabled()) {
+      LimelightHelpers.SetThrottle(config.name(), 200);
+      LimelightHelpers.SetIMUMode(config.name(), 1);
+    } else {
+      LimelightHelpers.SetThrottle(config.name(), 0);
+      LimelightHelpers.SetIMUMode(config.name(), 4);
+    }
+
     double lastHeartbeat = heartBeat;
     heartBeat = LimelightHelpers.getHeartbeat(config.name());
     inputs.isConnected = heartBeat != lastHeartbeat;
@@ -68,7 +74,6 @@ public class VisionIOLimelight implements VisionIO {
     inputs.numTags = mt2Estimate.tagCount;
 
     double[] rawStdDevs = this.NT.getEntry("stddevs").getDoubleArray(kdefaultStddevs);
-    // Log whether Limelight is publishing stddevs (non-zero at indices 6,7)
     boolean rawStdDevsPresent = rawStdDevs[6] != 0.0 || rawStdDevs[7] != 0.0;
     org.littletonrobotics.junction.Logger.recordOutput(
         "Vision/" + config.name() + "/rawStdDevsPresent", rawStdDevsPresent);

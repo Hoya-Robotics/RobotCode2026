@@ -224,6 +224,13 @@ public class Drive extends StateSubsystem<DriveState> {
     return fieldRequest.withVelocityX(vx).withVelocityY(vy).withRotationalRate(omega);
   }
 
+  public boolean atDriveToPoseSetpoint() {
+    Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
+    double dist = robotPose.getTranslation().getDistance(targetDrivePose.getTranslation());
+    double angleError = robotPose.getRotation().minus(targetDrivePose.getRotation()).getDegrees();
+    return dist < Units.inchesToMeters(2.0) && angleError < 1.5;
+  }
+
   private SwerveRequest getPidToPoseRequest(Pose2d robotPose, Optional<Pose2d> targetPose) {
     var target = targetPose.orElse(targetDrivePose);
     var robotToTarget = target.getTranslation().minus(robotPose.getTranslation());
