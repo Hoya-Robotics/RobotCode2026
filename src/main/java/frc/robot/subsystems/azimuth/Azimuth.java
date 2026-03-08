@@ -57,7 +57,9 @@ public class Azimuth extends SubsystemBase {
         new Rotation3d(
             TurretConstants.turretToCamera.getRotation().getX(),
             TurretConstants.turretToCamera.getRotation().getY(),
-            azimuthRadians + TurretConstants.turretCameraMagicOffset.in(Radians));
+            azimuthRadians
+                + TurretConstants.turretCameraMagicOffset.in(Radians)
+                + TurretConstants.robotToTurret.getRotation().getZ());
 
     return new Pose3d(cameraX, cameraY, cameraZ, cameraRotation);
   }

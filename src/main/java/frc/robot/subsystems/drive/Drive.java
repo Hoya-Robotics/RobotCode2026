@@ -17,6 +17,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.FieldConstants;
@@ -176,9 +177,7 @@ public class Drive extends StateSubsystem<DriveState> {
   // - Maybe align sooner if we are pointing in trench direction
   // / dont align if we arent driving very fast
   private boolean shouldAlignTrench(Pose2d robotPose) {
-    Pose2d trenchPose = robotPose.nearest(FieldConstants.trenchPoses);
-    return robotPose.getTranslation().getDistance(trenchPose.getTranslation())
-        < Units.inchesToMeters(30);
+    return false;
   }
 
   // Match requested x joystick with output y to align to center of trench
@@ -269,7 +268,11 @@ public class Drive extends StateSubsystem<DriveState> {
     magnitude = magnitude * magnitude; // heuristic
     magnitude *= DriveConstants.maxDriveSpeedMps;
 
-    return VecBuilder.fill(magnitude * heading.getCos(), magnitude * heading.getSin(), omega);
+    double xVelocity =
+        magnitude * heading.getCos() * (DriverStation.getAlliance().get() == Alliance.Red ? -1 : 1);
+    double yVelocity =
+        magnitude * heading.getSin() * (DriverStation.getAlliance().get() == Alliance.Red ? -1 : 1);
+    return VecBuilder.fill(xVelocity, yVelocity, omega);
   }
 
   public ChassisSpeeds getChassisSpeeds() {

@@ -50,6 +50,14 @@ public class Vision extends SubsystemBase {
             VecBuilder.fill(
                 state.stdDevs.get(0, 0), state.stdDevs.get(1, 0), state.stdDevs.get(2, 0));
 
+        // Diagnostic logging for debugging vision pose estimation
+        String camName = configs[i].name();
+        Logger.recordOutput("Vision/" + camName + "/acceptedStdDevX", stdDevVec.get(0));
+        Logger.recordOutput("Vision/" + camName + "/acceptedStdDevY", stdDevVec.get(1));
+        Logger.recordOutput("Vision/" + camName + "/acceptedStdDevYaw", stdDevVec.get(2));
+        Logger.recordOutput("Vision/" + camName + "/acceptedPose", state.poseEstimate);
+        Logger.recordOutput("Vision/" + camName + "/acceptedTimestamp", state.timestamp);
+
         RobotState.getInstance()
             .addVisionMeasurement(
                 new VisionObservation(state.poseEstimate, stdDevVec, Seconds.of(state.timestamp)));

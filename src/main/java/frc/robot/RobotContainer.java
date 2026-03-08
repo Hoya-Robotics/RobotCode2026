@@ -119,9 +119,10 @@ public class RobotContainer {
                   .minus(TurretConstants.robotToTurret.getRotation().toRotation2d().getMeasure());
 
           return new TurretState(
-              TurretConstants.turretCameraMagicOffset,
+              TurretConstants.turretCameraMagicOffset.unaryMinus().plus(Units.Degrees.of(90)),
+              // turretToTag.minus(TurretConstants.turretCameraMagicOffset),
               Units.Rotations.of(testHood),
-              Units.RotationsPerSecond.of(25.0));
+              Units.RotationsPerSecond.of(30.0));
         };
     superStructure = new SuperStructure(testSetpoints, spindexer, hood, azimuth, launcher, intake);
     PhoenixSync.optimizeAll();

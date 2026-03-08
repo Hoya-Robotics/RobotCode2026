@@ -15,7 +15,11 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 public class VisionIOLimelight implements VisionIO {
-  private static final double[] kdefaultStddevs = new double[12];
+  // Default stddevs when Limelight NT entry is missing. Indices 6,7,11 are X,Y,Yaw.
+  // Using sensible defaults (0.5m for position, 0.1rad for yaw) to prevent zero stddevs
+  // which cause numerical issues in the Kalman filter.
+  private static final double[] kdefaultStddevs =
+      new double[] {0, 0, 0, 0, 0, 0, 0.5, 0.5, 0, 0, 0, 0.1};
 
   private final Optional<Supplier<Pose3d>> dynamicCameraPoseSupplier;
   private final CameraConfig config;
@@ -64,6 +68,14 @@ public class VisionIOLimelight implements VisionIO {
     inputs.numTags = mt2Estimate.tagCount;
 
     double[] rawStdDevs = this.NT.getEntry("stddevs").getDoubleArray(kdefaultStddevs);
+    // Log whether Limelight is publishing stddevs (non-zero at indices 6,7)
+    boolean rawStdDevsPresent = rawStdDevs[6] != 0.0 || rawStdDevs[7] != 0.0;
+    org.littletonrobotics.junction.Logger.recordOutput(
+        "Vision/" + config.name() + "/rawStdDevsPresent", rawStdDevsPresent);
+    org.littletonrobotics.junction.Logger.recordOutput(
+        "Vision/" + config.name() + "/rawStdDevX", rawStdDevs[6]);
+    org.littletonrobotics.junction.Logger.recordOutput(
+        "Vision/" + config.name() + "/rawStdDevY", rawStdDevs[7]);
     inputs.stdDevs =
         calculateHybridStdDevs(rawStdDevs, mt2Estimate.avgTagDist, mt2Estimate.tagCount);
 

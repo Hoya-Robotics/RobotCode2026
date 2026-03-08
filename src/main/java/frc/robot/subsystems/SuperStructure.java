@@ -85,10 +85,12 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
       case SHOOT:
         // TODO: move intake back and forth + faster spin to unstick balls
         intake.retract();
+        launcher.setSpeed(turretParams.launchSpeed());
+        /*
         if (azimuth.getAngle().isNear(turretParams.azimuthAngle(), TurretConstants.azimuthTolerance)
             && hood.getAngle().isNear(turretParams.hoodAngle(), TurretConstants.hoodTolerance)) {
           launcher.setSpeed(turretParams.launchSpeed());
-        }
+        } */
         if (launcher
             .getSpeed()
             .gt(turretParams.launchSpeed().minus(TurretConstants.shooterTolerance))) {

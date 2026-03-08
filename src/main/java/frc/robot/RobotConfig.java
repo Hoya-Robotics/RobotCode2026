@@ -116,11 +116,11 @@ public class RobotConfig {
             Units.inchesToMeters(-6.0),
             Units.inchesToMeters(-6.0),
             Units.inchesToMeters(18.667),
-            new Rotation3d(0.0, 0.0, Math.PI));
+            new Rotation3d(0.0, 0.0, 0.0));
 
     public static final Transform3d turretToCamera =
         new Transform3d(
-            Units.inchesToMeters(-7.0733),
+            Units.inchesToMeters(7.0733),
             Units.inchesToMeters(0),
             Units.inchesToMeters(0),
             new Rotation3d(0.0, Units.degreesToRadians(30), 0.0));

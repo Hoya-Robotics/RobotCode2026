@@ -15,6 +15,7 @@ import edu.wpi.first.units.measure.Time;
 import frc.robot.RobotState.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import org.littletonrobotics.junction.Logger;
 
 public class DriveIOHardware extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder>
     implements DriveIO {
@@ -55,7 +56,18 @@ public class DriveIOHardware extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder
 
   @Override
   public void addVisionMeasurement(Pose2d pose, Time timestamp, Vector<N3> stdDevs) {
-    super.addVisionMeasurement(pose, timestamp.in(Seconds), stdDevs);
+    // Convert FPGA timestamp to CTRE timebase - critical for pose estimator to work correctly
+    double ctreTimestamp = com.ctre.phoenix6.Utils.fpgaToCurrentTime(timestamp.in(Seconds));
+
+    // Log vision measurement being passed to CTRE estimator
+    Logger.recordOutput("Drive/visionMeasurement/pose", pose);
+    Logger.recordOutput("Drive/visionMeasurement/fpgaTimestamp", timestamp.in(Seconds));
+    Logger.recordOutput("Drive/visionMeasurement/ctreTimestamp", ctreTimestamp);
+    Logger.recordOutput("Drive/visionMeasurement/stdDevX", stdDevs.get(0));
+    Logger.recordOutput("Drive/visionMeasurement/stdDevY", stdDevs.get(1));
+    Logger.recordOutput("Drive/visionMeasurement/stdDevYaw", stdDevs.get(2));
+
+    super.addVisionMeasurement(pose, ctreTimestamp, stdDevs);
   }
 
   @Override
