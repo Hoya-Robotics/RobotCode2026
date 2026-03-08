@@ -50,6 +50,8 @@ public class Drive extends StateSubsystem<DriveState> {
   private final PIDController trenchYController = DriveConstants.trenchYGains.toController();
 
   private Pose2d targetDrivePose = null;
+  private Pose2d lookaheadPose = null;
+  private double blendStartDistance = 0.0;
   private Optional<Trajectory<SwerveSample>> choreoTrajectory = Optional.empty();
   private Timer choreoTimer = new Timer();
 
@@ -106,6 +108,14 @@ public class Drive extends StateSubsystem<DriveState> {
 
   public void driveToPose(Pose2d target) {
     this.targetDrivePose = target;
+    this.lookaheadPose = null;
+    setState(DriveState.TO_POSE);
+  }
+
+  public void driveToPoseWithLookahead(Pose2d target, Pose2d lookahead, double blendStartMeters) {
+    this.targetDrivePose = target;
+    this.lookaheadPose = lookahead;
+    this.blendStartDistance = blendStartMeters;
     setState(DriveState.TO_POSE);
   }
 
@@ -132,7 +142,6 @@ public class Drive extends StateSubsystem<DriveState> {
         choreoYController.reset();
         choreoXController.reset();
         choreoThetaController.reset();
-        ;
         break;
       default:
         break;
@@ -234,30 +243,43 @@ public class Drive extends StateSubsystem<DriveState> {
     var target = targetPose.orElse(targetDrivePose);
     var robotToTarget = target.getTranslation().minus(robotPose.getTranslation());
     double distance = robotToTarget.getNorm();
-    Rotation2d heading = robotToTarget.getAngle();
+    Rotation2d headingToTarget = robotToTarget.getAngle();
 
     double linearOutput =
         Math.min(
             Math.abs(linearController.calculate(distance, 0.0)), DriveConstants.maxDriveSpeedMps);
-    double vx = linearOutput * heading.getCos();
-    double vy = linearOutput * heading.getSin();
+    double vx = linearOutput * headingToTarget.getCos();
+    double vy = linearOutput * headingToTarget.getSin();
+    Rotation2d targetHeading = target.getRotation();
+
+    // Blend with lookahead if present and within blend range
+    if (lookaheadPose != null && distance < blendStartDistance) {
+      var toLookahead = lookaheadPose.getTranslation().minus(robotPose.getTranslation());
+      Rotation2d headingToLookahead = toLookahead.getAngle();
+      double vxLookahead = linearOutput * headingToLookahead.getCos();
+      double vyLookahead = linearOutput * headingToLookahead.getSin();
+
+      // Quadratic blend: 0 at blendStart, 1 at target
+      double t = 1.0 - (distance / blendStartDistance);
+      double blend = t * t;
+      vx = vx * (1 - blend) + vxLookahead * blend;
+      vy = vy * (1 - blend) + vyLookahead * blend;
+      targetHeading = target.getRotation().interpolate(lookaheadPose.getRotation(), blend);
+      Logger.recordOutput("Drive/ToPose/blend", blend);
+    }
 
     double omega =
         MathUtil.clamp(
             omegaController.calculate(
-                robotPose.getRotation().getRadians(), target.getRotation().getRadians()),
+                robotPose.getRotation().getRadians(), targetHeading.getRadians()),
             -DriveConstants.maxRotationSpeedRadPerSec,
             DriveConstants.maxRotationSpeedRadPerSec);
 
     var speeds = ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, omega, inputs.gyroYaw);
-
     Logger.recordOutput("Drive/ToPose/TargetPose", target);
     Logger.recordOutput("Drive/ToPose/linearError", distance);
-    Logger.recordOutput("Drive/ToPose/headingDeg", heading.getDegrees());
-    Logger.recordOutput("Drive/ToPose/linearOutput", linearOutput);
-    Logger.recordOutput("Drive/ToPose/OmegaOutput", omega);
-    Logger.recordOutput("Drive/ToPose/speeds", speeds);
-
+    Logger.recordOutput("Drive/ToPose/vx", vx);
+    Logger.recordOutput("Drive/ToPose/vy", vy);
     return robotRelativeRequest.withSpeeds(speeds);
   }
 

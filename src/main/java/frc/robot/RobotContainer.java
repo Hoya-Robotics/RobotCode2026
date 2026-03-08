@@ -25,6 +25,7 @@ import frc.robot.subsystems.spindexer.*;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
+import frc.robot.util.AllianceFlip;
 import frc.robot.util.FuelSim;
 import frc.robot.util.PhoenixSync;
 import java.util.Optional;
@@ -110,20 +111,19 @@ public class RobotContainer {
 
           Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
           Translation2d tagPosition =
-              FieldConstants.aprilLayout.getTagPose(10).get().getTranslation().toTranslation2d();
+              AllianceFlip.apply(
+                  FieldConstants.aprilLayout
+                      .getTagPose(10)
+                      .get()
+                      .getTranslation()
+                      .toTranslation2d());
           Rotation2d fieldAngleToTag = tagPosition.minus(robotPose.getTranslation()).getAngle();
           Rotation2d robotRelativeAngle = fieldAngleToTag.minus(robotPose.getRotation());
 
-          Angle turretToTag =
-              robotRelativeAngle
-                  .getMeasure()
-                  .minus(TurretConstants.robotToTurret.getRotation().toRotation2d().getMeasure());
+          Angle turretToTag = robotRelativeAngle.getMeasure();
 
           return new TurretState(
-              Units.Degrees.of(90),
-              // turretToTag.minus(TurretConstants.turretCameraMagicOffset),
-              Units.Rotations.of(testHood),
-              Units.RotationsPerSecond.of(30.0));
+              turretToTag, Units.Rotations.of(testHood), Units.RotationsPerSecond.of(30.0));
         };
     superStructure = new SuperStructure(testSetpoints, spindexer, hood, azimuth, launcher, intake);
     PhoenixSync.optimizeAll();

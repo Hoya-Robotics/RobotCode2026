@@ -116,18 +116,18 @@ public class RobotConfig {
 
     public static final Angle azimuthTolerance = Degrees.of(1.5);
     public static final Angle hoodTolerance = Degrees.of(0.5);
-    public static final AngularVelocity shooterTolerance = RotationsPerSecond.of(0.5);
+    public static final AngularVelocity shooterTolerance = RotationsPerSecond.of(2.0);
 
     public static final Transform3d robotToTurret =
         new Transform3d(
             Units.inchesToMeters(-6.0),
             Units.inchesToMeters(-6.0),
             Units.inchesToMeters(18.667),
-            new Rotation3d(0.0, 0.0, Units.rotationsToRadians(0.125)));
+            new Rotation3d(0.0, 0.0, Units.rotationsToRadians(-0.125)));
 
     public static final Rotation3d cameraRotation =
         new Rotation3d(0.0, Units.degreesToRadians(30), 0.0);
-    public static final double azimuthRadiusMeters = Units.inchesToMeters(7.0733);
+    public static final double azimuthRadiusMeters = Units.inchesToMeters(7.0733 - 0.5);
   }
 
   public static final class VisionConstants {

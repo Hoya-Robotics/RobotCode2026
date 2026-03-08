@@ -17,6 +17,7 @@ public class Launcher extends SubsystemBase {
   }
 
   public void setSpeed(AngularVelocity velocity) {
+    Logger.recordOutput("Launcher/setpoint", velocity);
     this.io.setSpeed(velocity);
   }
 

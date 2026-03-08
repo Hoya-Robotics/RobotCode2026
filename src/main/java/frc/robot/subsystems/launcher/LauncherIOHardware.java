@@ -9,7 +9,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.util.PhoenixSync;
 import frc.robot.util.PhoenixSync.TalonFXSignals;
-import org.littletonrobotics.junction.Logger;
 
 public class LauncherIOHardware implements LauncherIO {
   private final TalonFX motor;
@@ -45,7 +44,6 @@ public class LauncherIOHardware implements LauncherIO {
 
   @Override
   public void setSpeed(AngularVelocity velocity) {
-    Logger.recordOutput("Launcher/setpoint", velocity);
     motor.setControl(request.withVelocity(velocity));
   }
 }

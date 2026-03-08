@@ -9,7 +9,7 @@ import org.littletonrobotics.junction.Logger;
 enum IntakeState {
   IDLE,
   RETRACT,
-  INTAKE
+  INTAKE,
 }
 
 public class Intake extends StateSubsystem<IntakeState> {
