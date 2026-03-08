@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -122,23 +123,19 @@ public class RobotConfig {
             Units.inchesToMeters(-6.0),
             Units.inchesToMeters(-6.0),
             Units.inchesToMeters(18.667),
-            new Rotation3d(0.0, 0.0, 0.0));
+            new Rotation3d(0.0, 0.0, Units.rotationsToRadians(0.125)));
 
-    public static final Transform3d turretToCamera =
-        new Transform3d(
-            Units.inchesToMeters(0),
-            Units.inchesToMeters(0),
-            Units.inchesToMeters(0),
-            new Rotation3d(0.0, Units.degreesToRadians(30), 0.0));
-
-    public static final Angle turretCameraMagicOffset = Rotations.of(0.125);
+    public static final Rotation3d cameraRotation =
+        new Rotation3d(0.0, Units.degreesToRadians(30), 0.0);
     public static final double azimuthRadiusMeters = Units.inchesToMeters(7.0733);
   }
 
   public static final class VisionConstants {
     public static final CameraConfig turretCameraConfig =
         new CameraConfig(
-            "limelight-turret", TurretConstants.robotToTurret.plus(TurretConstants.turretToCamera));
+            "limelight-turret",
+            TurretConstants.robotToTurret.plus(
+                new Transform3d(Translation3d.kZero, TurretConstants.cameraRotation)));
 
     // Hub detection tags (blue: 9,10 | red: 25,26)
     public static final List<Integer> hubTags = List.of(9, 10, 25, 26);

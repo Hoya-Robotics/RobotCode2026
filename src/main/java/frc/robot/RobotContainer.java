@@ -10,7 +10,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.RobotConfig.IntakeConstants;
 import frc.robot.RobotConfig.TurretConstants;
@@ -30,6 +29,7 @@ import frc.robot.util.FuelSim;
 import frc.robot.util.PhoenixSync;
 import java.util.Optional;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class RobotContainer {
   public final CommandXboxController driveController = new CommandXboxController(0);
@@ -42,6 +42,7 @@ public class RobotContainer {
   public final SuperStructure superStructure;
   public final Vision vision;
   public FuelSim fuelSim = null;
+  private final LoggedDashboardChooser<Command> autoChooser;
 
   public RobotContainer() {
     switch (RobotConfig.getMode()) {
@@ -119,13 +120,18 @@ public class RobotContainer {
                   .minus(TurretConstants.robotToTurret.getRotation().toRotation2d().getMeasure());
 
           return new TurretState(
-              TurretConstants.turretCameraMagicOffset.unaryMinus().plus(Units.Degrees.of(90)),
+              Units.Degrees.of(90),
               // turretToTag.minus(TurretConstants.turretCameraMagicOffset),
               Units.Rotations.of(testHood),
               Units.RotationsPerSecond.of(30.0));
         };
     superStructure = new SuperStructure(testSetpoints, spindexer, hood, azimuth, launcher, intake);
     PhoenixSync.optimizeAll();
+
+    autoChooser = new LoggedDashboardChooser<>("auto choices");
+    autoChooser.addOption(
+        "autoBuilderTest",
+        AutoBuilder.getTrajectoryCommand(AutoBuilder.testWaypoints, drive, superStructure));
 
     configureBindings();
   }
@@ -150,6 +156,6 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+    return autoChooser.get();
   }
 }

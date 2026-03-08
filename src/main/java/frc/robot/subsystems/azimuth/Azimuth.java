@@ -5,6 +5,8 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotConfig.TurretConstants;
@@ -23,41 +25,20 @@ public class Azimuth extends SubsystemBase {
     return inputs.position;
   }
 
-  public void setAngle(Angle angle) {
-    this.io.setAngle(angle);
+  public void setAngle(Angle robotAngle) {
+    this.io.setAngle(robotAngle.minus(TurretConstants.robotToTurret.getRotation().getMeasureZ()));
   }
 
   public Pose3d getTurretCameraPose() {
     double azimuthRadians = inputs.position.in(Radians);
 
-    // Get turret center position in robot space
-    double turretX = TurretConstants.robotToTurret.getX();
-    double turretY = TurretConstants.robotToTurret.getY();
-    double turretZ = TurretConstants.robotToTurret.getZ();
-
-    // Camera position relative to turret center, rotated by azimuth
-    // The camera orbits around the turret pivot at azimuthRadiusMeters
-    double cameraLocalX = TurretConstants.azimuthRadiusMeters * Math.cos(azimuthRadians);
-    double cameraLocalY = TurretConstants.azimuthRadiusMeters * Math.sin(azimuthRadians);
-    double cameraLocalZ = TurretConstants.turretToCamera.getZ();
-
-    // Final camera position in robot space
-    double cameraX =
-        turretX + cameraLocalX * Math.cos(azimuthRadians) - cameraLocalY * Math.sin(azimuthRadians);
-    double cameraY =
-        turretY + cameraLocalX * Math.sin(azimuthRadians) + cameraLocalY * Math.cos(azimuthRadians);
-    double cameraZ = turretZ + cameraLocalZ;
-
-    // Camera rotation: azimuth yaw + fixed pitch/roll offsets
+    Translation3d cameraOffset =
+        new Translation3d(new Translation2d(TurretConstants.azimuthRadiusMeters, azimuthRadians));
     Rotation3d cameraRotation =
-        new Rotation3d(
-            TurretConstants.turretToCamera.getRotation().getX(),
-            TurretConstants.turretToCamera.getRotation().getY(),
-            azimuthRadians
-                + TurretConstants.turretCameraMagicOffset.in(Radians)
-                + TurretConstants.robotToTurret.getRotation().getZ());
-
-    return new Pose3d(cameraX, cameraY, cameraZ, cameraRotation);
+        new Rotation3d(0.0, 0.0, azimuthRadians).rotateBy(TurretConstants.cameraRotation);
+    return new Pose3d()
+        .transformBy(TurretConstants.robotToTurret)
+        .transformBy(new Transform3d(cameraOffset, cameraRotation));
   }
 
   @Override

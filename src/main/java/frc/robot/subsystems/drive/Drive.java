@@ -17,7 +17,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.FieldConstants;
@@ -275,10 +274,8 @@ public class Drive extends StateSubsystem<DriveState> {
     magnitude = magnitude * magnitude; // heuristic
     magnitude *= DriveConstants.maxDriveSpeedMps;
 
-    double xVelocity =
-        magnitude * heading.getCos() * (DriverStation.getAlliance().get() == Alliance.Red ? -1 : 1);
-    double yVelocity =
-        magnitude * heading.getSin() * (DriverStation.getAlliance().get() == Alliance.Red ? -1 : 1);
+    double xVelocity = magnitude * heading.getCos() * (FieldConstants.isBlueAlliance() ? 1 : -1);
+    double yVelocity = magnitude * heading.getSin() * (FieldConstants.isBlueAlliance() ? 1 : -1);
     return VecBuilder.fill(xVelocity, yVelocity, omega);
   }
 
