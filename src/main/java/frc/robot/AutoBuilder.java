@@ -107,12 +107,12 @@ public class AutoBuilder {
     testWaypoints.add(wp2);
     testWaypoints.add(
         new StopWaypoint(
-            neutralTrench, SuperStructureState.RETRACT, SuperStructureState.RETRACT, () -> true));
+            neutralTrench, SuperStructureState.IDLE, SuperStructureState.IDLE, () -> true));
     testWaypoints.add(wp1);
     testWaypoints.add(fuelPoint);
     testWaypoints.add(wp2);
     testWaypoints.add(
         new StopWaypoint(
-            neutralTrench, SuperStructureState.RETRACT, SuperStructureState.RETRACT, () -> true));
+            neutralTrench, SuperStructureState.IDLE, SuperStructureState.IDLE, () -> true));
   }
 }

@@ -44,7 +44,7 @@ public class RobotContainer {
   public final Vision vision;
   public FuelSim fuelSim = null;
   private final LoggedDashboardChooser<Command> autoChooser;
-  private LoggedTunableNumber launcherVelocity = new LoggedTunableNumber("launcherRPS", 30.0);
+
   private LoggedTunableNumber hoodAngle = new LoggedTunableNumber("hoodAngleDegrees", 0.0);
   private LoggedTunableNumber launcherVoltage = new LoggedTunableNumber("launcherVoltage", 12.0);
 
@@ -110,20 +110,17 @@ public class RobotContainer {
     }
     Supplier<TurretState> testSetpoints =
         () -> {
-          // double testHood = driveController.getLeftTriggerAxis() * 0.107;
           Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
           Translation2d tagPosition = FieldConstants.Hub.getTopCenter();
-          // FieldConstants.Hub.getTopCenter().getTranslation();
+
           Rotation2d fieldAngleToTag = tagPosition.minus(robotPose.getTranslation()).getAngle();
           Rotation2d robotRelativeAngle = fieldAngleToTag.minus(robotPose.getRotation());
 
           Angle turretToTag = robotRelativeAngle.getMeasure();
-
           return new TurretState(
               turretToTag,
               Units.Degrees.of(hoodAngle.getAsDouble()),
               launcherVoltage.getAsDouble());
-          // Units.RotationsPerSecond.of(launcherVelocity.getAsDouble()));
         };
     superStructure = new SuperStructure(testSetpoints, spindexer, hood, azimuth, launcher, intake);
     // superStructure = new SuperStructure(RobotState.getInstance()::getTurretSetpoint, spindexer,

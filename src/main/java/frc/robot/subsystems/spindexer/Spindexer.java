@@ -46,12 +46,6 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
         outputs.feedMotorVoltage = Volts.zero();
         break;
       case FEED:
-        // HACK
-        /*if (Timer.getFPGATimestamp() % 5.0 < 0.5) {
-          outputs.indexMotorVoltage = Volts.of(-6.0);
-        } else {
-          outputs.indexMotorVoltage = Volts.of(6.0);
-        }*/
         outputs.indexMotorVoltage = Volts.of(4.5);
         outputs.feedMotorVoltage = Volts.of(7.5);
         break;

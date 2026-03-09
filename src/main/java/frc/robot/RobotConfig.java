@@ -23,8 +23,7 @@ public class RobotConfig {
   public enum SuperStructureState {
     IDLE,
     INTAKE,
-    SHOOT,
-    RETRACT
+    SHOOT
   }
 
   public enum OperationMode {
@@ -99,6 +98,9 @@ public class RobotConfig {
 
     public static final Distance maxExtension = Inches.of(11.4);
     public static final Distance maxRetraction = Inches.of(7.5);
+
+		public static final Distance agitateOutDist = Inches.of(10.0);
+		public static final Distance agitateInDist = Inches.of(9.0);
   }
 
   public static final class TurretConstants {
@@ -117,7 +119,9 @@ public class RobotConfig {
 
     public static final Angle azimuthTolerance = Degrees.of(1.5);
     public static final Angle hoodTolerance = Degrees.of(0.5);
-    public static final AngularVelocity shooterTolerance = RotationsPerSecond.of(2.0);
+    public static final AngularVelocity shotSpeedThreshold = RotationsPerSecond.of(20);
+    public static final double shooterWarmVoltage = 3.0;
+
 
     public static final Transform3d robotToTurret =
         new Transform3d(

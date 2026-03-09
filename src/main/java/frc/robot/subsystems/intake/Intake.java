@@ -58,7 +58,6 @@ public class Intake extends StateSubsystem<IntakeState> {
         outputs.intakeVoltage = Volts.zero();
         break;
       case RETRACT:
-        // TODO: run intake slowly while retracting, unstuck balls
         outputs.extendVoltage = Volts.of(-8.0);
         outputs.intakeVoltage = Volts.of(1.5);
         break;
@@ -67,20 +66,15 @@ public class Intake extends StateSubsystem<IntakeState> {
         outputs.intakeVoltage = Volts.of(12.0);
         break;
       case AGITATE:
-        if (agitatingForward) {
-          if (inputs.extendPosition.in(Inches) > 10.0) {
-            agitatingForward = false;
-          }
-          outputs.extendVoltage = Volts.of(4.0);
-        } else {
-          if (inputs.extendPosition.in(Inches) < 8.0) {
-            agitatingForward = true;
-          }
-          outputs.extendVoltage = Volts.of(-4.0);
-        }
+        outputs.extendVoltage = Volts.of(4.0 * (agitatingForward ? 1.0 : -1.0));
+        agitatingForward =
+            agitatingForward
+                ? inputs.extendPosition.lt(IntakeConstants.agitateOutDist)
+                : inputs.extendPosition.lt(IntakeConstants.agitateInDist);
         outputs.intakeVoltage = Volts.of(6.0);
         break;
     }
+
     if (inputs.extendPosition.lt(IntakeConstants.maxRetraction.plus(Inches.of(0.25)))) {
       outputs.intakeVoltage = Volts.of(0.0);
     }
