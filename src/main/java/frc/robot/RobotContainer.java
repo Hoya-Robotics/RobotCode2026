@@ -4,16 +4,12 @@
 
 package frc.robot;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.RobotConfig.IntakeConstants;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.VisionConstants;
-import frc.robot.RobotState.TurretState;
 import frc.robot.subsystems.SuperStructure;
 import frc.robot.subsystems.azimuth.*;
 import frc.robot.subsystems.drive.*;
@@ -25,11 +21,8 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.util.FuelSim;
-import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.PhoenixSync;
 import java.util.Optional;
-import java.util.function.Supplier;
-import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class RobotContainer {
@@ -44,9 +37,6 @@ public class RobotContainer {
   public final Vision vision;
   public FuelSim fuelSim = null;
   private final LoggedDashboardChooser<Command> autoChooser;
-
-  private LoggedTunableNumber hoodAngle = new LoggedTunableNumber("hoodAngleDegrees", 0.0);
-  private LoggedTunableNumber launcherVoltage = new LoggedTunableNumber("launcherVoltage", 12.0);
 
   public RobotContainer() {
     switch (RobotConfig.getMode()) {
@@ -108,24 +98,7 @@ public class RobotContainer {
         launcher = new Launcher(new LauncherIO() {});
         break;
     }
-    Supplier<TurretState> testSetpoints =
-        () -> {
-          Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
-          Translation2d hubPosition = FieldConstants.Hub.getTopCenter().toTranslation2d();
-          Rotation2d azimuth = hubPosition.minus(robotPose.getTranslation()).getAngle();
-          Rotation2d robotRelativeAngle = azimuth.minus(robotPose.getRotation());
-
-          Logger.recordOutput(
-              "Tuning/hubDistance", robotPose.getTranslation().getDistance(hubPosition));
-
-          return new TurretState(
-              robotRelativeAngle.getMeasure(),
-              Units.Degrees.of(hoodAngle.getAsDouble()),
-              launcherVoltage.getAsDouble());
-        };
-    superStructure = new SuperStructure(testSetpoints, spindexer, hood, azimuth, launcher, intake);
-    // superStructure = new SuperStructure(RobotState.getInstance()::getTurretSetpoint, spindexer,
-    // hood, azimuth, launcher, intake);
+    superStructure = new SuperStructure(spindexer, hood, azimuth, launcher, intake);
     PhoenixSync.optimizeAll();
 
     autoChooser = new LoggedDashboardChooser<>("auto choices");

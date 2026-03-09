@@ -4,6 +4,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.RobotConfig.TurretConstants;
+import frc.robot.RobotConfig.TurretTarget;
+import frc.robot.RobotState;
 import frc.robot.RobotState.TurretState;
 import frc.robot.subsystems.azimuth.Azimuth;
 import frc.robot.subsystems.hood.Hood;
@@ -11,7 +13,6 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.launcher.Launcher;
 import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.util.StateSubsystem;
-import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class SuperStructure extends StateSubsystem<SuperStructureState> {
@@ -20,16 +21,11 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
   private final Azimuth azimuth;
   private final Launcher launcher;
   private final Intake intake;
-  private final Supplier<TurretState> setpoints;
+  private TurretTarget target;
 
   public SuperStructure(
-      Supplier<TurretState> setpoints,
-      Spindexer spindexer,
-      Hood hood,
-      Azimuth azimuth,
-      Launcher launcher,
-      Intake intake) {
-    this.setpoints = setpoints;
+      Spindexer spindexer, Hood hood, Azimuth azimuth, Launcher launcher, Intake intake) {
+    this.target = TurretTarget.HUB;
     this.spindexer = spindexer;
     this.hood = hood;
     this.azimuth = azimuth;
@@ -41,7 +37,12 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
 
   @Override
   public void periodic() {
+
     applyState();
+  }
+
+  public Command setTarget(TurretTarget target) {
+    return Commands.runOnce(() -> this.target = target);
   }
 
   public Command idle() {
@@ -59,7 +60,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
   @Override
   public void applyState() {
     Logger.recordOutput("SuperStructure/state", getCurrentState());
-    TurretState turretParams = setpoints.get();
+    TurretState turretParams = RobotState.getInstance().resolveTurretTargetting(target);
 
     azimuth.setAngle(turretParams.azimuthAngle());
     hood.setAngle(turretParams.hoodAngle());

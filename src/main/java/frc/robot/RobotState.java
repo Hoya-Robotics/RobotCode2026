@@ -17,10 +17,14 @@ import edu.wpi.first.math.numbers.*;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Timer;
+import frc.robot.RobotConfig.*;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOInputsAutoLogged;
+import frc.robot.util.AllianceFlip;
+import frc.robot.util.LoggedTunableNumber;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -34,6 +38,10 @@ public class RobotState {
       new InterpolatingDoubleTreeMap();
   private static final InterpolatingDoubleTreeMap timeOfFlightMap =
       new InterpolatingDoubleTreeMap();
+
+  private LoggedTunableNumber hoodAngleTuning = new LoggedTunableNumber("hoodAngleDegrees", 0.0);
+  private LoggedTunableNumber launcherVoltageTuning =
+      new LoggedTunableNumber("launcherVoltage", 12.0);
 
   private static final int kMaxIterations = 10;
   private static final double kConvergenceEpsilon = 0.001;
@@ -128,6 +136,50 @@ public class RobotState {
     return simulatedDrivePoseSupplier.get();
   }
 
+  public TurretState resolveTurretTargetting(RobotConfig.TurretTarget target) {
+    switch (target) {
+      case HUB:
+        return getShootOnTheMoveTurretSetpoint();
+      case TUNING:
+        return turretTuning();
+      case NEAREST_TAG:
+        List<Pose2d> tagPoses =
+            FieldConstants.aprilLayout.getTags().stream()
+                .map(tag -> AllianceFlip.apply(tag.pose.toPose2d()))
+                .toList();
+        Translation2d nearestTag = getEstimatedPose().nearest(tagPoses).getTranslation();
+        return new TurretState(getMotionAdjustedAzimuth(nearestTag), Radians.of(0), 0.0);
+      case PASSING: // TODO: implement
+      default:
+        return new TurretState(Radians.of(0), Radians.of(0), 0.0);
+    }
+  }
+
+  public TurretState turretTuning() {
+    Pose2d robotPose = getEstimatedPose();
+    Translation2d hubPosition = FieldConstants.Hub.getTopCenter().toTranslation2d();
+    Rotation2d azimuth =
+        hubPosition.minus(robotPose.getTranslation()).getAngle().minus(driveInputs.gyroYaw);
+    Logger.recordOutput("Tuning/hubDistance", robotPose.getTranslation().getDistance(hubPosition));
+    return new TurretState(
+        azimuth.getMeasure(),
+        Degrees.of(hoodAngleTuning.getAsDouble()),
+        launcherVoltageTuning.getAsDouble());
+  }
+
+  public Angle getMotionAdjustedAzimuth(Translation2d target) {
+    Pose2d robotPose = getEstimatedPose();
+    Transform3d robotToTurret = TurretConstants.robotToTurret;
+    Translation2d turret =
+        new Pose3d(robotPose).transformBy(robotToTurret).toPose2d().getTranslation();
+    Translation2d turretToFieldVelocity =
+        rigidPointVelocity(driveInputs.Speeds, robotToTurret.getTranslation().toTranslation2d())
+            .rotateBy(driveInputs.gyroYaw);
+    turret = turret.plus(turretToFieldVelocity.times(TurretConstants.azimuthLatencyCompensation));
+    return target.minus(turret).getAngle().minus(driveInputs.gyroYaw).getMeasure();
+  }
+
+  @Deprecated
   public TurretState getTurretSetpoint() {
     Pose2d robotPose = getEstimatedPose();
     Translation2d target = FieldConstants.Hub.getTopCenter().toTranslation2d();
@@ -154,13 +206,7 @@ public class RobotState {
     Transform3d robotToTurret = TurretConstants.robotToTurret;
     Pose2d turretPose = new Pose3d(futurePose).transformBy(robotToTurret).toPose2d();
     Translation2d turretToFieldVelocity =
-        new Translation2d(
-                driveInputs.Speeds.vxMetersPerSecond
-                    - driveInputs.Speeds.omegaRadiansPerSecond
-                    + robotToTurret.getY(),
-                driveInputs.Speeds.vyMetersPerSecond
-                    + driveInputs.Speeds.omegaRadiansPerSecond
-                    + robotToTurret.getX())
+        rigidPointVelocity(driveInputs.Speeds, robotToTurret.getTranslation().toTranslation2d())
             .rotateBy(driveInputs.gyroYaw);
 
     double targetDist = turretPose.getTranslation().getDistance(target);
@@ -193,7 +239,6 @@ public class RobotState {
     }
 
     HubObservation obs = hubObs.get();
-
     Translation2d hubFromVision =
         robotPose
             .getTranslation()
@@ -202,7 +247,6 @@ public class RobotState {
                     .rotateBy(robotPose.getRotation()));
 
     double blendFactor = MathUtil.clamp(obs.confidence(), 0.0, 1.0);
-
     Logger.recordOutput("RobotState/hubBlend/factor", blendFactor);
     Logger.recordOutput(
         "RobotState/hubBlend/visionTarget", new Pose2d(hubFromVision, Rotation2d.kZero));
@@ -210,6 +254,12 @@ public class RobotState {
         "RobotState/hubBlend/globalTarget", new Pose2d(globalHubTarget, Rotation2d.kZero));
 
     return globalHubTarget.interpolate(hubFromVision, blendFactor);
+  }
+
+  private static Translation2d rigidPointVelocity(ChassisSpeeds speeds, Translation2d r) {
+    return new Translation2d(
+        speeds.vxMetersPerSecond - speeds.omegaRadiansPerSecond * r.getY(),
+        speeds.vyMetersPerSecond + speeds.omegaRadiansPerSecond * r.getX());
   }
 
   public record VisionObservation(Pose2d pose, Vector<N3> stdDevs, Time timestamp) {
@@ -221,5 +271,4 @@ public class RobotState {
   public record HubObservation(Pose3d robotToHub, int tagId, double timestamp, double confidence) {}
 
   public record TurretState(Angle azimuthAngle, Angle hoodAngle, double launchVoltage) {}
-  // public record TurretState(Angle azimuthAngle, Angle hoodAngle, AngularVelocity launchSpeed) {}
 }

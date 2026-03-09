@@ -26,6 +26,13 @@ public class RobotConfig {
     SHOOT
   }
 
+  public enum TurretTarget {
+    HUB,
+    NEAREST_TAG,
+    PASSING,
+    TUNING
+  }
+
   public enum OperationMode {
     REAL,
     SIM,
@@ -121,6 +128,8 @@ public class RobotConfig {
     public static final Angle hoodTolerance = Degrees.of(0.5);
     public static final AngularVelocity shotSpeedThreshold = RotationsPerSecond.of(20);
     public static final double shooterWarmVoltage = 3.0;
+
+    public static final double azimuthLatencyCompensation = 0.050;
 
     public static final Transform3d robotToTurret =
         new Transform3d(
