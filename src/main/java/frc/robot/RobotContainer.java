@@ -8,7 +8,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.RobotConfig.IntakeConstants;
@@ -30,6 +29,7 @@ import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.PhoenixSync;
 import java.util.Optional;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class RobotContainer {
@@ -111,14 +111,15 @@ public class RobotContainer {
     Supplier<TurretState> testSetpoints =
         () -> {
           Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
-          Translation2d tagPosition = FieldConstants.Hub.getTopCenter();
+          Translation2d hubPosition = FieldConstants.Hub.getTopCenter().toTranslation2d();
+          Rotation2d azimuth = hubPosition.minus(robotPose.getTranslation()).getAngle();
+          Rotation2d robotRelativeAngle = azimuth.minus(robotPose.getRotation());
 
-          Rotation2d fieldAngleToTag = tagPosition.minus(robotPose.getTranslation()).getAngle();
-          Rotation2d robotRelativeAngle = fieldAngleToTag.minus(robotPose.getRotation());
+          Logger.recordOutput(
+              "Tuning/hubDistance", robotPose.getTranslation().getDistance(hubPosition));
 
-          Angle turretToTag = robotRelativeAngle.getMeasure();
           return new TurretState(
-              turretToTag,
+              robotRelativeAngle.getMeasure(),
               Units.Degrees.of(hoodAngle.getAsDouble()),
               launcherVoltage.getAsDouble());
         };

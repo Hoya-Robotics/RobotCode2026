@@ -99,8 +99,8 @@ public class RobotConfig {
     public static final Distance maxExtension = Inches.of(11.4);
     public static final Distance maxRetraction = Inches.of(7.5);
 
-		public static final Distance agitateOutDist = Inches.of(10.0);
-		public static final Distance agitateInDist = Inches.of(9.0);
+    public static final Distance agitateOutDist = Inches.of(10.0);
+    public static final Distance agitateInDist = Inches.of(9.0);
   }
 
   public static final class TurretConstants {
@@ -121,7 +121,6 @@ public class RobotConfig {
     public static final Angle hoodTolerance = Degrees.of(0.5);
     public static final AngularVelocity shotSpeedThreshold = RotationsPerSecond.of(20);
     public static final double shooterWarmVoltage = 3.0;
-
 
     public static final Transform3d robotToTurret =
         new Transform3d(
@@ -157,6 +156,7 @@ public class RobotConfig {
     public static final double maxAcceptableStddev = 2.0; // meters
 
     // Hub-relative blending
+    public static final boolean useHubLocalizationBlending = false;
     public static final double hubRelativeMaxDistance = 3.5; // prefer hub-relative under this
     public static final double hubObservationTimeout = 0.5; // seconds
   }

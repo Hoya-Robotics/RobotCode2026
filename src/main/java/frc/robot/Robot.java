@@ -43,14 +43,6 @@ public class Robot extends LoggedRobot {
   public void robotPeriodic() {
     PhoenixSync.refreshAll(0.020);
     CommandScheduler.getInstance().run();
-
-    Logger.recordOutput("Test/hubPose", FieldConstants.Hub.getTopCenter());
-    Logger.recordOutput(
-        "Test/hubDistance",
-        RobotState.getInstance()
-            .getEstimatedPose()
-            .getTranslation()
-            .getDistance(FieldConstants.Hub.getTopCenter()));
   }
 
   @Override

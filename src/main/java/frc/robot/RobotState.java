@@ -2,10 +2,12 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
@@ -15,6 +17,7 @@ import edu.wpi.first.math.numbers.*;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.Timer;
+import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOInputsAutoLogged;
@@ -127,7 +130,7 @@ public class RobotState {
 
   public TurretState getTurretSetpoint() {
     Pose2d robotPose = getEstimatedPose();
-    Translation2d target = FieldConstants.Hub.getTopCenter();
+    Translation2d target = FieldConstants.Hub.getTopCenter().toTranslation2d();
     double distance = robotPose.getTranslation().getDistance(target);
 
     Angle robotToTarget =
@@ -140,77 +143,57 @@ public class RobotState {
         robotToTarget, hoodAngleMap.get(distance).getMeasure(), launcherVoltageMap.get(distance));
   }
 
-  /*
-  public TurretState getTurretSetpoints(TurretState turretState) {
+  public TurretState getShootOnTheMoveTurretSetpoint() {
     Pose2d robotPose = getEstimatedPose();
-    ChassisSpeeds speeds = driveInputs.Speeds;
-    Pose2d futurePose = robotPose.exp(speeds.toTwist2d(0.003));
+    Translation2d target =
+        VisionConstants.useHubLocalizationBlending
+            ? calculateBlendedHubTarget(robotPose)
+            : FieldConstants.Hub.getTopCenter().toTranslation2d();
+
+    Pose2d futurePose = robotPose.exp(driveInputs.Speeds.toTwist2d(0.003));
     Transform3d robotToTurret = TurretConstants.robotToTurret;
+    Pose2d turretPose = new Pose3d(futurePose).transformBy(robotToTurret).toPose2d();
+    Translation2d turretToFieldVelocity =
+        new Translation2d(
+                driveInputs.Speeds.vxMetersPerSecond
+                    - driveInputs.Speeds.omegaRadiansPerSecond
+                    + robotToTurret.getY(),
+                driveInputs.Speeds.vyMetersPerSecond
+                    + driveInputs.Speeds.omegaRadiansPerSecond
+                    + robotToTurret.getX())
+            .rotateBy(driveInputs.gyroYaw);
 
-    // Phase Shifted Turret Pose
-    Pose2d turretPose =
-        futurePose.transformBy(
-            new Transform2d(
-                robotToTurret.getX(),
-                robotToTurret.getY(),
-                robotToTurret.getRotation().toRotation2d()));
-
-    // Get blended hub target (combines global pose with hub-relative vision when available)
-    Translation2d target = calculateBlendedHubTarget(robotPose);
-    double targetDistance = turretPose.getTranslation().getDistance(target);
-
-    // v_turret = v_robot + w x r_turret
-    double r_turretVx =
-        speeds.vxMetersPerSecond - speeds.omegaRadiansPerSecond * robotToTurret.getY();
-    double r_turretVy =
-        speeds.vyMetersPerSecond + speeds.omegaRadiansPerSecond * robotToTurret.getX();
-    Translation2d f_turretV =
-        new Translation2d(r_turretVx, r_turretVy).rotateBy(driveInputs.gyroYaw);
-    double f_turretVx = f_turretV.getX();
-    double f_turretVy = f_turretV.getY();
-
-    double timeOfFlight = timeOfFlightMap.get(targetDistance);
-    Pose2d lookaheadPose = turretPose;
-    double lookaheadTargetDist = targetDistance;
-
-    // Iterative lookahead adjust
+    double targetDist = turretPose.getTranslation().getDistance(target);
+    double lastDist = targetDist;
+    double timeOfFlight = timeOfFlightMap.get(targetDist);
+    Translation2d adjustedTurretTranslation = turretPose.getTranslation();
     for (int i = 0; i < kMaxIterations; ++i) {
-      double prevDist = lookaheadTargetDist;
-      timeOfFlight = timeOfFlightMap.get(lookaheadTargetDist);
-      lookaheadPose =
-          new Pose2d(
-              turretPose
-                  .getTranslation()
-                  .plus(new Translation2d(f_turretVx * timeOfFlight, f_turretVy * timeOfFlight)),
-              turretPose.getRotation());
-      lookaheadTargetDist = lookaheadPose.getTranslation().getDistance(target);
-      if (Math.abs(lookaheadTargetDist - prevDist) < kConvergenceEpsilon) break;
+      timeOfFlight = timeOfFlightMap.get(targetDist);
+      adjustedTurretTranslation =
+          adjustedTurretTranslation.plus(turretToFieldVelocity.times(timeOfFlight));
+      lastDist = targetDist;
+      targetDist = adjustedTurretTranslation.getDistance(target);
+      if (Math.abs(targetDist - lastDist) < kConvergenceEpsilon) break;
     }
 
-    // Calculate remaining parameters
-    Rotation2d hoodAngle = hoodAngleMap.get(lookaheadTargetDist);
-    double launchSpeed = launcherSpeedMap.get(lookaheadTargetDist);
-    Rotation2d azimuth = target.minus(lookaheadPose.getTranslation()).getAngle();
-
+    Rotation2d azimuthAngle =
+        target.minus(adjustedTurretTranslation).getAngle().minus(driveInputs.gyroYaw);
     return new TurretState(
-        azimuth.getMeasure(), hoodAngle.getMeasure(), RadiansPerSecond.of(launchSpeed));
+        azimuthAngle.getMeasure(),
+        hoodAngleMap.get(targetDist).getMeasure(),
+        launcherVoltageMap.get(targetDist));
   }
 
   private Translation2d calculateBlendedHubTarget(Pose2d robotPose) {
-    Translation2d globalHubTarget = FieldConstants.Hub.getTopCenter(); // .getTranslation();
+    Translation2d globalHubTarget = FieldConstants.Hub.getTopCenter().toTranslation2d();
 
     Optional<HubObservation> hubObs = getLatestHubObservation();
     if (hubObs.isEmpty()) {
-      Logger.recordOutput("RobotState/hubBlend/factor", 0.0);
-      Logger.recordOutput("RobotState/hubBlend/usingVision", false);
       return globalHubTarget;
     }
 
     HubObservation obs = hubObs.get();
 
-    // Calculate hub position from hub-relative measurement
-    // robotToHub gives us the tag position relative to robot origin
-    // Transform to field coordinates: fieldHub = robotPose + rotate(robotToHub, robotYaw)
     Translation2d hubFromVision =
         robotPose
             .getTranslation()
@@ -218,20 +201,16 @@ public class RobotState {
                 new Translation2d(obs.robotToHub().getX(), obs.robotToHub().getY())
                     .rotateBy(robotPose.getRotation()));
 
-    // Linear interpolation based on confidence
-    // confidence = 1.0 at close range -> use hub-relative
-    // confidence = 0.0 at far range -> use global pose
     double blendFactor = MathUtil.clamp(obs.confidence(), 0.0, 1.0);
 
     Logger.recordOutput("RobotState/hubBlend/factor", blendFactor);
-    Logger.recordOutput("RobotState/hubBlend/usingVision", true);
     Logger.recordOutput(
         "RobotState/hubBlend/visionTarget", new Pose2d(hubFromVision, Rotation2d.kZero));
     Logger.recordOutput(
         "RobotState/hubBlend/globalTarget", new Pose2d(globalHubTarget, Rotation2d.kZero));
 
     return globalHubTarget.interpolate(hubFromVision, blendFactor);
-  }*/
+  }
 
   public record VisionObservation(Pose2d pose, Vector<N3> stdDevs, Time timestamp) {
     public double timestampSeconds() {
