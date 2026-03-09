@@ -2,27 +2,27 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 
-import choreo.trajectory.SwerveSample;
-import choreo.trajectory.Trajectory;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
-import com.therekrab.autopilot.*;
+
+import choreo.trajectory.SwerveSample;
+import choreo.trajectory.Trajectory;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.FieldConstants;
 import frc.robot.RobotConfig.*;
@@ -37,6 +37,7 @@ enum DriveState {
   TO_POSE,
   TELEOP,
   TRENCH,
+	CHOREO
 }
 
 public class Drive extends StateSubsystem<DriveState> {
@@ -48,6 +49,13 @@ public class Drive extends StateSubsystem<DriveState> {
   private final PIDController linearController = DriveConstants.toPoseLinearGains.toController();
   private final PIDController omegaController = DriveConstants.toPoseOmegaGains.toController();
   private final PIDController trenchYController = DriveConstants.trenchYGains.toController();
+
+  private final PIDController choreoXController = DriveConstants.choreoXGains.toController();
+  private final PIDController choreoYController = DriveConstants.choreoYGains.toController();
+  private final PIDController choreoOmegaController = DriveConstants.choreoOmegaGains.toController();
+
+	private Timer choreoTimer = new Timer();
+	private Optional<Trajectory<SwerveSample>> choreoTrajectory = Optional.empty();
 
   private Pose2d targetDrivePose = null;
   private SwerveRequest.ApplyRobotSpeeds robotRelativeRequest =
@@ -68,9 +76,9 @@ public class Drive extends StateSubsystem<DriveState> {
     linearController.setTolerance(DriveConstants.toPoseLinearTolerance);
     omegaController.setTolerance(DriveConstants.toPoseThetaTolerance);
     omegaController.enableContinuousInput(-Math.PI, Math.PI);
+		choreoOmegaController.enableContinuousInput(-Math.PI, Math.PI);
 
     setState(DriveState.IDLE);
-
     RobotState.getInstance().registerDrivetrain(this);
   }
 
@@ -93,9 +101,22 @@ public class Drive extends StateSubsystem<DriveState> {
     setState(DriveState.IDLE);
   }
 
+  public Command driveToPoseCommand(Pose2d target) {
+		return Commands.runOnce(() -> this.driveToPose(target));
+  }
+
   public void driveToPose(Pose2d target) {
     this.targetDrivePose = target;
     setState(DriveState.TO_POSE);
+  }
+
+  public Command followChoreoTrajectoryCommand(Trajectory<SwerveSample> trajectory) {
+		return Commands.runOnce(() -> this.followChoreoTrajectory(trajectory));
+  }
+
+  public void followChoreoTrajectory(Trajectory<SwerveSample> trajectory) {
+		this.choreoTrajectory = Optional.of(trajectory);
+    setState(DriveState.CHOREO);
   }
 
   public void addVisionMeasurement(VisionObservation observation) {
@@ -117,6 +138,9 @@ public class Drive extends StateSubsystem<DriveState> {
         linearController.reset();
         omegaController.reset();
         break;
+			case CHOREO:
+				choreoTimer.restart();
+				break;
       default:
         break;
     }
@@ -143,6 +167,14 @@ public class Drive extends StateSubsystem<DriveState> {
         if (robotPose.getTranslation().getDistance(trenchPose.getTranslation())
             < Units.inchesToMeters(2.0)) setState(DriveState.TELEOP);
         break;
+			case CHOREO:
+				if (choreoTrajectory.isPresent()) {
+					Optional<SwerveSample> sample = choreoTrajectory.get().sampleAt(choreoTimer.get(), ! FieldConstants.isBlueAlliance());
+					if (sample.isPresent()) {
+						applyRequest(choreoSampleRequest(robotPose, sample.get()));
+					}
+				}
+				break;
       case TO_POSE:
         applyRequest(getPidToPoseRequest(robotPose, Optional.empty()));
         break;
@@ -173,12 +205,27 @@ public class Drive extends StateSubsystem<DriveState> {
     return fieldRequest.withVelocityX(xOutput).withVelocityY(yOutput).withRotationalRate(omega);
   }
 
+  public boolean choreoTrajectoryDone() {
+    Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
+		Pose2d finalPose = choreoTrajectory.get().getFinalSample(! FieldConstants.isBlueAlliance()).get().getPose();
+		double linearErr = finalPose.getTranslation().getDistance(robotPose.getTranslation());
+		double headingErr = robotPose.getRotation().minus(finalPose.getRotation()).getDegrees();
+		return linearErr < DriveConstants.toPoseLinearTolerance && headingErr < DriveConstants.toPoseThetaTolerance;
+  }
+
   public boolean atDriveToPoseSetpoint() {
     Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
     double dist = robotPose.getTranslation().getDistance(targetDrivePose.getTranslation());
     double angleError = robotPose.getRotation().minus(targetDrivePose.getRotation()).getDegrees();
     return dist < Units.inchesToMeters(2.0) && angleError < 1.5;
   }
+
+	private SwerveRequest choreoSampleRequest(Pose2d pose, SwerveSample sample) {
+		return fieldRequest.withVelocityX(
+			sample.vx + choreoXController.calculate(pose.getX(), sample.x)
+		).withVelocityY(sample.vy + choreoYController.calculate(pose.getY(), sample.y))
+		.withRotationalRate(sample.omega + choreoOmegaController.calculate(pose.getRotation().getRadians(), sample.heading));
+	}
 
   private SwerveRequest getPidToPoseRequest(Pose2d robotPose, Optional<Pose2d> targetPose) {
     var target = targetPose.orElse(targetDrivePose);

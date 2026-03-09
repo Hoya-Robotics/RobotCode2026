@@ -49,10 +49,8 @@ public class RobotConfig {
     return RobotBase.isReal() ? OperationMode.REAL : OperationMode.SIM;
   }
 
-  // Robot dimensions / specs
   public static final Mass robotMass = Kilograms.of(65.0);
 
-  // TODO: inertia, https://choreo.autos/usage/estimating-moi/
   public static final Distance bumperWidthX = Inches.of(30.0);
   public static final Distance bumperWidthY = Inches.of(30.0);
   public static final Distance trackWidthX = Inches.of(21.75);
@@ -61,7 +59,6 @@ public class RobotConfig {
   public static final Distance wheelRadius = Inches.of(1.897);
   public static final Distance drivetrainRadius = Inches.of(15.38);
 
-  // Drivebase Constants/Config
   public static final class DriveConstants {
     public static final double maxDriveSpeedMps =
         TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
@@ -74,10 +71,11 @@ public class RobotConfig {
     public static final PIDGains toPoseOmegaGains = new PIDGains(8.0, 0.0, 0.0);
     public static final double toPoseThetaTolerance = Units.degreesToRadians(3.0);
 
-    public static final PIDGains trenchYGains = new PIDGains(0.0, 0.0, 0.0);
+    public static final PIDGains trenchYGains = new PIDGains(5.0, 0.0, 0.0);
 
-    public static final PIDGains choreoLinearGains = new PIDGains(7.0, 0.0, 0.0);
-    public static final PIDGains choreoThetaGains = new PIDGains(5.0, 0.0, 0.0);
+		public static final PIDGains choreoXGains = new PIDGains(0.0, 0.0, 0.0);
+		public static final PIDGains choreoYGains = new PIDGains(0.0, 0.0, 0.0);
+		public static final PIDGains choreoOmegaGains = new PIDGains(0.0, 0.0, 0.0);
   }
 
   public static final class SpindexerConstants {
@@ -124,7 +122,6 @@ public class RobotConfig {
     public static final double shooterWarmVoltage = 3.0;
 
     public static final double azimuthLatencyCompensation = 0.050;
-
     public static final Transform3d robotToTurret =
         new Transform3d(
             Units.inchesToMeters(-6.0),
@@ -144,7 +141,6 @@ public class RobotConfig {
             TurretConstants.robotToTurret.plus(
                 new Transform3d(Translation3d.kZero, TurretConstants.cameraRotation)));
 
-    // Hub detection tags (blue: 9,10 | red: 25,26)
     public static final List<Integer> hubTags = List.of(9, 10, 25, 26);
     public static final boolean rewindEnabled = false;
 

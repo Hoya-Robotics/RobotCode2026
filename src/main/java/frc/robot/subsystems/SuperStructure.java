@@ -79,18 +79,14 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     SuperStructureState state = getCurrentState();
     switch (state) {
       case IDLE:
+				intake.retract();
+				spindexer.hold();
       case INTAKE:
+				intake.run();
+				spindexer.hold();
       case UNJAM:
-        if (state == SuperStructureState.INTAKE) {
-          intake.run();
-        } else {
-          intake.retract();
-        }
-        if (state == SuperStructureState.UNJAM) {
-          spindexer.hold();
-        } else {
-          spindexer.reverse();
-        }
+				intake.stay();
+				spindexer.reverse();
         break;
       case SHOOT:
         launcher.setVoltage(turretParams.launchVoltage());
