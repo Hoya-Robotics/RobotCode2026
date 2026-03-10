@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.RobotConfig.IntakeConstants;
 import frc.robot.RobotConfig.TurretConstants;
+import frc.robot.RobotConfig.TurretTarget;
 import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.subsystems.SuperStructure;
 import frc.robot.subsystems.azimuth.*;
@@ -102,8 +103,7 @@ public class RobotContainer {
     PhoenixSync.optimizeAll();
 
     autoChooser = new LoggedDashboardChooser<>("auto choices");
-    // autoChooser.addDefaultOption("testAuto", AutoBuilder.tuneAuto(drive, superStructure));
-    autoChooser.addDefaultOption("testAuto", AutoBuilder.testAuto(drive, superStructure));
+    autoChooser.addDefaultOption("doubleSwipe", AutoBuilder.doubleSwipe(drive, superStructure));
 
     configureBindings();
   }
@@ -112,6 +112,10 @@ public class RobotContainer {
     driveController.leftTrigger(0.3).onTrue(superStructure.intake()).onFalse(superStructure.idle());
     driveController.rightTrigger(0.3).onTrue(superStructure.shoot()).onFalse(superStructure.idle());
     driveController.a().onTrue(superStructure.unjam()).onFalse(superStructure.idle());
+    driveController
+        .b()
+        .onTrue(superStructure.setTarget(TurretTarget.CONSTANT_FORWARD))
+        .onFalse(superStructure.setTarget(TurretTarget.TUNING));
   }
 
   private void configureFuelSim() {

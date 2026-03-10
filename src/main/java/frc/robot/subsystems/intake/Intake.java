@@ -66,12 +66,12 @@ public class Intake extends StateSubsystem<IntakeState> {
         outputs.intakeVoltage = Volts.of(12.0);
         break;
       case AGITATE:
-        outputs.extendVoltage = Volts.of(4.0 * (agitatingForward ? 1.0 : -1.0));
+        outputs.extendVoltage = Volts.of(6.0 * (agitatingForward ? 1.0 : -1.0));
         agitatingForward =
             agitatingForward
                 ? inputs.extendPosition.lt(IntakeConstants.agitateOutDist)
                 : inputs.extendPosition.lt(IntakeConstants.agitateInDist);
-        outputs.intakeVoltage = Volts.of(6.0);
+        outputs.intakeVoltage = Volts.of(-8.0);
         break;
     }
 

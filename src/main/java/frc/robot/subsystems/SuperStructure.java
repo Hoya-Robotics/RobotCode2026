@@ -1,8 +1,9 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.*;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.TurretTarget;
 import frc.robot.RobotState;
 import frc.robot.RobotState.TurretState;
@@ -77,7 +78,8 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     hood.setAngle(turretParams.hoodAngle());
 
     SuperStructureState state = getCurrentState();
-    launcher.setVoltage(TurretConstants.shooterIdleVoltage);
+    launcher.setSpeed(RotationsPerSecond.of(5.0));
+    // launcher.setVoltage(TurretConstants.shooterIdleVoltage);
     switch (state) {
       case IDLE:
         intake.retract();
@@ -92,10 +94,13 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         spindexer.reverse();
         break;
       case SHOOT:
-        launcher.setVoltage(turretParams.launchVoltage());
+        // launcher.setVoltage(turretParams.launchVoltage());
+        launcher.setSpeed(turretParams.launcherSpeed());
+        /*
         if (azimuth.getAngle().isNear(turretParams.azimuthAngle(), TurretConstants.azimuthTolerance)
             && hood.getAngle().isNear(turretParams.hoodAngle(), TurretConstants.hoodTolerance)
-            && launcher.getSpeed().gt(TurretConstants.shotSpeedThreshold)) {
+            && launcher.getSpeed().gt(TurretConstants.shotSpeedThreshold)) {*/
+        if (launcher.getSpeed().isNear(turretParams.launcherSpeed(), RotationsPerSecond.of(5.0))) {
           intake.agitate();
           spindexer.feed();
         }

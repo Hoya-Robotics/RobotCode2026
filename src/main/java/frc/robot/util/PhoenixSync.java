@@ -5,7 +5,6 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.StatusSignalCollection;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
-import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -25,13 +24,11 @@ public class PhoenixSync {
       StatusSignal<Current> current) {
 
     public Angle getPosition() {
-      return Units.Rotations.of(
-          BaseStatusSignal.getLatencyCompensatedValueAsDouble(position, velocity));
+      return BaseStatusSignal.getLatencyCompensatedValue(position, velocity);
     }
 
     public AngularVelocity getVelocity() {
-      return Units.RotationsPerSecond.of(
-          BaseStatusSignal.getLatencyCompensatedValueAsDouble(velocity, acceleration));
+      return BaseStatusSignal.getLatencyCompensatedValue(velocity, acceleration);
     }
 
     public Voltage getVoltage() {

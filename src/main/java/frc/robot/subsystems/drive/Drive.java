@@ -221,7 +221,8 @@ public class Drive extends StateSubsystem<DriveState> {
     double headingErr = robotPose.getRotation().minus(finalPose.getRotation()).getDegrees();
     Logger.recordOutput("Drive/Choreo/linearError", linearErr);
     Logger.recordOutput("Drive/Choreo/headingErr", headingErr);
-    return linearErr < Units.inchesToMeters(8.0) && headingErr < 5.0;
+    return choreoTimer.get() - choreoTrajectory.get().getTotalTime() > 0.25
+        || (linearErr < Units.inchesToMeters(8.0) && headingErr < 5.0);
   }
 
   public boolean atDriveToPoseSetpoint() {

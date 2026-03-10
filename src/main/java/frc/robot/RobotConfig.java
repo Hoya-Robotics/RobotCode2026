@@ -24,7 +24,8 @@ public class RobotConfig {
     HUB,
     NEAREST_TAG,
     PASSING,
-    TUNING
+    TUNING,
+    CONSTANT_FORWARD
   }
 
   public enum OperationMode {
@@ -33,6 +34,8 @@ public class RobotConfig {
   }
 
   // TODO: make this be tunable in advantage scope using 'LoggedTunableNumber'
+  // - make slot0configs / pid controller wrappers that have an reapply command when constants
+  // change
   public record PIDGains(double kp, double ki, double kd) {
     public PIDController toController() {
       return new PIDController(kp, ki, kd);
@@ -62,7 +65,7 @@ public class RobotConfig {
   public static final class DriveConstants {
     public static final double maxDriveSpeedMps =
         TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
-    public static final double maxDriveAccelMps = 9.0;
+    public static final double maxDriveAccelMps = 10.0;
     public static final double maxRotationSpeedRadPerSec =
         maxDriveSpeedMps / drivetrainRadius.in(Meters);
 
@@ -100,7 +103,7 @@ public class RobotConfig {
     public static final Distance maxRetraction = Inches.of(7.5);
 
     public static final Distance agitateOutDist = Inches.of(10.0);
-    public static final Distance agitateInDist = Inches.of(9.0);
+    public static final Distance agitateInDist = Inches.of(7.5);
   }
 
   public static final class TurretConstants {
@@ -111,15 +114,15 @@ public class RobotConfig {
 
     public static final double hoodGearRatio = 171.600;
     public static final double azimuthGearRatio = 42.0;
-    public static final double launcherGearRatio = 3.0;
+    public static final double launcherGearRatio = 2.25;
 
     public static final PIDGains hoodGains = new PIDGains(180.0, 0.0, 0.0);
     public static final PIDGains azimuthGains = new PIDGains(100.0, 0.0, 5.0);
-    public static final PIDGains shootGains = new PIDGains(0.0, 0.0, 0.0);
+    public static final PIDGains shootGains = new PIDGains(0.75, 0.0, 0.0);
 
     public static final Angle azimuthTolerance = Degrees.of(1.5);
     public static final Angle hoodTolerance = Degrees.of(0.5);
-    public static final AngularVelocity shotSpeedThreshold = RotationsPerSecond.of(20);
+    public static final AngularVelocity shotSpeedThreshold = RotationsPerSecond.of(17.5);
     public static final double shooterIdleVoltage = 1.5;
 
     public static final double azimuthLatencyCompensation = 0.050;
@@ -147,13 +150,13 @@ public class RobotConfig {
 
     // Hybrid stddev tuning
     public static final double baseStddevMultiplier = 1.0;
-    public static final double maxReliableDistance = 3.0; // meters
+    public static final double maxReliableDistance = 3.0;
     public static final double distanceScalingExponent = 2.0;
     public static final double singleTagPenalty = 5.0;
 
     // Filtering thresholds
-    public static final double maxAcceptableDistance = 5.0; // meters
-    public static final double maxAcceptableStddev = 2.0; // meters
+    public static final double maxAcceptableDistance = 5.0;
+    public static final double maxAcceptableStddev = 2.0;
   }
 
   public static final class SimConstants {

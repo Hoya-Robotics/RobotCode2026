@@ -14,6 +14,7 @@ import edu.wpi.first.math.interpolation.InverseInterpolator;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.*;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Time;
 import frc.robot.RobotConfig.*;
 import frc.robot.RobotConfig.TurretConstants;
@@ -30,32 +31,38 @@ import org.littletonrobotics.junction.Logger;
 public class RobotState {
   private static final InterpolatingTreeMap<Double, Rotation2d> hoodAngleMap =
       new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), Rotation2d::interpolate);
-  private static final InterpolatingDoubleTreeMap launcherVoltageMap =
+  private static final InterpolatingDoubleTreeMap launcherSpeedMap =
       new InterpolatingDoubleTreeMap();
+  /*
+  private static final InterpolatingDoubleTreeMap launcherVoltageMap =
+      new InterpolatingDoubleTreeMap();*/
   private static final InterpolatingDoubleTreeMap timeOfFlightMap =
       new InterpolatingDoubleTreeMap();
 
   private LoggedTunableNumber hoodAngleTuning = new LoggedTunableNumber("hoodAngleDegrees", 0.0);
+  /*
   private LoggedTunableNumber launcherVoltageTuning =
-      new LoggedTunableNumber("launcherVoltage", 12.0);
+      new LoggedTunableNumber("launcherVoltage", 12.0);*/
+  private LoggedTunableNumber launcherSpeedTuning = new LoggedTunableNumber("launcherSpeed", 20.0);
 
   private static final int kMaxIterations = 10;
   private static final double kConvergenceEpsilon = 0.001;
 
   static {
-    timeOfFlightMap.put(0.0, 2.0);
+    hoodAngleMap.put(2.0, Rotation2d.fromDegrees(6.0));
+    launcherSpeedMap.put(2.0, 27.5);
 
-    hoodAngleMap.put(3.0, Rotation2d.fromDegrees(7.5));
-    launcherVoltageMap.put(3.0, 10.0);
+    hoodAngleMap.put(2.6, Rotation2d.fromDegrees(7.2));
+    launcherSpeedMap.put(2.6, 30.0);
 
-    hoodAngleMap.put(2.5, Rotation2d.fromDegrees(5.5));
-    launcherVoltageMap.put(2.5, 10.0);
+    hoodAngleMap.put(3.0, Rotation2d.fromDegrees(9.0));
+    launcherSpeedMap.put(3.0, 31.0);
 
-    hoodAngleMap.put(2.0, Rotation2d.fromDegrees(6.5));
-    launcherVoltageMap.put(2.0, 10.5);
+    hoodAngleMap.put(3.5, Rotation2d.fromDegrees(10.0));
+    launcherSpeedMap.put(3.5, 32.0);
 
-    hoodAngleMap.put(1.74, Rotation2d.fromDegrees(2.5));
-    launcherVoltageMap.put(1.74, 10.25);
+    hoodAngleMap.put(4.0, Rotation2d.fromDegrees(9.75));
+    launcherSpeedMap.put(4.0, 34.5);
   }
 
   private Supplier<Pose2d> simulatedDrivePoseSupplier = () -> Pose2d.kZero;
@@ -118,16 +125,19 @@ public class RobotState {
         return getShootOnTheMoveTurretSetpoint();
       case TUNING:
         return turretTuning();
+      case CONSTANT_FORWARD:
+        return new TurretState(Radians.of(0.0), Radians.of(0.0), RadiansPerSecond.of(0.0));
       case NEAREST_TAG:
         List<Pose2d> tagPoses =
             FieldConstants.aprilLayout.getTags().stream()
                 .map(tag -> AllianceFlip.apply(tag.pose.toPose2d()))
                 .toList();
         Translation2d nearestTag = getEstimatedPose().nearest(tagPoses).getTranslation();
-        return new TurretState(getMotionAdjustedAzimuth(nearestTag), Radians.of(0), 0.0);
+        return new TurretState(
+            getMotionAdjustedAzimuth(nearestTag), Radians.of(0), RotationsPerSecond.of(0.0));
       case PASSING: // TODO: implement
       default:
-        return new TurretState(Radians.of(0), Radians.of(0), 0.0);
+        return new TurretState(Radians.of(0), Radians.of(0), RotationsPerSecond.of(0.0));
     }
   }
 
@@ -136,11 +146,18 @@ public class RobotState {
     Translation2d hubPosition = FieldConstants.Hub.getTopCenter().toTranslation2d();
     Rotation2d azimuth =
         hubPosition.minus(robotPose.getTranslation()).getAngle().minus(driveInputs.gyroYaw);
-    Logger.recordOutput("Tuning/hubDistance", robotPose.getTranslation().getDistance(hubPosition));
+    Pose2d turretPose = new Pose3d(robotPose).transformBy(TurretConstants.robotToTurret).toPose2d();
+    double hubDistance = turretPose.getTranslation().getDistance(hubPosition);
+    Logger.recordOutput("Tuning/hubDistance", hubDistance);
+    return new TurretState(
+        azimuth.getMeasure(),
+        hoodAngleMap.get(hubDistance).getMeasure(),
+        RotationsPerSecond.of(launcherSpeedMap.get(hubDistance)));
+    /*
     return new TurretState(
         azimuth.getMeasure(),
         Degrees.of(hoodAngleTuning.getAsDouble()),
-        launcherVoltageTuning.getAsDouble());
+        RotationsPerSecond.of(launcherSpeedTuning.getAsDouble()));*/
   }
 
   public Angle getMotionAdjustedAzimuth(Translation2d target) {
@@ -168,7 +185,9 @@ public class RobotState {
             .minus(robotPose.getRotation())
             .getMeasure();
     return new TurretState(
-        robotToTarget, hoodAngleMap.get(distance).getMeasure(), launcherVoltageMap.get(distance));
+        robotToTarget,
+        hoodAngleMap.get(distance).getMeasure(),
+        RotationsPerSecond.of(launcherSpeedMap.get(distance)));
   }
 
   // https://frc-docs--3242.org.readthedocs.build/en/3242/docs/software/advanced-controls/fire-control/dynamic-shooting.html
@@ -190,7 +209,7 @@ public class RobotState {
     for (int i = 0; i < kMaxIterations; ++i) {
       timeOfFlight = timeOfFlightMap.get(targetDist);
       adjustedTurretTranslation =
-          adjustedTurretTranslation.plus(turretToFieldVelocity.times(timeOfFlight));
+          turretPose.getTranslation().plus(turretToFieldVelocity.times(timeOfFlight));
       lastDist = targetDist;
       targetDist = adjustedTurretTranslation.getDistance(target);
       if (Math.abs(targetDist - lastDist) < kConvergenceEpsilon) break;
@@ -201,7 +220,7 @@ public class RobotState {
     return new TurretState(
         azimuthAngle.getMeasure(),
         hoodAngleMap.get(targetDist).getMeasure(),
-        launcherVoltageMap.get(targetDist));
+        RotationsPerSecond.of(launcherSpeedMap.get(targetDist)));
   }
 
   private static Translation2d rigidPointVelocity(ChassisSpeeds speeds, Translation2d r) {
@@ -216,5 +235,6 @@ public class RobotState {
     }
   }
 
-  public record TurretState(Angle azimuthAngle, Angle hoodAngle, double launchVoltage) {}
+  public record TurretState(Angle azimuthAngle, Angle hoodAngle, AngularVelocity launcherSpeed) {}
+  // public record TurretState(Angle azimuthAngle, Angle hoodAngle, double launchVoltage) {}
 }

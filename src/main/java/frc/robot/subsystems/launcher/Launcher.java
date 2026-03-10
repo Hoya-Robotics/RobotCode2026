@@ -1,5 +1,6 @@
 package frc.robot.subsystems.launcher;
 
+import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.littletonrobotics.junction.Logger;
@@ -17,7 +18,7 @@ public class Launcher extends SubsystemBase {
   }
 
   public void setSpeed(AngularVelocity velocity) {
-    // Logger.recordOutput("Launcher/setpoint", velocity);
+    Logger.recordOutput("Launcher/setpoint", velocity);
     this.io.setSpeed(velocity);
   }
 
@@ -30,5 +31,6 @@ public class Launcher extends SubsystemBase {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Launcher", inputs);
+    Logger.recordOutput("Launcher/velocityRPS", getSpeed().in(Units.RotationsPerSecond));
   }
 }

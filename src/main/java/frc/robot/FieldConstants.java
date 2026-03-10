@@ -50,6 +50,12 @@ public class FieldConstants {
   public static final Distance trenchWidthY = Inches.of(47.0);
   public static final Distance trenchCenter = trenchWidthY.div(2.0);
 
+  public static final Translation2d humanStation = new Translation2d(0.5464, 0.6621);
+
+  public static final Translation2d getHumanStation() {
+    return AllianceFlip.apply(humanStation);
+  }
+
   public static class Hub {
     public static final double width = Units.inchesToMeters(47.0);
     public static final double height =
