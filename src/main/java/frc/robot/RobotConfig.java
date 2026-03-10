@@ -66,16 +66,17 @@ public class RobotConfig {
     public static final double maxRotationSpeedRadPerSec =
         maxDriveSpeedMps / drivetrainRadius.in(Meters);
 
-    public static final PIDGains toPoseLinearGains = new PIDGains(5.0, 0.0, 0.0);
+    public static final PIDGains toPoseLinearGains = new PIDGains(3.5, 0.0, 0.0);
+    public static final PIDGains toPoseOmegaGains = new PIDGains(3.5, 0.0, 0.0);
     public static final double toPoseLinearTolerance = Units.inchesToMeters(2.0);
-    public static final PIDGains toPoseOmegaGains = new PIDGains(8.0, 0.0, 0.0);
     public static final double toPoseThetaTolerance = Units.degreesToRadians(3.0);
+    public static final double toPoseEndSpeed = 0.25;
 
     public static final PIDGains trenchYGains = new PIDGains(5.0, 0.0, 0.0);
 
-    public static final PIDGains choreoXGains = new PIDGains(0.0, 0.0, 0.0);
-    public static final PIDGains choreoYGains = new PIDGains(0.0, 0.0, 0.0);
-    public static final PIDGains choreoOmegaGains = new PIDGains(0.0, 0.0, 0.0);
+    public static final PIDGains choreoXGains = new PIDGains(10.0, 0.0, 0.0);
+    public static final PIDGains choreoYGains = new PIDGains(10.0, 0.0, 0.0);
+    public static final PIDGains choreoOmegaGains = new PIDGains(7.5, 0.0, 0.0);
   }
 
   public static final class SpindexerConstants {

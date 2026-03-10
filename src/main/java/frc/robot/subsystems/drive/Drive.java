@@ -102,7 +102,8 @@ public class Drive extends StateSubsystem<DriveState> {
   }
 
   public Command driveToPoseCommand(Pose2d target) {
-    return Commands.runOnce(() -> this.driveToPose(target));
+    return Commands.runOnce(() -> this.driveToPose(target))
+        .andThen(Commands.waitUntil(() -> atDriveToPoseSetpoint()));
   }
 
   public void driveToPose(Pose2d target) {
@@ -220,18 +221,21 @@ public class Drive extends StateSubsystem<DriveState> {
     double headingErr = robotPose.getRotation().minus(finalPose.getRotation()).getDegrees();
     Logger.recordOutput("Drive/Choreo/linearError", linearErr);
     Logger.recordOutput("Drive/Choreo/headingErr", headingErr);
-    return linearErr < DriveConstants.toPoseLinearTolerance
-        && headingErr < DriveConstants.toPoseThetaTolerance;
+    return linearErr < Units.inchesToMeters(8.0) && headingErr < 5.0;
   }
 
   public boolean atDriveToPoseSetpoint() {
     Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
     double dist = robotPose.getTranslation().getDistance(targetDrivePose.getTranslation());
     double angleError = robotPose.getRotation().minus(targetDrivePose.getRotation()).getDegrees();
-    return dist < Units.inchesToMeters(2.0) && angleError < 1.5;
+    return dist < Units.inchesToMeters(3.0)
+        && angleError < 2.0
+        && Math.hypot(inputs.Speeds.vxMetersPerSecond, inputs.Speeds.vyMetersPerSecond)
+            < DriveConstants.toPoseEndSpeed;
   }
 
   private SwerveRequest choreoSampleRequest(Pose2d pose, SwerveSample sample) {
+    Logger.recordOutput("Drive/Choreo/targetPose", sample.getPose());
     return fieldRequest
         .withVelocityX(sample.vx + choreoXController.calculate(pose.getX(), sample.x))
         .withVelocityY(sample.vy + choreoYController.calculate(pose.getY(), sample.y))
@@ -265,6 +269,7 @@ public class Drive extends StateSubsystem<DriveState> {
     Logger.recordOutput("Drive/ToPose/linearError", distance);
     Logger.recordOutput("Drive/ToPose/vx", vx);
     Logger.recordOutput("Drive/ToPose/vy", vy);
+    Logger.recordOutput("Drive/ToPose/omega", omega);
     return robotRelativeRequest.withSpeeds(speeds);
   }
 

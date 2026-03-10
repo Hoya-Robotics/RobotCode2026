@@ -102,6 +102,7 @@ public class RobotContainer {
     PhoenixSync.optimizeAll();
 
     autoChooser = new LoggedDashboardChooser<>("auto choices");
+    // autoChooser.addDefaultOption("testAuto", AutoBuilder.tuneAuto(drive, superStructure));
     autoChooser.addDefaultOption("testAuto", AutoBuilder.testAuto(drive, superStructure));
 
     configureBindings();
