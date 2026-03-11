@@ -6,7 +6,6 @@ import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
@@ -167,6 +166,8 @@ public class RobotState {
   public TurretState resolveTurretTargetting(RobotConfig.TurretTarget target) {
     Logger.recordOutput("Tuning/hubPose", FieldConstants.Hub.getTopCenter());
     switch (target) {
+      case ON_THE_MOVE:
+        return turretIterativeMovingSetpoint();
       case HUB:
         return getTurretSetpoint();
       case TUNING:
@@ -214,32 +215,35 @@ public class RobotState {
   }
 
   // https://frc-docs--3242.org.readthedocs.build/en/3242/docs/software/advanced-controls/fire-control/dynamic-shooting.html
-  public TurretState getShootOnTheMoveTurretSetpoint() {
+  public TurretState turretIterativeMovingSetpoint() {
     Pose2d robotPose = getEstimatedPose();
+    Pose2d turretPose = new Pose3d(robotPose).transformBy(TurretConstants.robotToTurret).toPose2d();
     Translation2d target = FieldConstants.Hub.getTopCenter().toTranslation2d();
 
-    Pose2d futurePose = robotPose.exp(driveInputs.Speeds.toTwist2d(0.003));
-    Transform3d robotToTurret = TurretConstants.robotToTurret;
-    Pose2d turretPose = new Pose3d(futurePose).transformBy(robotToTurret).toPose2d();
-    Translation2d turretToFieldVelocity =
-        rigidPointVelocity(driveInputs.Speeds, robotToTurret.getTranslation().toTranslation2d())
+    double targetDist = turretPose.getTranslation().getDistance(target);
+    Translation2d fieldVelocity =
+        rigidPointVelocity(
+                driveInputs.Speeds,
+                TurretConstants.robotToTurret.getTranslation().toTranslation2d())
             .rotateBy(driveInputs.gyroYaw);
 
-    double targetDist = turretPose.getTranslation().getDistance(target);
     double lastDist = targetDist;
     double timeOfFlight = timeOfFlightMap.get(targetDist);
     Translation2d adjustedTurretTranslation = turretPose.getTranslation();
     for (int i = 0; i < kMaxIterations; ++i) {
       timeOfFlight = timeOfFlightMap.get(targetDist);
       adjustedTurretTranslation =
-          turretPose.getTranslation().plus(turretToFieldVelocity.times(timeOfFlight));
+          turretPose.getTranslation().plus(fieldVelocity.times(timeOfFlight));
       lastDist = targetDist;
       targetDist = adjustedTurretTranslation.getDistance(target);
       if (Math.abs(targetDist - lastDist) < kConvergenceEpsilon) break;
     }
 
+    Rotation2d futureGyroYaw =
+        driveInputs.gyroYaw.plus(
+            Rotation2d.fromRadians(driveInputs.Speeds.omegaRadiansPerSecond * timeOfFlight));
     Rotation2d azimuthAngle =
-        target.minus(adjustedTurretTranslation).getAngle().minus(driveInputs.gyroYaw);
+        target.minus(adjustedTurretTranslation).getAngle().minus(futureGyroYaw);
     return new TurretState(
         azimuthAngle.getMeasure(),
         hoodAngleMap.get(targetDist).getMeasure(),

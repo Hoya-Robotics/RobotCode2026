@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 """
-Flip a Choreo trajectory over the field Y-axis (left/right mirror).
+Flip Choreo trajectories over the field Y-axis (left/right mirror).
 
-Usage: python3 flip_trajectory.py <input.traj> [output.traj]
+Usage: python3 flip_trajectory.py [input.traj] [output.traj]
 
-If no output path is given, creates <input>_flipped.traj
+If no arguments given, processes all trajectories in src/main/deploy/choreo/
+and creates flipped versions with "Left" appended to the filename.
+
+If input path is given without output, creates <input>_flipped.traj
 """
 
 import json
 import re
 import sys
 from pathlib import Path
+
+# Default choreo directory relative to project root
+CHOREO_DIR = Path(__file__).parent.parent / "src" / "main" / "deploy" / "choreo"
 
 FIELD_WIDTH = 8.069  # 2026 Reefscape field width in meters
 
@@ -94,11 +100,89 @@ def flip_trajectory(data: dict) -> dict:
     return data
 
 
-def main():
-    if len(sys.argv) < 2:
-        print(__doc__)
+def flip_single_trajectory(input_path: Path, output_path: Path, suffix: str):
+    """Flip a single trajectory file."""
+    # Read input
+    with open(input_path) as f:
+        data = json.load(f)
+
+    # Flip trajectory
+    flipped = flip_trajectory(data)
+
+    # Update name if present
+    if "name" in flipped:
+        flipped["name"] = flipped["name"] + suffix
+
+    # Write output
+    with open(output_path, "w") as f:
+        json.dump(flipped, f, indent=1)
+
+    print(f"Flipped trajectory written to: {output_path}")
+
+
+def process_all_trajectories():
+    """Process all trajectories in the choreo directory, creating Left versions."""
+    if not CHOREO_DIR.exists():
+        print(f"Error: Choreo directory not found: {CHOREO_DIR}")
         sys.exit(1)
 
+    traj_files = sorted(CHOREO_DIR.glob("*.traj"))
+    if not traj_files:
+        print(f"No .traj files found in {CHOREO_DIR}")
+        sys.exit(1)
+
+    # First pass: delete existing Left files that have a source file
+    deleted = 0
+    for traj_file in traj_files:
+        if "Left" in traj_file.stem:
+            # Check if source file exists (remove "Left" from name)
+            source_name = traj_file.stem.replace("Left", "")
+            source_path = traj_file.with_stem(source_name)
+            if source_path.exists():
+                traj_file.unlink()
+                print(f"Deleted: {traj_file.name}")
+                deleted += 1
+
+    # Refresh file list after deletion
+    traj_files = sorted(CHOREO_DIR.glob("*.traj"))
+
+    # Second pass: create fresh flipped versions
+    processed = 0
+    for input_path in traj_files:
+        # Skip files that have "Left" in the name (orphaned flipped files)
+        if "Left" in input_path.stem:
+            continue
+
+        output_path = input_path.with_stem(input_path.stem + "Left")
+
+        # Read input
+        with open(input_path) as f:
+            data = json.load(f)
+
+        # Flip trajectory
+        flipped = flip_trajectory(data)
+
+        # Update name if present
+        if "name" in flipped:
+            flipped["name"] = flipped["name"] + "Left"
+
+        # Write output
+        with open(output_path, "w") as f:
+            json.dump(flipped, f, indent=1)
+
+        print(f"Created: {output_path.name}")
+        processed += 1
+
+    print(f"\nDeleted {deleted}, created {processed} trajectories")
+
+
+def main():
+    # No arguments: process all trajectories in choreo directory
+    if len(sys.argv) < 2:
+        process_all_trajectories()
+        return
+
+    # Single file mode
     input_path = Path(sys.argv[1])
     if not input_path.exists():
         print(f"Error: {input_path} not found")
@@ -109,22 +193,7 @@ def main():
     else:
         output_path = input_path.with_stem(input_path.stem + "_flipped")
 
-    # Read input
-    with open(input_path) as f:
-        data = json.load(f)
-
-    # Flip trajectory
-    flipped = flip_trajectory(data)
-
-    # Update name if present
-    if "name" in flipped:
-        flipped["name"] = flipped["name"] + "_flipped"
-
-    # Write output
-    with open(output_path, "w") as f:
-        json.dump(flipped, f, indent=1)
-
-    print(f"Flipped trajectory written to: {output_path}")
+    flip_single_trajectory(input_path, output_path, "_flipped")
 
 
 if __name__ == "__main__":

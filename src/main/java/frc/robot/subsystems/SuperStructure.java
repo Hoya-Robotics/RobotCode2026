@@ -80,7 +80,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
   }
 
   private void simulateTurretShot(TurretState params) {
-    if (simShotTimer.get() > 0.25 && RobotState.getInstance().consumeFuel()) {
+    if (simShotTimer.get() > 0.25) { // && RobotState.getInstance().consumeFuel()) {
       Pose2d robotPose = RobotState.getInstance().getSimulatedPose();
       Translation3d pos =
           new Pose3d(robotPose).transformBy(TurretConstants.robotToTurret).getTranslation();
@@ -140,13 +140,14 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
             DriverStation.isAutonomous()
                 && FieldConstants.inNeutralZone(RobotState.getInstance().getEstimatedPose());
         ChassisSpeeds speeds = RobotState.getInstance().getFieldVelocity();
-        double vmag = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
-        if (vmag <= RobotConfig.TurretConstants.maxShootingRobotSpeed
-            && !autoNeutral
-            && RobotConfig.getMode() == OperationMode.SIM) simulateTurretShot(turretParams);
+        boolean speedCapped =
+            Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond) > 2.0
+                && target != TurretTarget.ON_THE_MOVE;
+        if (!speedCapped && !autoNeutral && RobotConfig.getMode() == OperationMode.SIM)
+          simulateTurretShot(turretParams);
         if (launcher.getSpeed().isNear(turretParams.launcherSpeed(), RotationsPerSecond.of(5.0))
             && !autoNeutral
-            && vmag <= RobotConfig.TurretConstants.maxShootingRobotSpeed) {
+            && !speedCapped) {
           intake.agitate();
           spindexer.feed();
         }

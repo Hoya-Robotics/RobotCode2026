@@ -22,6 +22,7 @@ import java.util.List;
 public class RobotConfig {
   public enum TurretTarget {
     HUB,
+    ON_THE_MOVE,
     NEAREST_TAG,
     PASSING,
     TUNING,

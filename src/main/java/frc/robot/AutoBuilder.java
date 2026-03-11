@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+
 public class AutoBuilder {
   enum NodeType {
     STATE_CHANGE,
@@ -31,6 +33,7 @@ public class AutoBuilder {
   }
 
   private static Timer autoTimer = new Timer();
+	public static LoggedDashboardChooser<Command> autoChooser = new LoggedDashboardChooser<>("Auto Routine");
 
   private List<Supplier<Pose2d>> targetPoses = new ArrayList<>();
   private List<String> trajectoryNames = new ArrayList<>();
@@ -189,28 +192,17 @@ public class AutoBuilder {
     return copy;
   }
 
-  public static Command singleSwipe(
-      Drive drive, SuperStructure superStructure, boolean isRightSide) {
-    return new AutoBuilder()
-        .withStateChange(SuperStructureState.INTAKE)
-        .withChoreoTraj("FullFuelSwipe")
-        .withStateChange(SuperStructureState.SHOOT)
-        .withDriveToPoseAllianceAgnostic(new Pose2d(3.5784, 0.663, Rotation2d.kZero))
-        .generate(drive, superStructure, isRightSide);
-  }
+  private static AutoBuilder swipeTemplate(String trajName, boolean endsIntakeToNeutral) {
+      return new AutoBuilder()
+          .withStateChange(SuperStructureState.INTAKE)
+          .withChoreoTraj(trajName)
+          .withStateChange(SuperStructureState.SHOOT)
+          .withDriveToPoseAllianceAgnostic(new Pose2d(3.5784, 0.663, endsIntakeToNeutral ? Rotation2d.kZero : Rotation2d.k180deg));
+	}
 
-  private static AutoBuilder fullSwipeTemplate =
-      new AutoBuilder()
-          .withStateChange(SuperStructureState.INTAKE)
-          .withChoreoTraj("FullFuelSwipe")
-          .withStateChange(SuperStructureState.SHOOT)
-          .withDriveToPoseAllianceAgnostic(new Pose2d(3.5784, 0.663, Rotation2d.kZero));
-  private static AutoBuilder cleanSwipeTemplate =
-      new AutoBuilder()
-          .withStateChange(SuperStructureState.INTAKE)
-          .withChoreoTraj("CleanSwipe")
-          .withStateChange(SuperStructureState.SHOOT)
-          .withDriveToPoseAllianceAgnostic(new Pose2d(3.5784, 0.663, Rotation2d.k180deg));
+  private static AutoBuilder cleanSwipeTemplate = swipeTemplate("CleanSwipe", false);
+  private static AutoBuilder cleanSwipeInverseTemplate = swipeTemplate("CleanSwipeInverse", false);
+  private static AutoBuilder fullSwipeTemplate = swipeTemplate("FullFuelSwipe", true);
 
   public static Command doubleSwipeCleanup(
       Drive drive, SuperStructure superStructure, boolean isRightSide) {
@@ -224,36 +216,60 @@ public class AutoBuilder {
         .generate(drive, superStructure, isRightSide);
   }
 
+  public static Command doubleSwipeCleanupInverse(
+      Drive drive, SuperStructure superStructure, boolean isRightSide) {
+    return fullSwipeTemplate
+        .withDelay(2.0)
+.join(cleanSwipeInverseTemplate)
+        .withDelayTillRemaining(1.0)
+        .captureRewind()
+        .withStateChange(SuperStructureState.IDLE)
+        .withDriveToPoseAllianceAgnostic(new Pose2d(7.5784, 0.663, Rotation2d.k180deg))
+        .generate(drive, superStructure, isRightSide);
+  }
+
+  public static Command doubleSwipeCleanupInverseOutpost(
+      Drive drive, SuperStructure superStructure) {
+    return fullSwipeTemplate
+        .withDelay(2.0)
+        .join(cleanSwipeInverseTemplate)
+				.withDelay(1.0)
+				.withStateChange(SuperStructureState.IDLE)
+				.withDriveToPose(FieldConstants::getHumanStation)
+				.withStateChange(SuperStructureState.SHOOT)
+        .generate(drive, superStructure, true);
+  }
+
   public static Command swipeAndDepot(Drive drive, SuperStructure superStructure) {
     return fullSwipeTemplate
         .withDelay(2.0)
-        .join(
-            new AutoBuilder()
-                .withStateChange(SuperStructureState.INTAKE)
-                .withChoreoTraj("DepotCycle")
-                .withStateChange(SuperStructureState.SHOOT)
-                .withDelayTillRemaining(1.0)
-                .captureRewind()
-                .withStateChange(SuperStructureState.IDLE)
-                .withChoreoTraj("ExitDepot"))
+        .withStateChange(SuperStructureState.INTAKE)
+        .withChoreoTraj("DepotCycle")
+        .withStateChange(SuperStructureState.SHOOT)
+        .withDelayTillRemaining(1.0)
+        .captureRewind()
+        .withStateChange(SuperStructureState.IDLE)
+        .withChoreoTraj("ExitDepot")
         .generate(drive, superStructure, false);
   }
 
-  /*public static Command doubleSwipeHumanStation(Drive drive, SuperStructure superStructure) {
-    return new AutoBuilder()
-        .withStateChange(SuperStructureState.INTAKE)
-        .withChoreoTraj("FullFuelSwipe")
-        .withStateChange(SuperStructureState.SHOOT)
-        .withDriveToPoseAllianceAgnostic(new Pose2d(3.5784, 0.663, Rotation2d.kZero))
-        .withDelay(2.0)
-        .withStateChange(SuperStructureState.INTAKE)
-        .withChoreoTraj("CleanSwipe")
-        .withStateChange(SuperStructureState.SHOOT)
-        .withDriveToPoseAllianceAgnostic(new Pose2d(3.5784, 0.663, Rotation2d.k180deg))
-        .withDelay(1.0)
-        .withDriveToPose(() -> FieldConstants.getHumanStation())
-        .withDelay(0.8)
-        .withDriveToPoseAllianceAgnostic(new Pose2d(1.75, 1.75, Rotation2d.kZero))
-        .generate(drive, superStructure, true);
-  }*/
+	public static Command shootOnTheMoveTest(Drive drive, SuperStructure superStructure) {
+		return new AutoBuilder()
+			.withTrackTarget(TurretTarget.ON_THE_MOVE)
+			.withStateChange(SuperStructureState.SHOOT)
+			.withChoreoTraj("ShootOnTheMoveTest")
+			.withStateChange(SuperStructureState.IDLE)
+			.captureRewind()
+			.generate(drive, superStructure, true);
+	}
+
+	public static void registerAutoChoices(Drive drive, SuperStructure superStructure) {
+		autoChooser.addDefaultOption("doubleSwipeRight", doubleSwipeCleanup(drive, superStructure, true));
+		autoChooser.addOption("doubleSwipeLeft", doubleSwipeCleanup(drive, superStructure, false));
+		autoChooser.addOption("doubleSwipeInverseRight", doubleSwipeCleanupInverse(drive, superStructure, true));
+		autoChooser.addOption("doubleSwipeInverseLeft", doubleSwipeCleanupInverse(drive, superStructure, false));
+		autoChooser.addOption("doubleSwipeInverseOutpost", doubleSwipeCleanupInverseOutpost(drive, superStructure));
+		autoChooser.addOption("swipeAndDepot", swipeAndDepot(drive, superStructure));
+		autoChooser.addOption("shootOnMoveTest", shootOnTheMoveTest(drive, superStructure));
+	}
 }

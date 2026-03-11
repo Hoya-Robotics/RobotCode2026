@@ -24,7 +24,6 @@ import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.util.FuelSim;
 import frc.robot.util.PhoenixSync;
 import java.util.Optional;
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class RobotContainer {
   public final CommandXboxController driveController = new CommandXboxController(0);
@@ -37,7 +36,6 @@ public class RobotContainer {
   public final SuperStructure superStructure;
   public final Vision vision;
   public FuelSim fuelSim = null;
-  private final LoggedDashboardChooser<Command> autoChooser;
 
   public RobotContainer() {
     switch (RobotConfig.getMode()) {
@@ -103,13 +101,7 @@ public class RobotContainer {
     }
     superStructure = new SuperStructure(spindexer, hood, azimuth, launcher, intake);
     PhoenixSync.optimizeAll();
-
-    autoChooser = new LoggedDashboardChooser<>("Auto Routine");
-    autoChooser.addDefaultOption(
-        "doubleSwipeCleanupRight", AutoBuilder.doubleSwipeCleanup(drive, superStructure, true));
-    autoChooser.addOption(
-        "doubleSwipeCleanupLeft", AutoBuilder.doubleSwipeCleanup(drive, superStructure, false));
-    autoChooser.addOption("swipeAndDepot", AutoBuilder.swipeAndDepot(drive, superStructure));
+    AutoBuilder.registerAutoChoices(drive, superStructure);
 
     configureBindings();
   }
@@ -125,6 +117,10 @@ public class RobotContainer {
     driveController
         .x()
         .onTrue(superStructure.setTarget(TurretTarget.TUNING))
+        .onFalse(superStructure.setTarget(TurretTarget.HUB));
+    driveController
+        .y()
+        .onTrue(superStructure.setTarget(TurretTarget.ON_THE_MOVE))
         .onFalse(superStructure.setTarget(TurretTarget.HUB));
   }
 
@@ -151,6 +147,6 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return autoChooser.get();
+    return AutoBuilder.autoChooser.get();
   }
 }
