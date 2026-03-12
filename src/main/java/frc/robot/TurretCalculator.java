@@ -2,6 +2,7 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -75,12 +76,13 @@ public class TurretCalculator {
     timeOfFlightMap.put(4.0, 10.5 / 8.0);
   }
 
-  public static TurretParameters calculateSetpoints(RobotConfig.TurretTarget target) {
+  public static TurretParameters calculateSetpoints(
+      RobotConfig.TurretTarget target, Angle currentAzimuthAngle) {
     Logger.recordOutput("Tuning/hubPose", FieldConstants.Hub.getTopCenter());
-		Translation2d hubPosition = FieldConstants.Hub.getTopCenter().toTranslation2d();
+    Translation2d hubPosition = FieldConstants.Hub.getTopCenter().toTranslation2d();
     switch (target) {
-			case PASSING:
-				return getStationarySetpoint(getPassingTarget());
+      case PASSING:
+        return getStationarySetpoint(getPassingTarget());
       case ON_THE_MOVE:
         return turretIterativeMovingSetpoint();
       case HUB:
@@ -109,25 +111,35 @@ public class TurretCalculator {
                 .getMeasure(),
             Radians.of(0),
             RotationsPerSecond.of(0.0));
-        // case PASSING: // TODO: implement
       default:
         return new TurretParameters(Radians.of(0), Radians.of(0), RotationsPerSecond.of(0.0));
     }
   }
 
-	private static final double xPassTarget = Units.inchesToMeters(37);
-	private static final double yPassTarget = Units.inchesToMeters(65);
-	private static Translation2d getPassingTarget() {
-		Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
-		double flippedY = AllianceFlip.apply(robotPose).getY();
-		boolean mirror = flippedY > FieldConstants.fieldWidth / 2.0;
-		return AllianceFlip.apply(
-			new Translation2d(
-				xPassTarget,
-				mirror ? FieldConstants.fieldWidth - yPassTarget : yPassTarget
-			)
-		);
-	}
+  private static Angle calculateAzimuthAngle(Angle fieldRelativeTargetAngle, Angle currentAngle) {
+    Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
+    double angle =
+        MathUtil.inputModulus(
+            new Rotation2d(fieldRelativeTargetAngle).minus(robotPose.getRotation()).getRotations(),
+            -0.5,
+            0.5);
+    double current = currentAngle.in(Rotations);
+    if (current > 0 && angle + 1 <= TurretConstants.maxAzimuthAngle.in(Rotations)) angle += 1;
+    if (current < 0 && angle - 1 >= -TurretConstants.maxAzimuthAngle.in(Rotations)) angle -= 1;
+    return Rotations.of(angle);
+  }
+
+  private static final double xPassTarget = Units.inchesToMeters(37);
+  private static final double yPassTarget = Units.inchesToMeters(65);
+
+  private static Translation2d getPassingTarget() {
+    Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
+    double flippedY = AllianceFlip.apply(robotPose).getY();
+    boolean mirror = flippedY > FieldConstants.fieldWidth / 2.0;
+    return AllianceFlip.apply(
+        new Translation2d(
+            xPassTarget, mirror ? FieldConstants.fieldWidth - yPassTarget : yPassTarget));
+  }
 
   private static TurretParameters getStationarySetpoint(Translation2d target) {
     Pose2d robotPose = RobotState.getInstance().getEstimatedPose();

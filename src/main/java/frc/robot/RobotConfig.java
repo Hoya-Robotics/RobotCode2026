@@ -107,7 +107,7 @@ public class RobotConfig {
     public static final double extendGearRatio = 1.8364;
     public static final PIDGains extendGains = new PIDGains(1.05, 0.0, 0.0);
 
-    public static final Distance maxExtension = Inches.of(11.4);
+    public static final Distance maxExtension = Inches.of(11.0);
     public static final Distance maxRetraction = Inches.of(7.5);
 
     public static final Distance agitateOutDist = Inches.of(10.0);
@@ -130,6 +130,9 @@ public class RobotConfig {
     public static final PIDGains azimuthGains = new PIDGains(100.0, 0.0, 5.0);
     public static final PIDGains shootGains = new PIDGains(0.75, 0.0, 0.0);
 
+    public static final Angle maxAzimuthAngle = Rotations.of(0.65);
+    public static final Angle minAzimuthAngle = Rotations.of(-0.35);
+
     public static final Angle azimuthTolerance = Degrees.of(1.5);
     public static final Angle hoodTolerance = Degrees.of(0.5);
     public static final AngularVelocity shotSpeedThreshold = RotationsPerSecond.of(17.5);
@@ -142,7 +145,8 @@ public class RobotConfig {
             Units.inchesToMeters(-6.0),
             Units.inchesToMeters(-6.0),
             Units.inchesToMeters(18.667),
-            new Rotation3d(0.0, 0.0, Units.rotationsToRadians(0.125)));
+            new Rotation3d(0.0, 0.0, 0.0));
+    // new Rotation3d(0.0, 0.0, Units.rotationsToRadians(0.125)));
 
     public static final Rotation3d cameraRotation =
         new Rotation3d(0.0, Units.degreesToRadians(30), 0.0);

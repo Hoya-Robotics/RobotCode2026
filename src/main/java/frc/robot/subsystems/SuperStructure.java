@@ -109,7 +109,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
   public void applyState() {
     Logger.recordOutput("SuperStructure/state", getCurrentState());
     Logger.recordOutput("SuperStructure/trackingTarget", target);
-    TurretParameters turretParams = TurretCalculator.calculateSetpoints(target);
+    TurretParameters turretParams = TurretCalculator.calculateSetpoints(target, azimuth.getAngle());
 
     azimuth.setAngle(turretParams.azimuthAngle());
     hood.setAngle(turretParams.hoodAngle());
