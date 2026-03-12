@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -29,6 +30,9 @@ import org.littletonrobotics.junction.Logger;
 
 public class SuperStructure extends StateSubsystem<SuperStructureState> {
   private Timer simShotTimer = new Timer();
+  private Timer shotCooldownTimer = new Timer();
+  private boolean coolingDown = false;
+  private AngularVelocity cooldownSpeed = RotationsPerSecond.of(0.0);
 
   private final Spindexer spindexer;
   private final Hood hood;
@@ -106,6 +110,24 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
   }
 
   @Override
+  public SuperStructureState handleStateTransitions() {
+    if (getCurrentState() == null) return getRequestedState();
+    SuperStructureState state = getCurrentState();
+    switch (state) {
+      case SHOOT:
+        TurretParameters turretParams =
+            TurretCalculator.calculateSetpoints(target, azimuth.getAngle());
+        coolingDown = true;
+        shotCooldownTimer.restart();
+        cooldownSpeed = turretParams.launcherSpeed();
+        break;
+      default:
+        break;
+    }
+    return getRequestedState();
+  }
+
+  @Override
   public void applyState() {
     Logger.recordOutput("SuperStructure/state", getCurrentState());
     Logger.recordOutput("SuperStructure/trackingTarget", target);
@@ -115,7 +137,15 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     hood.setAngle(turretParams.hoodAngle());
 
     SuperStructureState state = getCurrentState();
-    launcher.setSpeed(RotationsPerSecond.of(5.0));
+    if (coolingDown) {
+      launcher.setSpeed(cooldownSpeed);
+      if (shotCooldownTimer.get() > 0.25) {
+        shotCooldownTimer.stop();
+        coolingDown = false;
+      }
+    } else {
+      launcher.setSpeed(RotationsPerSecond.of(10.0));
+    }
     // launcher.setVoltage(TurretConstants.shooterIdleVoltage);
     switch (state) {
       case IDLE:
@@ -132,10 +162,6 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         break;
       case SHOOT:
         launcher.setSpeed(turretParams.launcherSpeed());
-        /*
-        if (azimuth.getAngle().isNear(turretParams.azimuthAngle(), TurretConstants.azimuthTolerance)
-            && hood.getAngle().isNear(turretParams.hoodAngle(), TurretConstants.hoodTolerance)
-            && launcher.getSpeed().gt(TurretConstants.shotSpeedThreshold)) {*/
         // HACK: auto passing will need better fix
         boolean autoNeutral =
             DriverStation.isAutonomous()
@@ -144,11 +170,27 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         boolean speedCapped =
             Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond) > 2.0
                 && target != TurretTarget.ON_THE_MOVE;
+        boolean hoodWithinTolerance =
+            hood.getAngle().isNear(turretParams.hoodAngle(), TurretConstants.hoodTolerance);
+        boolean azimuthWithinTolerance =
+            azimuth
+                .getAngle()
+                .isNear(turretParams.azimuthAngle(), TurretConstants.azimuthTolerance);
+        boolean upToSpeed =
+            launcher.getSpeed().isNear(turretParams.launcherSpeed(), RotationsPerSecond.of(5.0));
+
+        Logger.recordOutput("SuperStructure/hoodWithinTolerance", hoodWithinTolerance);
+        // Logger.recordOutput("SuperStructure/azimuthWithinTolerance", azimuthWithinTolerance);
+        Logger.recordOutput("SuperStructure/upToSpeed", upToSpeed);
+        Logger.recordOutput("SuperStructure/speedCapped", speedCapped);
+
         if (!speedCapped && !autoNeutral && RobotConfig.getMode() == OperationMode.SIM)
           simulateTurretShot(turretParams);
-        if (launcher.getSpeed().isNear(turretParams.launcherSpeed(), RotationsPerSecond.of(5.0))
-            && !autoNeutral
-            && !speedCapped) {
+        if (upToSpeed
+            && hoodWithinTolerance
+            // && azimuthWithinTolerance
+            && !speedCapped
+            && !autoNeutral) {
           intake.agitate();
           spindexer.feed();
         }

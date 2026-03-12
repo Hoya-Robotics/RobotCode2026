@@ -63,7 +63,7 @@ public class Intake extends StateSubsystem<IntakeState> {
         break;
       case INTAKE:
         outputs.extendVoltage = Volts.of(8.0);
-        outputs.intakeVoltage = Volts.of(8.0);
+        outputs.intakeVoltage = Volts.of(9.0);
         break;
       case AGITATE:
         outputs.extendVoltage = Volts.of(6.0 * (agitatingForward ? 1.0 : -1.0));

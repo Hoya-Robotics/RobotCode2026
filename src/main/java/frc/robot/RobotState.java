@@ -70,6 +70,7 @@ public class RobotState {
   public void addVisionMeasurement(VisionObservation estimate) {
     boolean autoNeutral =
         DriverStation.isAutonomousEnabled() && FieldConstants.inNeutralZone(getEstimatedPose());
+    Logger.recordOutput("RobotState/autoNeutral", autoNeutral);
     if (drive != null && !autoNeutral) {
       drive.addVisionMeasurement(estimate);
     }

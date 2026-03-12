@@ -216,16 +216,27 @@ public class AutoBuilder {
         .generate(drive, superStructure, isRightSide);
   }
 
+  public static Command doubleSwipeCleanupInverse(
+      Drive drive, SuperStructure superStructure, boolean isRightSide) {
+    return fullSwipeTemplate
+        .withDelay(3.0)
+        .join(cleanSwipeInverseTemplate)
+        .withDelayTillRemaining(0.5)
+        .captureRewind()
+        .withStateChange(SuperStructureState.IDLE)
+        .withDriveToPoseAllianceAgnostic(new Pose2d(7.5784, 0.663, Rotation2d.k180deg))
+        .generate(drive, superStructure, isRightSide);
+  }
 
-  public static Command doubleSwipeCleanupOutpost(
+  public static Command doubleSwipeCleanupInverseOutpost(
       Drive drive, SuperStructure superStructure) {
     return fullSwipeTemplate
         .withDelay(2.75)
         .withStateChange(SuperStructureState.INTAKE)
-        .withChoreoTraj("CleanSwipe")
+        .withChoreoTraj("CleanSwipeInverse")
         .withStateChange(SuperStructureState.SHOOT)
         .withDriveToPose(FieldConstants::getHumanStation)
-        .withDelayTillRemaining(1.25)
+        .withDelayTillRemaining(1.75)
         .withStateChange(SuperStructureState.IDLE)
         .withChoreoTraj("LeaveOutpost")
         .captureRewind()
@@ -265,12 +276,16 @@ public class AutoBuilder {
 
   public static void registerAutoChoices(Drive drive, SuperStructure superStructure) {
     autoChooser.addDefaultOption(
-        "2xR", doubleSwipeCleanup(drive, superStructure, true));
-    autoChooser.addOption("2xL", doubleSwipeCleanup(drive, superStructure, false));
+        "doubleSwipeRight", doubleSwipeCleanup(drive, superStructure, true));
+    autoChooser.addOption("doubleSwipeLeft", doubleSwipeCleanup(drive, superStructure, false));
     autoChooser.addOption(
-        "2xOutpost", doubleSwipeCleanupOutpost(drive, superStructure));
-    autoChooser.addOption("0xDepot", centerDepot(drive, superStructure));
-    autoChooser.addOption("1xDepot", swipeAndDepot(drive, superStructure));
+        "doubleSwipeInverseRight", doubleSwipeCleanupInverse(drive, superStructure, true));
+    autoChooser.addOption(
+        "doubleSwipeInverseLeft", doubleSwipeCleanupInverse(drive, superStructure, false));
+    autoChooser.addOption(
+        "doubleSwipeInverseOutpost", doubleSwipeCleanupInverseOutpost(drive, superStructure));
+    autoChooser.addOption("swipeAndDepot", swipeAndDepot(drive, superStructure));
     autoChooser.addOption("shootOnMoveTest", shootOnTheMoveTest(drive, superStructure));
+    autoChooser.addOption("centerDepot", centerDepot(drive, superStructure));
   }
 }

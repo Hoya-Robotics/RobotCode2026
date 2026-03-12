@@ -37,8 +37,10 @@ public class FieldConstants {
 
   public static boolean inNeutralZone(Pose2d robotPose) {
     double center = fieldLength / 2.0;
-    double neutralZoneNear = center - Units.inchesToMeters(120);
-    double neutralZoneFar = center + Units.inchesToMeters(120);
+    double neutralZoneNear =
+        center - Units.inchesToMeters(120) + RobotConfig.bumperWidthX.in(Meters);
+    double neutralZoneFar =
+        center + Units.inchesToMeters(120) - RobotConfig.bumperWidthX.in(Meters);
     double robotX = robotPose.getX();
     return robotX < neutralZoneFar && robotX > neutralZoneNear;
   }
