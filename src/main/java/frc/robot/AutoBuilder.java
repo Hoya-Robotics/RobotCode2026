@@ -216,9 +216,7 @@ public class AutoBuilder {
         .generate(drive, superStructure, isRightSide);
   }
 
-
-  public static Command doubleSwipeCleanupOutpost(
-      Drive drive, SuperStructure superStructure) {
+  public static Command doubleSwipeCleanupOutpost(Drive drive, SuperStructure superStructure) {
     return fullSwipeTemplate
         .withDelay(2.75)
         .withStateChange(SuperStructureState.INTAKE)
@@ -264,11 +262,9 @@ public class AutoBuilder {
   }
 
   public static void registerAutoChoices(Drive drive, SuperStructure superStructure) {
-    autoChooser.addDefaultOption(
-        "2xR", doubleSwipeCleanup(drive, superStructure, true));
+    autoChooser.addDefaultOption("2xR", doubleSwipeCleanup(drive, superStructure, true));
     autoChooser.addOption("2xL", doubleSwipeCleanup(drive, superStructure, false));
-    autoChooser.addOption(
-        "2xOutpost", doubleSwipeCleanupOutpost(drive, superStructure));
+    autoChooser.addOption("2xOutpost", doubleSwipeCleanupOutpost(drive, superStructure));
     autoChooser.addOption("0xDepot", centerDepot(drive, superStructure));
     autoChooser.addOption("1xDepot", swipeAndDepot(drive, superStructure));
     autoChooser.addOption("shootOnMoveTest", shootOnTheMoveTest(drive, superStructure));

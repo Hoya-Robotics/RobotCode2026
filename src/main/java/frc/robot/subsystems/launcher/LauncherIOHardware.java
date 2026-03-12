@@ -1,6 +1,7 @@
 package frc.robot.subsystems.launcher;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -23,6 +24,7 @@ public class LauncherIOHardware implements LauncherIO {
     // Configure motor
     var config = new TalonFXConfiguration();
     config.withSlot0(TurretConstants.shootGains.toSlot0Configs().withKV(0.84 / 3.0).withKA(0.16));
+    // config.withSlot0(TurretConstants.shootGains.toSlot0Configs().withKV(0.0).withKA(0.06));
     config.Feedback.withSensorToMechanismRatio(TurretConstants.launcherGearRatio);
     config.CurrentLimits.withStatorCurrentLimit(60);
     config.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive)

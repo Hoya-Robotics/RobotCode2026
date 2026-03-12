@@ -44,9 +44,9 @@ public class AzimuthIOHardware implements AzimuthIO {
         .withNeutralMode(NeutralModeValue.Coast);
     // .withNeutralMode(NeutralModeValue.Brake);
     // config.ClosedLoopGeneral.withContinuousWrap(true);
-    config.Feedback.withRemoteCANcoder(encoder)
-        .withFeedbackSensorSource(FeedbackSensorSourceValue.RemoteCANcoder)
-        // .withFeedbackSensorSource(FeedbackSensorSourceValue.FusedCANcoder)
+    config.Feedback.withFeedbackRemoteSensorID(encoderId)
+        // .withFeedbackSensorSource(FeedbackSensorSourceValue.RemoteCANcoder)
+        .withFeedbackSensorSource(FeedbackSensorSourceValue.FusedCANcoder)
         .withSensorToMechanismRatio(1.0)
         .withRotorToSensorRatio(TurretConstants.azimuthGearRatio);
     config.SoftwareLimitSwitch.withForwardSoftLimitEnable(true)

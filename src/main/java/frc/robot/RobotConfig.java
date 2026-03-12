@@ -128,6 +128,7 @@ public class RobotConfig {
 
     public static final PIDGains hoodGains = new PIDGains(180.0, 0.0, 0.0);
     public static final PIDGains azimuthGains = new PIDGains(100.0, 0.0, 5.0);
+    // public static final PIDGains shootGains = new PIDGains(60.0, 0.0, 0.0);
     public static final PIDGains shootGains = new PIDGains(0.75, 0.0, 0.0);
 
     public static final Angle maxAzimuthAngle = Rotations.of(0.73);
@@ -164,10 +165,10 @@ public class RobotConfig {
     public static final boolean rewindEnabled = true;
 
     // Hybrid stddev tuning
-    public static final double baseStddevMultiplier = 1.0;
-    public static final double maxReliableDistance = 3.0;
+    public static final double baseStddevMultiplier = 0.8;
+    public static final double maxReliableDistance = 4.0;
     public static final double distanceScalingExponent = 2.0;
-    public static final double singleTagPenalty = 5.0;
+    public static final double singleTagPenalty = 1.0;
 
     // Filtering thresholds
     public static final double maxAcceptableDistance = 5.0;
