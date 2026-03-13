@@ -107,7 +107,8 @@ public class VisionIOLimelight implements VisionIO {
 
     double tagScalar = (numTags == 1) ? VisionConstants.singleTagPenalty : 1.0;
     double multiplier = VisionConstants.baseStddevMultiplier * distanceScalar * tagScalar;
-    return VecBuilder.fill(baseX * multiplier, baseY * multiplier, baseYaw * multiplier);
+    return VecBuilder.fill(baseX * multiplier, baseY * multiplier, Float.POSITIVE_INFINITY);
+    // return VecBuilder.fill(baseX * multiplier, baseY * multiplier, baseYaw * multiplier);
   }
 
   @Override

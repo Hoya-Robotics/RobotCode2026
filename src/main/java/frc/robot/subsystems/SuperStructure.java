@@ -141,7 +141,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     TurretParameters turretParams = TurretCalculator.calculateSetpoints(target, azimuth.getAngle());
 
     azimuth.setAngle(turretParams.azimuthAngle());
-    hood.setAngle(turretParams.hoodAngle());
+    hood.setAngle(Radians.of(0.0));
 
     SuperStructureState state = getCurrentState();
     if (coolingDown) {
@@ -168,6 +168,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         spindexer.reverse();
         break;
       case SHOOT:
+        hood.setAngle(turretParams.hoodAngle());
         launcher.setSpeed(turretParams.launcherSpeed());
 
         // HACK: auto passing will need better fix

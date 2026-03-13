@@ -132,14 +132,16 @@ public class RobotContainer {
         .b()
         .onTrue(superStructure.setTarget(TurretTarget.CONSTANT_FORWARD))
         .onFalse(superStructure.setTarget(TurretTarget.HUB));
-    driveController
-        .x()
-        .onTrue(superStructure.setTarget(TurretTarget.TUNING))
-        .onFalse(superStructure.setTarget(TurretTarget.HUB));
-    driveController
-        .y()
-        .onTrue(superStructure.setTarget(TurretTarget.ON_THE_MOVE))
-        .onFalse(superStructure.setTarget(TurretTarget.HUB));
+    /*
+      driveController
+          .x()
+          .onTrue(superStructure.setTarget(TurretTarget.TUNING))
+          .onFalse(superStructure.setTarget(TurretTarget.HUB));
+      driveController
+          .y()
+          .onTrue(superStructure.setTarget(TurretTarget.ON_THE_MOVE))
+          .onFalse(superStructure.setTarget(TurretTarget.HUB));
+    */
   }
 
   private void configureFuelSim() {
