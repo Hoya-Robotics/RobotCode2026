@@ -20,24 +20,25 @@ import com.ctre.phoenix6.sim.TalonFXSimState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.util.PhoenixSync;
 import frc.robot.util.PhoenixSync.TalonFXSignals;
+import org.ironmaple.simulation.motorsims.SimulatedBattery;
 import org.littletonrobotics.junction.Logger;
 
 /** Add your docs here. */
 public class AzimuthIOSim implements AzimuthIO {
   private DCMotor gearbox = DCMotor.getKrakenX60(1);
   private DCMotorSim turretSim =
-      new DCMotorSim(LinearSystemId.createDCMotorSystem(gearbox, 0.07867078, 42.0), gearbox);
+      new DCMotorSim(
+          LinearSystemId.createDCMotorSystem(gearbox, 0.07867078, TurretConstants.azimuthGearRatio),
+          gearbox);
 
   private final TalonFX motor;
   private final CANcoder encoder;
   private final TalonFXSignals signals;
 
-  // private PositionTorqueCurrentFOC request = new PositionTorqueCurrentFOC(0.0);
   private PositionVoltage request = new PositionVoltage(0.0);
 
   public AzimuthIOSim(int motorId, int encoderId) {
@@ -83,25 +84,19 @@ public class AzimuthIOSim implements AzimuthIO {
     var CANcoderSim = encoder.getSimState();
     var talonFXSim = motor.getSimState();
 
-    // set the supply voltage of the TalonFX
-    CANcoderSim.setSupplyVoltage(RobotController.getBatteryVoltage());
-    talonFXSim.setSupplyVoltage(RobotController.getBatteryVoltage());
+    CANcoderSim.setSupplyVoltage(SimulatedBattery.getBatteryVoltage());
+    talonFXSim.setSupplyVoltage(SimulatedBattery.getBatteryVoltage());
 
-    // get the motor voltage of the TalonFX
     var motorVoltage = talonFXSim.getMotorVoltageMeasure();
-
-    // use the motor voltage to calculate new position and velocity
-    // using WPILib's DCMotorSim class for physics simulation
     turretSim.setInputVoltage(motorVoltage.in(Volts));
-    turretSim.update(0.020); // assume 20 ms loop time
+    turretSim.update(0.020);
 
-    // apply the new rotor position and velocity to the TalonFX;
-    // note that this is rotor position/velocity (before gear ratio), but
-    // DCMotorSim returns mechanism position/velocity (after gear ratio)
     CANcoderSim.setRawPosition(turretSim.getAngularPosition());
     CANcoderSim.setVelocity(turretSim.getAngularVelocity());
-    talonFXSim.setRawRotorPosition(turretSim.getAngularPosition().times(42.0));
-    talonFXSim.setRotorVelocity(turretSim.getAngularVelocity().times(42.0));
+    talonFXSim.setRawRotorPosition(
+        turretSim.getAngularPosition().times(TurretConstants.azimuthGearRatio));
+    talonFXSim.setRotorVelocity(
+        turretSim.getAngularVelocity().times(TurretConstants.azimuthGearRatio));
 
     inputs.isConnected = signals.isConnected();
     inputs.voltageApplied = signals.getVoltage();

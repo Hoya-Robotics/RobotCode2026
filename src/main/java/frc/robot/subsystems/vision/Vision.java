@@ -40,6 +40,8 @@ public class Vision extends SubsystemBase {
       cameras[i].updateInputs(inputs[i]);
       Logger.processInputs("Vision/" + configs[i].name(), inputs[i]);
 
+      if (configs[i].filter().isPresent() && !configs[i].filter().get().getAsBoolean()) continue;
+
       var state = inputs[i];
       if (!state.isConnected) continue;
 
@@ -59,7 +61,8 @@ public class Vision extends SubsystemBase {
 
         RobotState.getInstance()
             .addVisionMeasurement(
-                new VisionObservation(state.poseEstimate, stdDevVec, Seconds.of(state.timestamp)));
+                new VisionObservation(
+                    configs[i], state.poseEstimate, stdDevVec, Seconds.of(state.timestamp)));
         acceptedMeasurements++;
       } else if (state.numTags > 0) {
         rejectedMeasurements++;

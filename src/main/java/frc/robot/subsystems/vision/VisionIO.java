@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import frc.robot.RobotConfig.CameraConfig;
+import java.util.Optional;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface VisionIO {
@@ -23,7 +24,7 @@ public interface VisionIO {
   public default void updateInputs(VisionIOInputs inputs) {}
 
   public default CameraConfig getConfig() {
-    return new CameraConfig("foo", Transform3d.kZero);
+    return new CameraConfig("foo", Transform3d.kZero, Optional.of(() -> true));
   }
 
   public default void captureRewind(double duration) {}

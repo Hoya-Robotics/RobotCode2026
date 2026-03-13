@@ -4,9 +4,12 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.RobotConfig.IntakeConstants;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.TurretTarget;
@@ -87,7 +90,16 @@ public class RobotContainer {
         vision =
             new Vision(
                 new VisionIOLimelight(
-                    VisionConstants.turretCameraConfig, Optional.of(azimuth::getTurretCameraPose)));
+                    new CameraConfig(
+                        "limelight-hopper", VisionConstants.hopperRobotToCamera, Optional.empty()),
+                    Optional.empty()),
+                new VisionIOLimelight(
+                    new CameraConfig(
+                        "limelight-turret",
+                        TurretConstants.robotToTurret.plus(
+                            new Transform3d(Translation3d.kZero, TurretConstants.cameraRotation)),
+                        Optional.of(azimuth::isCameraAccurate)),
+                    Optional.of(azimuth::getTurretCameraPose)));
         break;
       default:
         vision = new Vision(new VisionIO() {});
@@ -107,11 +119,14 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-    driveController.leftTrigger(0.3).onTrue(superStructure.intake()).onFalse(superStructure.idle());
-    driveController.rightTrigger(0.3).onTrue(superStructure.shoot()).onFalse(superStructure.idle());
+    driveController
+        .rightTrigger(0.3)
+        .onTrue(superStructure.intake())
+        .onFalse(superStructure.idle());
+    driveController.leftTrigger(0.3).onTrue(superStructure.shoot()).onFalse(superStructure.idle());
     driveController
         .a()
-        .onTrue(superStructure.setTarget(TurretTarget.PASSING))
+        .onTrue(superStructure.setTarget(TurretTarget.FRONT_OF_HUB))
         .onFalse(superStructure.setTarget(TurretTarget.HUB));
     driveController
         .b()

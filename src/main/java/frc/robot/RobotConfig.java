@@ -15,6 +15,8 @@ import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.subsystems.drive.TunerConstants;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.BooleanSupplier;
 
 /*
  * Complete description of physical and virtual robot configuration
@@ -26,7 +28,8 @@ public class RobotConfig {
     NEAREST_TAG,
     PASSING,
     TUNING,
-    CONSTANT_FORWARD
+    CONSTANT_FORWARD,
+    FRONT_OF_HUB
   }
 
   public enum SuperStructureState {
@@ -54,7 +57,8 @@ public class RobotConfig {
     }
   }
 
-  public record CameraConfig(String name, Transform3d robotToCamera) {}
+  public record CameraConfig(
+      String name, Transform3d robotToCamera, Optional<BooleanSupplier> filter) {}
 
   public static OperationMode getMode() {
     return RobotBase.isReal() ? OperationMode.REAL : OperationMode.SIM;
@@ -139,7 +143,7 @@ public class RobotConfig {
     public static final AngularVelocity shotSpeedThreshold = RotationsPerSecond.of(17.5);
     public static final double shooterIdleVoltage = 1.5;
 
-		public static final double cooldownSeconds = 1.0;
+    public static final double cooldownSeconds = 1.0;
 
     public static final double azimuthLatencyCompensation = 0.050;
     public static final double maxShootingRobotSpeed = 1.0;
@@ -157,13 +161,26 @@ public class RobotConfig {
   }
 
   public static final class VisionConstants {
-    public static final CameraConfig turretCameraConfig =
-        new CameraConfig(
-            "limelight-turret",
-            TurretConstants.robotToTurret.plus(
-                new Transform3d(Translation3d.kZero, TurretConstants.cameraRotation)));
+    /*
+      public static final CameraConfig turretCameraConfig =
+          new CameraConfig(
+              "limelight-turret",
+              TurretConstants.robotToTurret.plus(
+                  new Transform3d(Translation3d.kZero, TurretConstants.cameraRotation)));
 
-		public static final CameraConfig hopperCameraConfig = new CameraConfig("limelight-hopper", new Transform3d());
+      public static final CameraConfig hopperCameraConfig =
+          new CameraConfig("limelight-hopper", new Transform3d());
+    */
+    public static final Transform3d turretRobotToCamera =
+        TurretConstants.robotToTurret.plus(
+            new Transform3d(Translation3d.kZero, TurretConstants.cameraRotation));
+    public static final Transform3d hopperRobotToCamera =
+        new Transform3d(
+            new Translation3d(
+                -Units.inchesToMeters(9.125),
+                -Units.inchesToMeters(11.396),
+                Units.inchesToMeters(19.828)),
+            new Rotation3d(0.0, Units.degreesToRadians(20.0), 0.0));
 
     public static final List<Integer> hubTags = List.of(9, 10, 25, 26);
     public static final boolean rewindEnabled = true;

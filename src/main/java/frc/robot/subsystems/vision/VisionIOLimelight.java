@@ -30,6 +30,15 @@ public class VisionIOLimelight implements VisionIO {
     this.config = config;
     this.NT = NetworkTableInstance.getDefault().getTable(config.name());
 
+    LimelightHelpers.setCameraPose_RobotSpace(
+        config.name(),
+        config.robotToCamera().getX(),
+        config.robotToCamera().getY(),
+        config.robotToCamera().getZ(),
+        Math.toDegrees(config.robotToCamera().getRotation().getX()),
+        Math.toDegrees(config.robotToCamera().getRotation().getY()),
+        Math.toDegrees(config.robotToCamera().getRotation().getZ()));
+
     LimelightHelpers.setRewindEnabled(config.name(), VisionConstants.rewindEnabled);
   }
 

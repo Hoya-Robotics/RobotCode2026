@@ -59,7 +59,8 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
 
     if (DriverStation.isTeleop()
-        && getCurrentState() == SuperStructureState.SHOOT
+        && (getCurrentState() == SuperStructureState.SHOOT
+            || getCurrentState() == SuperStructureState.IDLE)
         && (target == TurretTarget.PASSING || target == TurretTarget.HUB)) {
       target = FieldConstants.inNeutralZone(robotPose) ? TurretTarget.PASSING : TurretTarget.HUB;
     }

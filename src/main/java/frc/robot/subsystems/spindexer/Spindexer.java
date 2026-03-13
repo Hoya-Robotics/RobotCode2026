@@ -61,7 +61,7 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
         outputs.feedMotorVoltage = Volts.zero();
         break;
       case FEED:
-        outputs.indexMotorVoltage = Volts.of(2.75);
+        outputs.indexMotorVoltage = Volts.of(2.5);
         outputs.feedMotorVoltage = Volts.of(4.5);
         break;
       case REVERSE:

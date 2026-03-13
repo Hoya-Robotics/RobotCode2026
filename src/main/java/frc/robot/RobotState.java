@@ -8,6 +8,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.*;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
+import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOInputsAutoLogged;
 import frc.robot.util.FuelSim;
@@ -113,7 +114,8 @@ public class RobotState {
     return simulatedDrivePoseSupplier.get();
   }
 
-  public record VisionObservation(Pose2d pose, Vector<N3> stdDevs, Time timestamp) {
+  public record VisionObservation(
+      CameraConfig source, Pose2d pose, Vector<N3> stdDevs, Time timestamp) {
     public double timestampSeconds() {
       return timestamp.in(Seconds);
     }
