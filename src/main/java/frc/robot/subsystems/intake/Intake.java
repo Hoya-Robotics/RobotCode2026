@@ -2,6 +2,7 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.RobotConfig.IntakeConstants;
 import frc.robot.subsystems.intake.IntakeIO.IntakeIOOutputs;
 import frc.robot.util.StateSubsystem;
@@ -20,6 +21,8 @@ public class Intake extends StateSubsystem<IntakeState> {
   private IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
   private IntakeIOOutputs outputs = new IntakeIOOutputs();
   private boolean agitatingForward = false;
+
+  private Timer stateChangeTimer = new Timer();
 
   public Intake(IntakeIO io) {
     this.io = io;
@@ -56,7 +59,15 @@ public class Intake extends StateSubsystem<IntakeState> {
   }
 
   private boolean isStalled() {
-		return inputs.intakeVelocity.lt(RotationsPerSecond.of(2.0));
+    return stateChangeTimer.get() < 0.5 && inputs.intakeVelocity.abs(RotationsPerSecond) < 2.0;
+  }
+
+  @Override
+  public IntakeState handleStateTransitions() {
+    if (getRequestedState() != getCurrentState()) {
+      stateChangeTimer.restart();
+    }
+    return getRequestedState();
   }
 
   @Override

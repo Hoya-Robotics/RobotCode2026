@@ -204,10 +204,6 @@ public class AutoBuilder {
     return fullSwipeTemplate
         .withDelay(3.5)
         .join(cleanSwipeTemplate)
-        // .withDelayTillRemaining(0.5)
-        // .captureRewind()
-        // .withStateChange(SuperStructureState.IDLE)
-        // .withDriveToPoseAllianceAgnostic(new Pose2d(7.5784, 0.663, Rotation2d.k180deg))
         .generate(drive, superStructure, isRightSide);
   }
 
@@ -221,7 +217,16 @@ public class AutoBuilder {
         .withDelayTillRemaining(1.25)
         .withStateChange(SuperStructureState.IDLE)
         .withChoreoTraj("LeaveOutpost")
-        // .captureRewind()
+        .generate(drive, superStructure, true);
+  }
+
+  public static Command swipeOutpost(Drive drive, SuperStructure superStructure) {
+    return fullSwipeTemplate
+        .withDelay(2.75)
+        .withDriveToPose(FieldConstants::getHumanStation)
+        .withDelayTillRemaining(0.75)
+        .withStateChange(SuperStructureState.IDLE)
+        .withChoreoTraj("LeaveOutpost")
         .generate(drive, superStructure, true);
   }
 
@@ -233,7 +238,6 @@ public class AutoBuilder {
         .withStateChange(SuperStructureState.INTAKE)
         .withChoreoTraj("DepotCycle180")
         .withStateChange(SuperStructureState.SHOOT)
-        // .captureRewind()
         .generate(drive, superStructure, false);
   }
 
@@ -270,6 +274,7 @@ public class AutoBuilder {
     autoChooser.addDefaultOption("2xR", doubleSwipe(drive, superStructure, true));
     autoChooser.addOption("2xL", doubleSwipe(drive, superStructure, false));
     autoChooser.addOption("0xOutpost", centerOutpost(drive, superStructure));
+    autoChooser.addOption("1xOutpost", swipeOutpost(drive, superStructure));
     autoChooser.addOption("2xOutpost", doubleSwipeOutpost(drive, superStructure));
     autoChooser.addOption("0xDepot", centerDepot(drive, superStructure));
     autoChooser.addOption("1xDepot", swipeAndDepot(drive, superStructure));

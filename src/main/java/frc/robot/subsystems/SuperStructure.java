@@ -142,12 +142,12 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
 
     azimuth.setAngle(turretParams.azimuthAngle());
     hood.setAngle(Radians.of(0.0));
-		launcher.setSpeed(RotationsPerSecond.of(10.0)); // idle speed
+    launcher.setSpeed(RotationsPerSecond.of(10.0)); // idle speed
 
     SuperStructureState state = getCurrentState();
     if (coolingDown && shotCooldownTimer.get() > TurretConstants.cooldownSeconds) {
-        shotCooldownTimer.stop();
-        coolingDown = false;
+      shotCooldownTimer.stop();
+      coolingDown = false;
     }
 
     switch (state) {
@@ -204,9 +204,9 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         break;
     }
 
-		if (coolingDown && state != SuperStructureState.SHOOT) {
+    if (coolingDown && state != SuperStructureState.SHOOT) {
       launcher.setSpeed(cooldownSpeed);
       spindexer.cooldown();
-		}
+    }
   }
 }
