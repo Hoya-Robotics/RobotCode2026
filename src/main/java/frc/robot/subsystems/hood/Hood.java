@@ -17,6 +17,7 @@ public class Hood extends SubsystemBase {
   }
 
   public void setAngle(Angle angle) {
+    Logger.recordOutput("Hood/setpoint", angle);
     this.io.setAngle(angle);
   }
 

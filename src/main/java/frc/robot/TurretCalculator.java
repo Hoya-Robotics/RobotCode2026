@@ -209,7 +209,7 @@ public class TurretCalculator {
     return new TurretParameters(
         calculateAzimuthAngle(azimuth.getMeasure(), currentAzimuthAngle),
         newHoodLUT.get(hubDistance).getMeasure(),
-        RotationsPerSecond.of(newLauncherLUT.get(hubDistance) - 0.75));
+        RotationsPerSecond.of(newLauncherLUT.get(hubDistance) - 1.35));
   }
 
   // https://github.com/FRC3161/Rebuilt2026/blob/main/src/main/java/frc/robot/subsystems/Drive/CommandSwerveDrivetrain.java#L144

@@ -5,7 +5,9 @@ import choreo.trajectory.SwerveSample;
 import choreo.trajectory.Trajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -185,9 +187,9 @@ public class AutoBuilder2 {
     return new AutoBuilder2(shouldFlipYAxis)
         .withStateChange(SuperStructureState.INTAKE)
         .withChoreoTraj(trajName)
-        .withStateChange(SuperStructureState.SHOOT)
         .withDriveToPoseAllianceAgnostic(
-            new Pose2d(3.5784, 0.663, endsIntakeToNeutral ? Rotation2d.kZero : Rotation2d.k180deg));
+            new Pose2d(3.5784, 0.663, endsIntakeToNeutral ? Rotation2d.kZero : Rotation2d.k180deg))
+        .withStateChange(SuperStructureState.SHOOT);
   }
 
   private static AutoBuilder2 cleanSwipeTemplate(boolean shouldFlipYAxis) {
@@ -219,7 +221,6 @@ public class AutoBuilder2 {
         .withDelay(2.75)
         .withStateChange(SuperStructureState.INTAKE)
         .withChoreoTraj("CleanSwipe")
-        .withStateChange(SuperStructureState.SHOOT)
         .withDriveToPose(FieldConstants::getHumanStation)
         .withDelayTillRemaining(1.25)
         .withStateChange(SuperStructureState.IDLE)

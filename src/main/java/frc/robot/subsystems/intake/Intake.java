@@ -65,7 +65,7 @@ public class Intake extends StateSubsystem<IntakeState> {
 
   @Override
   public IntakeState handleStateTransitions() {
-    if (getRequestedState() != getCurrentState()) {
+    if (getRequestedState() != getCurrentState() && getCurrentState() != IntakeState.REVERSE) {
       stateChangeTimer.restart();
     }
     return getRequestedState();

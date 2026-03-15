@@ -139,6 +139,8 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     Logger.recordOutput("SuperStructure/state", getCurrentState());
     Logger.recordOutput("SuperStructure/trackingTarget", target);
     TurretParameters turretParams = TurretCalculator.calculateSetpoints(target, azimuth.getAngle());
+    // TurretParameters turretParams = new TurretParameters(Radians.of(0.0), Radians.of(0.0),
+    // RotationsPerSecond.of(19.0));
 
     azimuth.setAngle(turretParams.azimuthAngle());
     hood.setAngle(Radians.of(0.0));
@@ -163,6 +165,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         intake.run();
         spindexer.hold();
         break;
+			case SHOOT_INTAKE:
       case SHOOT:
         hood.setAngle(turretParams.hoodAngle());
         launcher.setSpeed(turretParams.launcherSpeed());
@@ -193,12 +196,14 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         if (!speedCapped && !autoNeutral && RobotConfig.getMode() == OperationMode.SIM) {
           simulateTurretShot(turretParams);
         }
-        if (upToSpeed
-            && hoodWithinTolerance
-            && azimuthWithinTolerance
-            && !speedCapped
-            && !autoNeutral) {
-          intake.agitate();
+        if (upToSpeed && hoodWithinTolerance && azimuthWithinTolerance && !speedCapped
+        // && !autoNeutral) {
+        ) {
+					if (state == SuperStructureState.SHOOT_INTAKE) {
+						intake.run();
+					} else {
+						intake.agitate();
+					}
           spindexer.feed();
         }
         break;

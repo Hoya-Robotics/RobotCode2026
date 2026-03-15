@@ -55,20 +55,21 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
   }
 
   private boolean isStalled() {
-    return stateChangeTimer.get() > 0.25 && (inputs.feedMotorVelocity.abs(RPM) < 1.75 || inputs.indexMotorVelocity.abs(RPM) < 1.75);
+    return stateChangeTimer.get() > 0.25
+        && (inputs.feedMotorVelocity.abs(RPM) < 2.0 || inputs.indexMotorVelocity.abs(RPM) < 2.0);
   }
 
-	@Override
-	public SpindexerState handleStateTransitions() {
-		if (getRequestedState() != getCurrentState()) {
-			stateChangeTimer.restart();
-		}
-		return getRequestedState();
-	}
+  @Override
+  public SpindexerState handleStateTransitions() {
+    if (getRequestedState() != getCurrentState() && getCurrentState() != SpindexerState.REVERSE) {
+      stateChangeTimer.restart();
+    }
+    return getRequestedState();
+  }
 
   @Override
   public void applyState() {
-    if (unjamming && unjamTimer.get() > 0.35) {
+    if (unjamming && unjamTimer.get() > 0.45) {
       unjamming = false;
     } else if (!unjamming && getCurrentState() == SpindexerState.FEED && isStalled()) {
       unjamming = true;
@@ -89,11 +90,11 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
         outputs.feedMotorVoltage = Volts.of(4.5);
         break;
       case FEED:
-        outputs.indexMotorVoltage = Volts.of(2.5);
+        outputs.indexMotorVoltage = Volts.of(3.5);
         outputs.feedMotorVoltage = Volts.of(4.5);
         break;
       case REVERSE:
-        outputs.indexMotorVoltage = Volts.of(-4.5);
+        outputs.indexMotorVoltage = Volts.of(-7.0);
         outputs.feedMotorVoltage = Volts.of(-4.5);
         break;
     }

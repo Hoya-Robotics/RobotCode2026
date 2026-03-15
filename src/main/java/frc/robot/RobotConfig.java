@@ -34,6 +34,7 @@ public class RobotConfig {
 
   public enum SuperStructureState {
     IDLE,
+    SHOOT_INTAKE,
     INTAKE,
     SHOOT,
     REVERSE_INTAKE
