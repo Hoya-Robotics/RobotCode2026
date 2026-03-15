@@ -28,7 +28,7 @@ public class LauncherIOHardware implements LauncherIO {
     // config.withSlot0(TurretConstants.shootGains.toSlot0Configs().withKV(0.84 /
     // 3.0).withKA(0.16));
     config.Feedback.withSensorToMechanismRatio(TurretConstants.launcherGearRatio);
-    config.CurrentLimits.withStatorCurrentLimit(60);
+    config.CurrentLimits.withStatorCurrentLimit(100);
     config.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive)
         .withNeutralMode(NeutralModeValue.Brake);
 

@@ -11,8 +11,6 @@ import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.VisionObservation;
-import frc.robot.util.FuelSim;
-
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
@@ -25,7 +23,7 @@ public class Vision extends SubsystemBase {
   private int rejectedMeasurements = 0;
   private int hubObservations = 0;
 
-	private Pose2d lastPoseEstimate = Pose2d.kZero;
+  private Pose2d lastPoseEstimate = Pose2d.kZero;
 
   public Vision(VisionIO... cameras) {
     this.cameras = cameras;
@@ -64,7 +62,6 @@ public class Vision extends SubsystemBase {
         Logger.recordOutput("Vision/" + camName + "/acceptedPose", state.poseEstimate);
         Logger.recordOutput("Vision/" + camName + "/acceptedTimestamp", state.timestamp);
 
-
         RobotState.getInstance()
             .addVisionMeasurement(
                 new VisionObservation(
@@ -86,9 +83,11 @@ public class Vision extends SubsystemBase {
       return false;
     }
 
-		Pose2d fusedEstimate = RobotState.getInstance().getEstimatedPose();
-		double latentDistance = state.poseEstimate.getTranslation().getDistance(fusedEstimate.getTranslation());
-		// if (latentDistance > 3.5) return false; dont do it this way, just check the difference between vision estimates
+    // Pose2d fusedEstimate = RobotState.getInstance().getEstimatedPose();
+    // double latentDistance =
+    // state.poseEstimate.getTranslation().getDistance(fusedEstimate.getTranslation());
+    // if (latentDistance > 3.5) return false; dont do it this way, just check the difference
+    // between vision estimates
 
     if (state.stdDevs != null) {
       double maxStd = Math.max(state.stdDevs.get(0, 0), state.stdDevs.get(1, 0));

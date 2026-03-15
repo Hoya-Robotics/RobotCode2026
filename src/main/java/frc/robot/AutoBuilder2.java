@@ -262,19 +262,29 @@ public class AutoBuilder2 {
   }
 
   public static Command centerDepot(Drive drive, SuperStructure superStructure) {
-    return new AutoBuilder()
+    return new AutoBuilder2(true)
         .withStateChange(SuperStructureState.INTAKE)
         .withChoreoTraj("CenterDepot")
         .withStateChange(SuperStructureState.SHOOT)
-        .generate(drive, superStructure, false);
+        .generate(drive, superStructure);
   }
 
   public static Command centerOutpost(Drive drive, SuperStructure superStructure) {
-    return new AutoBuilder()
+    return new AutoBuilder2(true)
         .withStateChange(SuperStructureState.IDLE)
         .withChoreoTraj("CenterOutpost")
         .withStateChange(SuperStructureState.SHOOT)
-        .generate(drive, superStructure, false);
+        .generate(drive, superStructure);
+  }
+
+  public static Command hailMary(
+      Drive drive, SuperStructure superStructure, boolean shouldFlipYAxis) {
+    return new AutoBuilder2(shouldFlipYAxis)
+        .withStateChange(SuperStructureState.INTAKE)
+        .withChoreoTraj("SplitTheGap")
+        .withCommand(Commands.runOnce(() -> drive.setIdle()))
+        .withStateChange(SuperStructureState.SHOOT)
+        .generate(drive, superStructure);
   }
 
   public static void registerAutoChoices(Drive drive, SuperStructure superStructure) {
@@ -286,5 +296,7 @@ public class AutoBuilder2 {
     autoChooser.addOption("0xDepot", centerDepot(drive, superStructure));
     autoChooser.addOption("1xDepot", swipeAndDepot(drive, superStructure));
     autoChooser.addOption("2xDepot", doubleSwipeDepot(drive, superStructure));
+    autoChooser.addOption("SplitTheGapRight", hailMary(drive, superStructure, false));
+    autoChooser.addOption("SplitTheGapLeft", hailMary(drive, superStructure, true));
   }
 }

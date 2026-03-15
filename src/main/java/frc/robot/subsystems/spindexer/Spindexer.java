@@ -2,6 +2,7 @@ package frc.robot.subsystems.spindexer;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.spindexer.SpindexerIO.SpindexerIOOutputs;
 import frc.robot.util.StateSubsystem;
 import org.littletonrobotics.junction.Logger;
@@ -17,6 +18,9 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
   private final SpindexerIO io;
   private final SpindexerIOInputsAutoLogged inputs = new SpindexerIOInputsAutoLogged();
   private SpindexerIOOutputs outputs = new SpindexerIOOutputs();
+  private boolean unjamming = false;
+  private Timer unjamTimer = new Timer();
+  private Timer stateChangeTimer = new Timer();
 
   public Spindexer(SpindexerIO io) {
     this.io = io;
@@ -51,12 +55,27 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
   }
 
   private boolean isStalled() {
-    return inputs.feedMotorVelocity.abs(RPM) < 1.75 || inputs.indexMotorVelocity.abs(RPM) < 1.75;
+    return stateChangeTimer.get() > 0.25 && (inputs.feedMotorVelocity.abs(RPM) < 1.75 || inputs.indexMotorVelocity.abs(RPM) < 1.75);
   }
+
+	@Override
+	public SpindexerState handleStateTransitions() {
+		if (getRequestedState() != getCurrentState()) {
+			stateChangeTimer.restart();
+		}
+		return getRequestedState();
+	}
 
   @Override
   public void applyState() {
-    if (getCurrentState() == SpindexerState.FEED && isStalled()) {
+    if (unjamming && unjamTimer.get() > 0.35) {
+      unjamming = false;
+    } else if (!unjamming && getCurrentState() == SpindexerState.FEED && isStalled()) {
+      unjamming = true;
+      unjamTimer.restart();
+    }
+
+    if (unjamming) {
       setState(SpindexerState.REVERSE);
     }
 

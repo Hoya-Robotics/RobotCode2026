@@ -184,7 +184,7 @@ public class RobotConfig {
 
     // Filtering thresholds
     public static final double maxAcceptableDistance = 5.0;
-    public static final double maxAcceptableStddev = 2.0;
+    public static final double maxAcceptableStddev = 3.5;
   }
 
   public static final class SimConstants {

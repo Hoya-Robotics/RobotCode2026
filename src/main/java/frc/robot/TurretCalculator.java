@@ -76,21 +76,21 @@ public class TurretCalculator {
 
     // Experimental LUTs
     newHoodLUT.put(1.5, Rotation2d.fromDegrees(5.0));
-    newHoodLUT.put(2.0, Rotation2d.fromDegrees(7.5));
+    newHoodLUT.put(2.0, Rotation2d.fromDegrees(8.5));
     newHoodLUT.put(2.6, Rotation2d.fromDegrees(15.0));
-    newHoodLUT.put(3.0, Rotation2d.fromDegrees(11.0));
-    newHoodLUT.put(3.5, Rotation2d.fromDegrees(18.0));
-    newHoodLUT.put(4.0, Rotation2d.fromDegrees(20.5));
-    newHoodLUT.put(4.5, Rotation2d.fromDegrees(21.25));
-    newHoodLUT.put(5.2, Rotation2d.fromDegrees(18));
+    newHoodLUT.put(3.0, Rotation2d.fromDegrees(18.5));
+    newHoodLUT.put(3.5, Rotation2d.fromDegrees(19.75));
+    newHoodLUT.put(4.0, Rotation2d.fromDegrees(22.25));
+    // newHoodLUT.put(4.5, Rotation2d.fromDegrees(21.25));
+    // newHoodLUT.put(5.2, Rotation2d.fromDegrees(18));
 
     newLauncherLUT.put(1.5, 26.75);
     newLauncherLUT.put(2.0, 27.0);
-    newLauncherLUT.put(2.6, 28.0);
-    newLauncherLUT.put(3.0, 29.5);
-    newLauncherLUT.put(3.5, 30.0);
-    newLauncherLUT.put(4.0, 33.0);
-    newLauncherLUT.put(4.5, 33.25);
+    newLauncherLUT.put(2.6, 29.0);
+    newLauncherLUT.put(3.0, 29.25);
+    newLauncherLUT.put(3.5, 31.5);
+    newLauncherLUT.put(4.0, 33.5);
+    // newLauncherLUT.put(4.5, 33.5);
 
     // Current LUTs
     hoodAngleMap.put(1.5, Rotation2d.fromDegrees(2.0));
@@ -208,8 +208,8 @@ public class TurretCalculator {
     Logger.recordOutput("Tuning/hubDistance", hubDistance);
     return new TurretParameters(
         calculateAzimuthAngle(azimuth.getMeasure(), currentAzimuthAngle),
-        hoodAngleMap.get(hubDistance).getMeasure(),
-        RotationsPerSecond.of(launcherSpeedMap.get(hubDistance)));
+        newHoodLUT.get(hubDistance).getMeasure(),
+        RotationsPerSecond.of(newLauncherLUT.get(hubDistance) - 0.75));
   }
 
   // https://github.com/FRC3161/Rebuilt2026/blob/main/src/main/java/frc/robot/subsystems/Drive/CommandSwerveDrivetrain.java#L144
