@@ -139,13 +139,12 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     Logger.recordOutput("SuperStructure/state", getCurrentState());
     Logger.recordOutput("SuperStructure/trackingTarget", target);
     TurretParameters turretParams = TurretCalculator.calculateSetpoints(target, azimuth.getAngle());
-    // TurretParameters turretParams = new TurretParameters(Radians.of(0.0), Radians.of(0.0),
-    // RotationsPerSecond.of(19.0));
 
     azimuth.setAngle(turretParams.azimuthAngle());
     hood.setAngle(Radians.of(0.0));
     launcher.setSpeed(RotationsPerSecond.of(10.0)); // idle speed
-
+	
+		// TODO: hood down on trench
     SuperStructureState state = getCurrentState();
     if (coolingDown && shotCooldownTimer.get() > TurretConstants.cooldownSeconds) {
       shotCooldownTimer.stop();
@@ -170,9 +169,6 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         hood.setAngle(turretParams.hoodAngle());
         launcher.setSpeed(turretParams.launcherSpeed());
 
-        boolean autoNeutral =
-            DriverStation.isAutonomous()
-                && FieldConstants.inNeutralZone(RobotState.getInstance().getEstimatedPose());
         ChassisSpeeds speeds = RobotState.getInstance().getFieldVelocity();
         boolean speedCapped =
             Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond) > 2.0
@@ -193,11 +189,10 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         Logger.recordOutput("SuperStructure/upToSpeed", upToSpeed);
         Logger.recordOutput("SuperStructure/speedCapped", speedCapped);
 
-        if (!speedCapped && !autoNeutral && RobotConfig.getMode() == OperationMode.SIM) {
+        if (!speedCapped && RobotConfig.getMode() == OperationMode.SIM) {
           simulateTurretShot(turretParams);
         }
         if (upToSpeed && hoodWithinTolerance && azimuthWithinTolerance && !speedCapped
-        // && !autoNeutral) {
         ) {
 					if (state == SuperStructureState.SHOOT_INTAKE) {
 						intake.run();

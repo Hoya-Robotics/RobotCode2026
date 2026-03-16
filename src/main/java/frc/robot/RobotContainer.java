@@ -130,8 +130,7 @@ public class RobotContainer {
     }
     superStructure = new SuperStructure(spindexer, hood, azimuth, launcher, intake);
     PhoenixSync.optimizeAll();
-    AutoBuilder2.registerAutoChoices(drive, superStructure);
-    // AutoBuilder.registerAutoChoices(drive, superStructure);
+    AutoBuilder.registerAutoChoices(drive, superStructure);
 
     configureBindings();
   }
@@ -146,10 +145,6 @@ public class RobotContainer {
         .rightBumper()
         .onTrue(superStructure.setStateCommand(SuperStructureState.REVERSE_INTAKE))
         .onFalse(superStructure.setStateCommand(SuperStructureState.IDLE));
-    driveController
-        .a()
-        .onTrue(superStructure.setTarget(TurretTarget.FRONT_OF_HUB))
-        .onFalse(superStructure.setTarget(TurretTarget.HUB));
     driveController
         .b()
         .onTrue(superStructure.setTarget(TurretTarget.CONSTANT_FORWARD))
@@ -167,11 +162,6 @@ public class RobotContainer {
         .x()
         .onTrue(superStructure.setTarget(TurretTarget.TUNING))
         .onFalse(superStructure.setTarget(TurretTarget.HUB));
-    /*driveController
-          .y()
-          .onTrue(superStructure.setTarget(TurretTarget.ON_THE_MOVE))
-          .onFalse(superStructure.setTarget(TurretTarget.HUB));
-    */
   }
 
   private void configureFuelSim() {
@@ -197,7 +187,6 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return AutoBuilder2.autoChooser.get();
-    // return AutoBuilder.autoChooser.get();
+    return AutoBuilder.autoChooser.get();
   }
 }
