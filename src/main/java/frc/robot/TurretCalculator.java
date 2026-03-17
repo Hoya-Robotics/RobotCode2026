@@ -17,33 +17,11 @@ import edu.wpi.first.units.measure.Distance;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.util.AllianceFlip;
 import frc.robot.util.LoggedTunableNumber;
-import frc.robot.util.PolynomialRegression;
 import org.littletonrobotics.junction.Logger;
 
 public class TurretCalculator {
   public record TurretParameters(
       Angle azimuthAngle, Angle hoodAngle, AngularVelocity launcherSpeed) {}
-
-  private static final PolynomialRegression hoodAngleFn =
-      new PolynomialRegression(
-          new double[][] {
-            {1.5, 2.0},
-            {2.0, 6.0},
-            {3.0, 8.25},
-            {3.5, 10.0},
-            {4.5, 15.0}
-          },
-          2);
-  private static final PolynomialRegression launcherSpeedFn =
-      new PolynomialRegression(
-          new double[][] {
-            {1.5, 28.0},
-            {2.0, 27.5},
-            {3.0, 30.0},
-            {3.5, 32.0},
-            {4.5, 34.0}
-          },
-          2);
 
   private static final InterpolatingDoubleTreeMap timeOfFlightMap =
       new InterpolatingDoubleTreeMap();
@@ -91,16 +69,11 @@ public class TurretCalculator {
     timeOfFlightMap.put(4.0, 1.07);
   }
 
-  private static final TurretParameters FRONT_OF_HUB_PARAMS =
-      new TurretParameters(Rotations.of(0.0), Degrees.of(2.0), RotationsPerSecond.of(28.0));
-
   public static TurretParameters calculateSetpoints(
       RobotConfig.TurretTarget target, Angle currentAzimuthAngle) {
     Translation2d hubPosition = AllianceFlip.apply(FieldConstants.hubCenter.toTranslation2d());
     Logger.recordOutput("Tuning/hubPose", hubPosition);
     switch (target) {
-      case FRONT_OF_HUB:
-        return FRONT_OF_HUB_PARAMS;
       case PASSING:
         return getStationarySetpoint(getPassingTarget(), currentAzimuthAngle);
       case ON_THE_MOVE:

@@ -89,8 +89,6 @@ public class RobotConfig {
     public static final double toPoseThetaTolerance = Units.degreesToRadians(3.0);
     public static final double toPoseEndSpeed = 0.25;
 
-    public static final PIDGains trenchYGains = new PIDGains(3.5, 0.0, 0.0);
-
     public static final PIDGains choreoXGains = new PIDGains(7.5, 0.0, 0.0);
     public static final PIDGains choreoYGains = new PIDGains(7.5, 0.0, 0.0);
     public static final PIDGains choreoOmegaGains = new PIDGains(4.5, 0.0, 0.0);
@@ -134,7 +132,6 @@ public class RobotConfig {
 
     public static final PIDGains hoodGains = new PIDGains(180.0, 0.0, 0.0);
     public static final PIDGains azimuthGains = new PIDGains(100.0, 0.0, 5.0);
-    // public static final PIDGains shootGains = new PIDGains(60.0, 0.0, 0.0);
     public static final PIDGains shootGains = new PIDGains(0.75, 0.0, 0.0);
 
     public static final Angle maxAzimuthAngle = Rotations.of(0.73);
@@ -177,13 +174,11 @@ public class RobotConfig {
     public static final List<Integer> hubTags = List.of(9, 10, 25, 26);
     public static final boolean rewindEnabled = true;
 
-    // Hybrid stddev tuning
     public static final double baseStddevMultiplier = 0.9;
     public static final double maxReliableDistance = 4.0;
     public static final double distanceScalingExponent = 2.0;
     public static final double singleTagPenalty = 2.5;
 
-    // Filtering thresholds
     public static final double maxAcceptableDistance = 5.0;
     public static final double maxAcceptableStddev = 3.5;
   }

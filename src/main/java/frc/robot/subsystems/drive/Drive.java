@@ -36,7 +36,6 @@ enum DriveState {
   IDLE,
   TO_POSE,
   TELEOP,
-  TRENCH,
   CHOREO
 }
 
@@ -48,7 +47,6 @@ public class Drive extends StateSubsystem<DriveState> {
 
   private final PIDController linearController = DriveConstants.toPoseLinearGains.toController();
   private final PIDController omegaController = DriveConstants.toPoseOmegaGains.toController();
-  private final PIDController trenchYController = DriveConstants.trenchYGains.toController();
 
   private final PIDController choreoXController = DriveConstants.choreoXGains.toController();
   private final PIDController choreoYController = DriveConstants.choreoYGains.toController();
@@ -79,7 +77,6 @@ public class Drive extends StateSubsystem<DriveState> {
     linearController.setTolerance(DriveConstants.toPoseLinearTolerance);
     omegaController.setTolerance(DriveConstants.toPoseThetaTolerance);
     omegaController.enableContinuousInput(-Math.PI, Math.PI);
-    trenchYController.setTolerance(DriveConstants.toPoseLinearTolerance);
     choreoOmegaController.enableContinuousInput(-Math.PI, Math.PI);
 
     setState(DriveState.IDLE);
@@ -159,10 +156,6 @@ public class Drive extends StateSubsystem<DriveState> {
         linearController.reset();
         omegaController.reset();
         break;
-      case TRENCH:
-        trenchYController.reset();
-        omegaController.reset();
-        break;
       case CHOREO:
         choreoTimer.restart();
         break;
@@ -184,20 +177,6 @@ public class Drive extends StateSubsystem<DriveState> {
                 .withVelocityX(speeds.get(0))
                 .withVelocityY(speeds.get(1))
                 .withRotationalRate(speeds.get(2)));
-        /*FieldConstants.Trench.triggerTrenchAlign()
-        .ifPresent(
-            pose -> {
-              trenchPose = pose;
-              setState(DriveState.TRENCH);
-            });*/
-        break;
-      case TRENCH:
-        applyRequest(trenchRequest(robotPose));
-        double xVelocity = RobotState.getInstance().getFieldVelocity().vxMetersPerSecond;
-        boolean passedTarget =
-            (xVelocity > 0 && robotPose.getX() > trenchPose.getX())
-                || (xVelocity < 0 && robotPose.getX() < trenchPose.getX());
-        if (passedTarget) setState(DriveState.TELEOP);
         break;
       case CHOREO:
         if (choreoTrajectory.isPresent()) {
@@ -218,23 +197,6 @@ public class Drive extends StateSubsystem<DriveState> {
         applyRequest(brakeRequest);
         break;
     }
-  }
-
-  private SwerveRequest trenchRequest(Pose2d robotPose) {
-    double xOutput = getInputVector().get(0);
-    var robotToTrench = trenchPose.minus(robotPose);
-
-    double yError = robotToTrench.getY();
-    double yOutput = Math.signum(yError) * Math.abs(trenchYController.calculate(0.0, yError));
-    double omega =
-        omegaController.calculate(
-            robotPose.getRotation().getRadians(), trenchPose.getRotation().getRadians());
-
-    Logger.recordOutput("Drive/TrenchAlign/alignPose", trenchPose);
-    Logger.recordOutput("Drive/TrenchAlign/yError", yError);
-    Logger.recordOutput("Drive/TrenchAlign/yOutput", yOutput);
-    Logger.recordOutput("Drive/TrenchAlign/omegaOutput", omega);
-    return fieldRequest.withVelocityX(xOutput).withVelocityY(yOutput).withRotationalRate(omega);
   }
 
   public boolean choreoTrajectoryDone() {

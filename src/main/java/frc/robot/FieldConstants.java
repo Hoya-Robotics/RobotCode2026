@@ -32,6 +32,13 @@ public class FieldConstants {
   public static final Distance neutralZoneLength = Inches.of(283);
   public static final Distance neutralZoneStart = centerLine.minus(neutralZoneLength.div(2.0));
   public static final Distance neutralZoneEnd = centerLine.plus(neutralZoneLength.div(2.0));
+  public static final Distance bumpWidth = Inches.of(73.0);
+  public static final Distance trenchWidth = Inches.of(65.65);
+  public static final Distance trenchDepth = Inches.of(47.0);
+
+  public static final Distance passingY = trenchWidth.plus(bumpWidth.div(2.0));
+  public static final Distance passingX =
+      neutralZoneStart.minus(trenchDepth.div(2.0)).minus(RobotConfig.bumperWidthX.times(4.0));
 
   public static final Translation3d hubCenter =
       new Translation3d(neutralZoneStart, fieldWidth.div(2.0), Inches.of(72.0));
