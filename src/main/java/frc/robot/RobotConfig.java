@@ -99,7 +99,7 @@ public class RobotConfig {
     public static final int feedMotorId = 21;
 
     public static final double feedGearRatio = 1.0;
-    public static final double indexGearRatio = 3.0;
+    public static final double indexGearRatio = 1.0 / 3.0;
   }
 
   public static final class IntakeConstants {
@@ -143,7 +143,7 @@ public class RobotConfig {
 
     public static final double shooterIdleVoltage = 1.5;
 
-    public static final double cooldownSeconds = 1.0;
+    public static final double cooldownSeconds = 0.5;
 
     public static final double azimuthLatencyCompensation = 0.050;
     public static final double maxShootingRobotSpeed = 1.0;

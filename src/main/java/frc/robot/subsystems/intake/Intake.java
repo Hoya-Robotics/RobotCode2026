@@ -115,6 +115,6 @@ public class Intake extends StateSubsystem<IntakeState> {
     if (inputs.extendPosition.lt(IntakeConstants.maxRetraction.plus(Inches.of(0.25)))) {
       outputs.intakeVoltage = Volts.of(0.0);
     }
-    outputs.extensionDistance = Inches.of(0.0);
+    // outputs.extensionDistance = Inches.of(0.0);
   }
 }

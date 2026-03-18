@@ -13,16 +13,16 @@ public interface SpindexerIO {
     public boolean indexConnected = false;
     public Voltage indexMotorVoltageApplied = Volts.zero();
     public Current indexMotorCurrent = Amps.zero();
-    public AngularVelocity indexMotorVelocity = RadiansPerSecond.zero();
+    public AngularVelocity indexMotorVelocity_velocityRotationsPerSecond = RadiansPerSecond.zero();
 
     public boolean feedConnected = false;
     public Voltage feedMotorVoltageApplied = Volts.zero();
     public Current feedMotorCurrent = Amps.zero();
-    public AngularVelocity feedMotorVelocity = RadiansPerSecond.zero();
+    public AngularVelocity feedMotorVelocity_velocityRotationsPerSecond = RadiansPerSecond.zero();
   }
 
   public class SpindexerIOOutputs {
-    public Voltage indexMotorVoltage = Volts.zero();
+    public AngularVelocity indexMotorVelocity = RotationsPerSecond.of(0.0);
     public AngularVelocity feedVelocity = RotationsPerSecond.of(0.0);
     // public Voltage feedMotorVoltage = Volts.zero();
   }
