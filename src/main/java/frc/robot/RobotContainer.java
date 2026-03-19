@@ -4,6 +4,9 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meters;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -58,7 +61,7 @@ public class RobotContainer {
                     TunerConstants.BackLeft,
                     TunerConstants.BackRight));
         spindexer = new Spindexer(new SpindexerIO() {});
-        intake = new Intake(new IntakeIO() {});
+        intake = new Intake(new IntakeIOSimSimple());
         azimuth =
             new Azimuth(
                 // new AzimuthIOSimAdvanced(TurretConstants.azimuthMotorId,
@@ -186,16 +189,20 @@ public class RobotContainer {
     fuelSim = new FuelSim();
     fuelSim.spawnStartingFuel();
     fuelSim.registerRobot(
-        RobotConfig.bumperWidthY.in(Units.Meters),
-        RobotConfig.bumperWidthX.in(Units.Meters),
-        edu.wpi.first.math.util.Units.inchesToMeters(3.0),
+        RobotConfig.bumperWidthY.times(2.0).in(Units.Meters),
+        RobotConfig.bumperWidthX.times(2.0).in(Units.Meters),
+        edu.wpi.first.math.util.Units.inchesToMeters(6.5),
         RobotState.getInstance()::getSimulatedPose,
         RobotState.getInstance()::getFieldVelocity);
     fuelSim.registerIntake(
-        RobotConfig.bumperWidthX.in(Units.Meters),
-        RobotConfig.bumperWidthX.plus(Units.Inches.of(10.0)).in(Units.Meters),
-        -RobotConfig.bumperWidthY.in(Units.Meters),
-        RobotConfig.bumperWidthY.in(Units.Meters),
+        // RobotConfig.bumperWidthX.in(Units.Meters),
+        Inches.of(13.75).in(Meters),
+        // RobotConfig.bumperWidthX.plus(Units.Inches.of(10.0)).in(Units.Meters),
+        Inches.of(13.75).unaryMinus().in(Meters),
+        // -RobotConfig.bumperWidthY.in(Units.Meters),
+        Inches.of(9).in(Meters),
+        // RobotConfig.bumperWidthY.in(Units.Meters),
+        Inches.zero().in(Meters),
         () -> superStructure.isIntaking(),
         RobotState.getInstance()::addFuel);
     // fuelSim.enableAirResistance();

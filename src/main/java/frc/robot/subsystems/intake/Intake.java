@@ -39,9 +39,11 @@ public class Intake extends StateSubsystem<IntakeState> {
     Logger.processInputs("Intake", inputs);
     Logger.recordOutput("Intake/state", getCurrentState());
     Distance intakePostion = inputs.extendPosition;
-    Distance intakeZ = Meters.of(Math.sin(8.0) * intakePostion.in(Meters));
-    Distance intakeX = Meters.of(Math.cos(8.0) * intakePostion.in(Meters));
-    Logger.recordOutput("Intake/IntakePose", new Pose3d(intakeX, Meters.zero(), intakeZ.unaryMinus(), Rotation3d.kZero));
+    Distance intakeX = Meters.of(Math.sin(8.0) * intakePostion.in(Meters));
+    Distance intakeZ = Meters.of(Math.cos(8.0) * intakePostion.in(Meters));
+    Logger.recordOutput(
+        "Intake/IntakePose",
+        new Pose3d(intakeX, Meters.zero(), intakeZ.unaryMinus(), Rotation3d.kZero));
 
     applyState();
     io.applyOutputs(outputs);

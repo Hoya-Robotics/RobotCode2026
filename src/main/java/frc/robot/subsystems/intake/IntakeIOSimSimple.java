@@ -20,7 +20,7 @@ public class IntakeIOSimSimple implements IntakeIO {
   private DCMotor gearbox = DCMotor.getFalcon500(1);
   private ElevatorSim intakeSim = new ElevatorSim(gearbox, 10.3846, 0.1, 1.8, 0, 11, false, 0);
 
-  private PIDController intakePID = new PIDController(200, 0, 0);
+  private PIDController intakePID = new PIDController(10, 0, 0);
 
   public IntakeIOSimSimple() {
     intakeSim.setState(0.0, 0.0);
@@ -52,7 +52,7 @@ public class IntakeIOSimSimple implements IntakeIO {
     Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVoltage);
 
     // extendMotor.setVoltage(outputs.extendVoltage.in(Volts));
-    //extendMotor.setControl(extendRequest.withPosition(outputs.extensionDistance.in(Inches)));
+    // extendMotor.setControl(extendRequest.withPosition(outputs.extensionDistance.in(Inches)));
     intakePID.setSetpoint(outputs.extensionDistance.in(Meters));
   }
 }
