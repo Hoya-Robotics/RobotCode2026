@@ -58,7 +58,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
   }
 
   public boolean isIntaking() {
-    return getCurrentState() == SuperStructureState.INTAKE;
+    return getCurrentState() == SuperStructureState.INTAKE || getCurrentState() == SuperStructureState.SHOOT_INTAKE;
   }
 
   public Command setStateCommand(SuperStructureState state) {
@@ -174,13 +174,14 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         Logger.recordOutput("SuperStructure/azimuthWithinTolerance", azimuthWithinTolerance);
         Logger.recordOutput("SuperStructure/upToSpeed", upToSpeed);
 
-				if (state == SuperStructureState.SHOOT_INTAKE) {
-					intake.run();
-				}
+        if (state == SuperStructureState.SHOOT_INTAKE) {
+          intake.run();
+        }
 
-        if (RobotConfig.getMode() == OperationMode.SIM) {
+        if (RobotConfig.getMode() == OperationMode.SIM && hoodWithinTolerance && azimuthWithinTolerance) {
           simulateTurretShot(turretParams);
         }
+
         if (upToSpeed && hoodWithinTolerance && azimuthWithinTolerance) {
           if (state != SuperStructureState.SHOOT_INTAKE) {
             intake.agitate();
