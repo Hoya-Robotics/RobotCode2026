@@ -178,6 +178,10 @@ public class RobotContainer {
         .onTrue(superStructure.setTarget(TurretTarget.CONSTANT_FORWARD))
         .onFalse(superStructure.setTarget(TurretTarget.DEFAULT));
     driveController
+        .a()
+        .onTrue(superStructure.setTarget(TurretTarget.MAX_PASSING))
+        .onFalse(superStructure.setTarget(TurretTarget.DEFAULT));
+    driveController
         .start()
         .onTrue(
             Commands.runOnce(
@@ -202,13 +206,9 @@ public class RobotContainer {
         RobotState.getInstance()::getSimulatedPose,
         RobotState.getInstance()::getFieldVelocity);
     fuelSim.registerIntake(
-        // RobotConfig.bumperWidthX.in(Units.Meters),
         Inches.of(16.875).in(Meters),
-        // RobotConfig.bumperWidthX.plus(Units.Inches.of(10.0)).in(Units.Meters),
         Inches.of(16.875 + 9.375).in(Meters),
-        // -RobotConfig.bumperWidthY.in(Units.Meters),
         Inches.of(13.75).unaryMinus().in(Meters),
-        // RobotConfig.bumperWidthY.in(Units.Meters),
         Inches.of(13.75).in(Meters),
         () -> superStructure.isIntaking(),
         RobotState.getInstance()::addFuel);

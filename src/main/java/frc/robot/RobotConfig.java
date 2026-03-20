@@ -24,6 +24,7 @@ public class RobotConfig {
     DEFAULT,
     TUNING,
     CONSTANT_FORWARD,
+    MAX_PASSING
   }
 
   public enum SuperStructureState {

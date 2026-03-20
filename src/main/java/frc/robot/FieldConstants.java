@@ -52,9 +52,13 @@ public class FieldConstants {
   public static boolean underTrench(Pose2d pose) {
     pose = AllianceFlip.apply(pose);
     return pose.getMeasureX()
-            .lt(neutralZoneStart.plus(trenchDepth.div(2.0).plus(RobotConfig.bumperWidthX.div(2))))
+            .lt(
+                neutralZoneStart.plus(
+                    trenchDepth.div(2.0).plus(RobotConfig.bumperWidthX.times(0.75))))
         && pose.getMeasureX()
-            .gt(neutralZoneStart.minus(trenchDepth.div(2.0).plus(RobotConfig.bumperWidthX.div(2))))
+            .gt(
+                neutralZoneStart.minus(
+                    trenchDepth.div(2.0).plus(RobotConfig.bumperWidthX.times(0.75))))
         && (pose.getMeasureY().lt(trenchWidth)
             || pose.getMeasureY().gt(fieldWidth.minus(trenchWidth)));
   }
