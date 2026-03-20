@@ -135,8 +135,10 @@ public class TurretCalculator {
     Logger.recordOutput("Tuning/hubDistance", hubDistance);
     return new TurretParameters(
         calculateAzimuthAngle(azimuth.getMeasure(), currentAzimuthAngle),
-        newHoodLUT.get(hubDistance).getMeasure(),
-        RotationsPerSecond.of(newLauncherLUT.get(hubDistance) - 1.65));
+        // newHoodLUT.get(hubDistance).getMeasure(),
+        Degrees.of(4.0 * hubDistance - 2.0),
+        // RotationsPerSecond.of(newLauncherLUT.get(hubDistance) - 1.65));
+        RotationsPerSecond.of(2.27 * hubDistance + 22.3));
   }
 
   // https://frc-docs--3242.org.readthedocs.build/en/3242/docs/software/advanced-controls/fire-control/dynamic-shooting.html

@@ -42,8 +42,7 @@ public class Intake extends StateSubsystem<IntakeState> {
     Distance intakeX = Meters.of(Math.sin(8.0) * intakePostion.in(Meters));
     Distance intakeZ = Meters.of(Math.cos(8.0) * intakePostion.in(Meters));
     Logger.recordOutput(
-        "Intake/IntakePose",
-        new Pose3d(intakeX, Meters.zero(), intakeZ, Rotation3d.kZero));
+        "Intake/IntakePose", new Pose3d(intakeX, Meters.zero(), intakeZ, Rotation3d.kZero));
 
     applyState();
     io.applyOutputs(outputs);

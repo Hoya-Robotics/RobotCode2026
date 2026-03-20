@@ -30,7 +30,7 @@ public class AzimuthIOHardware implements AzimuthIO {
 
     var encoderConfig = new CANcoderConfiguration();
     encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
-    encoderConfig.MagnetSensor.withMagnetOffset(0.89);
+    encoderConfig.MagnetSensor.withMagnetOffset(0.1557);
     encoder.getConfigurator().apply(encoderConfig);
 
     var config = new TalonFXConfiguration();

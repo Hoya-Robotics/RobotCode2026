@@ -19,7 +19,9 @@ import org.littletonrobotics.junction.Logger;
 /** Add your docs here. */
 public class IntakeIOSimSimple implements IntakeIO {
   private DCMotor gearbox = DCMotor.getFalcon500(1);
-  private ElevatorSim intakeSim = new ElevatorSim(gearbox, 10.3846, 0.1, Inches.of(0.9).in(Meters), 0, Inches.of(11).in(Meters), false, 0);
+  private ElevatorSim intakeSim =
+      new ElevatorSim(
+          gearbox, 10.3846, 0.1, Inches.of(0.9).in(Meters), 0, Inches.of(11).in(Meters), false, 0);
 
   private PIDController intakePID = new PIDController(100, 0, 0);
 
