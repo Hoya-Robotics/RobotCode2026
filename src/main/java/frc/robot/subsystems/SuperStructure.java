@@ -5,8 +5,6 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -43,7 +41,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
 
   public SuperStructure(
       Spindexer spindexer, Hood hood, Azimuth azimuth, Launcher launcher, Intake intake) {
-    this.target = TurretTarget.HUB;
+    this.target = TurretTarget.DEFAULT;
     this.spindexer = spindexer;
     this.hood = hood;
     this.azimuth = azimuth;
@@ -56,14 +54,6 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
 
   @Override
   public void periodic() {
-    Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
-
-    if (DriverStation.isTeleop()
-        && (getCurrentState() == SuperStructureState.SHOOT
-            || getCurrentState() == SuperStructureState.IDLE)
-        && (target == TurretTarget.PASSING || target == TurretTarget.HUB)) {
-      target = FieldConstants.inNeutralZone(robotPose) ? TurretTarget.PASSING : TurretTarget.HUB;
-    }
     applyState();
   }
 
@@ -169,10 +159,6 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         hood.setAngle(turretParams.hoodAngle());
         launcher.setSpeed(turretParams.launcherSpeed());
 
-        ChassisSpeeds speeds = RobotState.getInstance().getFieldVelocity();
-        boolean speedCapped =
-            Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond) > 2.0
-                && target != TurretTarget.ON_THE_MOVE;
         boolean hoodWithinTolerance =
             hood.getAngle().isNear(turretParams.hoodAngle(), TurretConstants.hoodTolerance);
         boolean azimuthWithinTolerance =
@@ -187,12 +173,11 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         Logger.recordOutput("SuperStructure/hoodWithinTolerance", hoodWithinTolerance);
         Logger.recordOutput("SuperStructure/azimuthWithinTolerance", azimuthWithinTolerance);
         Logger.recordOutput("SuperStructure/upToSpeed", upToSpeed);
-        Logger.recordOutput("SuperStructure/speedCapped", speedCapped);
 
-        if (!speedCapped && RobotConfig.getMode() == OperationMode.SIM) {
+        if (RobotConfig.getMode() == OperationMode.SIM) {
           simulateTurretShot(turretParams);
         }
-        if (upToSpeed && hoodWithinTolerance && azimuthWithinTolerance && !speedCapped) {
+        if (upToSpeed && hoodWithinTolerance && azimuthWithinTolerance) {
           if (state == SuperStructureState.SHOOT_INTAKE) {
             intake.run();
           } else {
@@ -208,5 +193,9 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
       hood.setAngle(cooldownParams.hoodAngle());
       spindexer.cooldown();
     }
+
+		if (FieldConstants.inNeutralZone(RobotState.getInstance().getEstimatedPose())) {
+			hood.setAngle(Degrees.of(0.0));
+		}
   }
 }

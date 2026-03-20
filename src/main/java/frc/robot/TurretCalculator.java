@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
@@ -43,8 +44,14 @@ public class TurretCalculator {
   private static final double kConvergenceEpsilon = 0.001;
 
   static {
-    passingHoodAngleMap.put(0.0, Rotation2d.fromDegrees(0.0));
-    passingLauncherSpeedMap.put(0.0, 0.0);
+    // Passing hood angles
+    passingHoodAngleMap.put(3.5, Rotation2d.fromDegrees(11.0));
+    passingHoodAngleMap.put(4.0, Rotation2d.fromDegrees(12.5));
+    passingHoodAngleMap.put(4.5, Rotation2d.fromDegrees(12.5));
+
+    // Passing launcher angles
+    passingLauncherSpeedMap.put(3.5, 24.0);
+    passingLauncherSpeedMap.put(4.0, 25.3);
 
     // Hood angle in
     newHoodLUT.put(1.5, Rotation2d.fromDegrees(5.0));
@@ -71,19 +78,30 @@ public class TurretCalculator {
     timeOfFlightMap.put(4.0, 1.07);
   }
 
+  private static double hoodRegression(double x) {
+    return 4.0 * x - 2.0;
+  }
+
+  private static double shotRegression(double x) {
+    return 2.27 * x + 22.3;
+  }
+
+  private static double tofRegression(double x) {
+    return 0.076 * x + 0.982;
+  }
+
   public static TurretParameters calculateSetpoints(
-      RobotConfig.TurretTarget target, Angle currentAzimuthAngle) {
-    Translation2d hubPosition = AllianceFlip.apply(FieldConstants.hubCenter.toTranslation2d());
-    Logger.recordOutput("Tuning/hubPose", hubPosition);
-    switch (target) {
-      case PASSING:
-        return getStationarySetpoint(getPassingTarget(), currentAzimuthAngle);
-      case ON_THE_MOVE:
-        return turretIterativeMovingSetpoint(currentAzimuthAngle);
-      case HUB:
-        return getStationarySetpoint(hubPosition, currentAzimuthAngle);
+      RobotConfig.TurretTarget trackingTarget, Angle currentAzimuthAngle) {
+		boolean passing = FieldConstants.inNeutralZone(RobotState.getInstance().getEstimatedPose());
+    Translation2d target =
+        AllianceFlip.apply(passing ? getPassingTarget()
+                : FieldConstants.hubCenter.toTranslation2d());
+    Logger.recordOutput("TurretCalculator/target", new Translation3d(target));
+    switch (trackingTarget) {
+      case DEFAULT:
+        return turretIterativeMovingSetpoint(target, passing, currentAzimuthAngle);
       case TUNING:
-        var setpoint = getStationarySetpoint(hubPosition, currentAzimuthAngle);
+        var setpoint = turretIterativeMovingSetpoint(target, passing, currentAzimuthAngle);
         return new TurretParameters(
             setpoint.azimuthAngle(),
             Degrees.of(hoodAngleTuning.getAsDouble()),
@@ -113,20 +131,19 @@ public class TurretCalculator {
     return Rotations.of(closestTarget);
   }
 
-  private static final Distance xPassTarget = Inches.of(37);
-  private static final Distance yPassTarget = Inches.of(65);
-
   private static Translation2d getPassingTarget() {
     Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
     Distance flippedY = AllianceFlip.apply(robotPose).getMeasureY();
     boolean mirror = flippedY.gt(FieldConstants.fieldWidth.div(2.0));
-    return AllianceFlip.apply(
-        new Translation2d(
-            xPassTarget, mirror ? FieldConstants.fieldWidth.minus(yPassTarget) : yPassTarget));
+    return new Translation2d(
+        FieldConstants.passingX,
+        mirror
+            ? FieldConstants.fieldWidth.minus(FieldConstants.passingY)
+            : FieldConstants.passingY);
   }
 
   private static TurretParameters getStationarySetpoint(
-      Translation2d target, Angle currentAzimuthAngle) {
+      Translation2d target, boolean passing, Angle currentAzimuthAngle) {
     Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
     Rotation2d azimuth =
         target.minus(robotPose.getTranslation()).getAngle().minus(robotPose.getRotation());
@@ -135,41 +152,38 @@ public class TurretCalculator {
     Logger.recordOutput("Tuning/hubDistance", hubDistance);
     return new TurretParameters(
         calculateAzimuthAngle(azimuth.getMeasure(), currentAzimuthAngle),
-        // newHoodLUT.get(hubDistance).getMeasure(),
-        Degrees.of(4.0 * hubDistance - 2.0),
-        // RotationsPerSecond.of(newLauncherLUT.get(hubDistance) - 1.65));
-        RotationsPerSecond.of(2.27 * hubDistance + 22.3));
+        passing ? passingHoodAngleMap.get(hubDistance).getMeasure() : Degrees.of(hoodRegression(hubDistance)),
+        RotationsPerSecond.of(passing ? passingLauncherSpeedMap.get(hubDistance) : shotRegression(hubDistance)));
   }
 
   // https://frc-docs--3242.org.readthedocs.build/en/3242/docs/software/advanced-controls/fire-control/dynamic-shooting.html
-  private static TurretParameters turretIterativeMovingSetpoint(Angle currentAzimuthAngle) {
+  private static TurretParameters turretIterativeMovingSetpoint(
+      Translation2d target, boolean passing, Angle currentAzimuthAngle) {
     Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
     Pose2d turretPose = new Pose3d(robotPose).transformBy(TurretConstants.robotToTurret).toPose2d();
-    Translation2d originalTarget = AllianceFlip.apply(FieldConstants.hubCenter.toTranslation2d());
     Translation2d fieldVelocity =
         rigidPointVelocity(
                 RobotState.getInstance().getRobotVelocity(),
                 TurretConstants.robotToTurret.getTranslation().toTranslation2d())
             .rotateBy(robotPose.getRotation());
-    if (fieldVelocity.getNorm() < 0.25)
-      return getStationarySetpoint(originalTarget, currentAzimuthAngle);
-    double distance = turretPose.getTranslation().getDistance(originalTarget);
-    double tof = timeOfFlightMap.get(distance) + 0.2;
+    if (fieldVelocity.getNorm() < 0.25) return getStationarySetpoint(target, passing, currentAzimuthAngle);
+    double distance = turretPose.getTranslation().getDistance(target);
+    double tof = tofRegression(distance);
     for (int i = 0; i < kMaxIterations; ++i) {
       Translation2d futureTurretPos = turretPose.getTranslation().plus(fieldVelocity.times(tof));
       double lastDist = distance;
-      distance = futureTurretPos.getDistance(originalTarget);
+      distance = futureTurretPos.getDistance(target);
       if (Math.abs(distance - lastDist) < kConvergenceEpsilon) break;
-      tof = timeOfFlightMap.get(distance) + 0.2;
+      tof = tofRegression(distance);
     }
 
     Translation2d aimVector =
-        originalTarget.minus(turretPose.getTranslation().plus(fieldVelocity.times(tof)));
+        target.minus(turretPose.getTranslation().plus(fieldVelocity.times(tof)));
     Rotation2d azimuthAngle = aimVector.getAngle().minus(robotPose.getRotation());
     return new TurretParameters(
         calculateAzimuthAngle(azimuthAngle.getMeasure(), currentAzimuthAngle),
-        newHoodLUT.get(distance).getMeasure(),
-        RotationsPerSecond.of(newLauncherLUT.get(distance) - 1.65));
+        passing ? passingHoodAngleMap.get(distance).getMeasure() : Degrees.of(hoodRegression(distance)),
+        RotationsPerSecond.of(passing ? passingLauncherSpeedMap.get(distance) : shotRegression(distance)));
   }
 
   private static Translation2d rigidPointVelocity(ChassisSpeeds speeds, Translation2d r) {

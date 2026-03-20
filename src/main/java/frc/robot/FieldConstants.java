@@ -37,8 +37,7 @@ public class FieldConstants {
   public static final Distance trenchDepth = Inches.of(47.0);
 
   public static final Distance passingY = trenchWidth.plus(bumpWidth.div(2.0));
-  public static final Distance passingX =
-      neutralZoneStart.minus(trenchDepth.div(2.0)).minus(RobotConfig.bumperWidthX.times(4.0));
+  public static final Distance passingX = Meters.of(3.0);
 
   public static final Translation3d hubCenter =
       new Translation3d(neutralZoneStart, fieldWidth.div(2.0), Inches.of(72.0));

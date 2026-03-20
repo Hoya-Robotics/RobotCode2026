@@ -146,7 +146,29 @@ public class RobotContainer {
         .rightTrigger(0.3)
         .onTrue(superStructure.intake())
         .onFalse(superStructure.idle());
-    // driveController.leftTrigger(0.3).onTrue(superStructure.shoot()).onFalse(superStructure.idle());
+    driveController
+        .leftTrigger(0.3)
+        .onTrue(
+            superStructure.shoot().andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.0))))
+        .onFalse(
+            superStructure
+                .idle()
+                .andThen(
+                    Commands.runOnce(
+                        () -> drive.setTeleopSpeedLimit(DriveConstants.maxDriveSpeedMps))));
+    driveController
+        .leftTrigger(0.3)
+        .and(driveController.rightTrigger(0.3))
+        .onTrue(
+            superStructure
+                .setStateCommand(SuperStructureState.SHOOT_INTAKE)
+                .andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.0))))
+        .onFalse(
+            superStructure
+                .idle()
+                .andThen(
+                    Commands.runOnce(
+                        () -> drive.setTeleopSpeedLimit(DriveConstants.maxDriveSpeedMps))));
     driveController
         .rightBumper()
         .onTrue(superStructure.setStateCommand(SuperStructureState.REVERSE_INTAKE))
@@ -154,7 +176,7 @@ public class RobotContainer {
     driveController
         .b()
         .onTrue(superStructure.setTarget(TurretTarget.CONSTANT_FORWARD))
-        .onFalse(superStructure.setTarget(TurretTarget.HUB));
+        .onFalse(superStructure.setTarget(TurretTarget.DEFAULT));
     driveController
         .start()
         .onTrue(
@@ -167,22 +189,7 @@ public class RobotContainer {
     driveController
         .x()
         .onTrue(superStructure.setTarget(TurretTarget.TUNING))
-        .onFalse(superStructure.setTarget(TurretTarget.HUB));
-    driveController
-        .leftTrigger(0.3)
-        .onTrue(
-            superStructure
-                .setTarget(TurretTarget.ON_THE_MOVE)
-                // .setTarget(TurretTarget.TUNING)
-                .andThen(superStructure.shoot())
-                .andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.0))))
-        .onFalse(
-            superStructure
-                .setTarget(TurretTarget.HUB)
-                .andThen(superStructure.idle())
-                .andThen(
-                    Commands.runOnce(
-                        () -> drive.setTeleopSpeedLimit(DriveConstants.maxDriveSpeedMps))));
+        .onFalse(superStructure.setTarget(TurretTarget.DEFAULT));
   }
 
   private void configureFuelSim() {

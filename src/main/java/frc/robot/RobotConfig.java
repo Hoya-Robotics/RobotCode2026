@@ -21,12 +21,9 @@ import java.util.function.BooleanSupplier;
 
 public class RobotConfig {
   public enum TurretTarget {
-    HUB,
-    ON_THE_MOVE,
-    PASSING,
+    DEFAULT,
     TUNING,
     CONSTANT_FORWARD,
-    FRONT_OF_HUB
   }
 
   public enum SuperStructureState {

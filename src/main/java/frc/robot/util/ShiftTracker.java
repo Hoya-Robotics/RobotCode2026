@@ -1,5 +1,7 @@
 package frc.robot.util;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 
@@ -22,6 +24,12 @@ public class ShiftTracker {
         break;
       }
     }
-    return shiftEndTimes[shift] - t;
+
+    double remaining = (shiftEndTimes[shift] - shiftStartTimes[shift]) - t - shiftStartTimes[shift];
+
+		Logger.recordOutput("ShiftTracker/currentShift", shift);
+		Logger.recordOutput("ShiftTracker/teleopTime", t);
+		Logger.recordOutput("ShiftTracker/shiftTimeReamining", remaining);
+		return remaining;
   }
 }

@@ -90,23 +90,19 @@ public class Intake extends StateSubsystem<IntakeState> {
     }
     switch (getCurrentState()) {
       case IDLE:
-        // outputs.extendVoltage = Volts.zero();
         outputs.extensionDistance = Inches.of(7.25);
         outputs.intakeVoltage = Volts.zero();
         break;
       case RETRACT:
         outputs.extensionDistance = Inches.of(7.25);
-        // outputs.extendVoltage = Volts.of(-4.0);
         outputs.intakeVoltage = Volts.of(1.5);
         break;
       case REVERSE:
         outputs.extensionDistance = IntakeConstants.maxExtension;
-        // outputs.extendVoltage = Volts.of(8.0);
         outputs.intakeVoltage = Volts.of(-9.0);
         break;
       case INTAKE:
         outputs.extensionDistance = IntakeConstants.maxExtension;
-        // outputs.extendVoltage = Volts.of(8.0);
         outputs.intakeVoltage = Volts.of(9.0);
         break;
       case AGITATE:
@@ -116,14 +112,12 @@ public class Intake extends StateSubsystem<IntakeState> {
         }
         outputs.extensionDistance =
             agitatingForward ? Inches.of(10.75) : Inches.of(7.25); // 10.75 and 7.75
-        // outputs.extendVoltage = Volts.of(6.0 * (agitatingForward ? 1.0 : -1.0));
         outputs.intakeVoltage = Volts.of(2.0);
         break;
     }
 
     if (inputs.extendPosition.lt(IntakeConstants.maxRetraction.plus(Inches.of(0.25)))) {
-      outputs.intakeVoltage = Volts.of(0.0);
+      outputs.intakeVoltage = Volts.of(1.0);
     }
-    // outputs.extensionDistance = Inches.of(0.0);
   }
 }

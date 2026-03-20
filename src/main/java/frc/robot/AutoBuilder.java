@@ -186,9 +186,9 @@ public class AutoBuilder {
     return new AutoBuilder(shouldFlipYAxis)
         .withStateChange(SuperStructureState.INTAKE)
         .withChoreoTraj(trajName)
+        .withStateChange(SuperStructureState.SHOOT)
         .withDriveToPoseAllianceAgnostic(
-            new Pose2d(3.5784, 0.663, endsIntakeToNeutral ? Rotation2d.kZero : Rotation2d.k180deg))
-        .withStateChange(SuperStructureState.SHOOT);
+            new Pose2d(3.5784, 0.663, endsIntakeToNeutral ? Rotation2d.kZero : Rotation2d.k180deg));
   }
 
   private static AutoBuilder cleanSwipeTemplate(boolean shouldFlipYAxis) {
@@ -276,6 +276,14 @@ public class AutoBuilder {
         .withStateChange(SuperStructureState.IDLE)
         .withChoreoTraj("CenterOutpost")
         .withStateChange(SuperStructureState.SHOOT)
+        .generate(drive, superStructure);
+  }
+
+  public static Command passSweep(Drive drive, SuperStructure superStructure) {
+    return new AutoBuilder(true)
+        .withStateChange(SuperStructureState.SHOOT_INTAKE)
+        .withChoreoTraj("OrbitPass")
+        .withStateChange(SuperStructureState.IDLE)
         .generate(drive, superStructure);
   }
 
