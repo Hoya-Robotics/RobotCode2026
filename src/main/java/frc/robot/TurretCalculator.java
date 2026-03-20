@@ -98,8 +98,12 @@ public class TurretCalculator {
     Translation2d target =
         AllianceFlip.apply(
             passing ? getPassingTarget() : FieldConstants.hubCenter.toTranslation2d());
+<<<<<<< HEAD
     Logger.recordOutput(
         "TurretCalculator/target", new Pose3d(new Translation3d(target), Rotation3d.kZero));
+=======
+    Logger.recordOutput("TurretCalculator/target", new Translation3d(target));
+>>>>>>> refs/remotes/origin/main
     switch (trackingTarget) {
       case DEFAULT:
         return turretIterativeMovingSetpoint(target, passing, currentAzimuthAngle);

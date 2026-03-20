@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -86,14 +87,17 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
       Pose2d robotPose = RobotState.getInstance().getSimulatedPose();
       Translation3d pos =
           new Pose3d(robotPose).transformBy(TurretConstants.robotToTurret).getTranslation();
-      double launchSpeedMps =
-          params.launcherSpeed().in(RadiansPerSecond)
-              * TurretConstants.launcherWheelRadius.in(Meters);
+      // double launchSpeedMps = params.launcherSpeed().in(RadiansPerSecond) *
+      // TurretConstants.launcherWheelRadius.in(Meters);
+      LinearVelocity launchSpeed =
+          MetersPerSecond.of(
+              TurretConstants.launcherWheelRadius.times(2.0 * Math.PI).in(Meters)
+                  * params.launcherSpeed().in(RotationsPerSecond));
 
       // Calculate velocity components: hoodAngle=0 is horizontal, 90 deg is straight up
       double hoodAngleRad = Degrees.of(90).minus(params.hoodAngle()).in(Radians);
-      double horizontalVel = Math.cos(hoodAngleRad) * launchSpeedMps;
-      double verticalVel = Math.sin(hoodAngleRad) * launchSpeedMps;
+      double horizontalVel = Math.cos(hoodAngleRad) * launchSpeed.in(MetersPerSecond);
+      double verticalVel = Math.sin(hoodAngleRad) * launchSpeed.in(MetersPerSecond);
 
       // Field-relative yaw = robot rotation + turret azimuth
       double fieldYawRad = robotPose.getRotation().getRadians() + params.azimuthAngle().in(Radians);
@@ -101,7 +105,12 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
       double yVel = horizontalVel * Math.sin(fieldYawRad);
 
       Translation3d shotVector = new Translation3d(xVel, yVel, verticalVel);
-      RobotState.getInstance().getFuelSim().spawnFuel(pos, shotVector);
+      // RobotState.getInstance().getFuelSim().spawnFuel(pos, shotVector);
+      RobotState.getInstance()
+          .getFuelSim()
+          .launchFuel(
+              launchSpeed, params.hoodAngle().unaryMinus().plus(Degrees.of(83.0)), params.azimuthAngle(), Inches.of(18.66694637));
+      // fuelSim.launchFuel(null, null, null, null);
       simShotTimer.restart();
     }
   }
