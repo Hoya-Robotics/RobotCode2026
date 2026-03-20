@@ -203,13 +203,13 @@ public class RobotContainer {
         RobotState.getInstance()::getFieldVelocity);
     fuelSim.registerIntake(
         // RobotConfig.bumperWidthX.in(Units.Meters),
-        Inches.of(13.75).in(Meters),
+        Inches.of(16.875).in(Meters),
         // RobotConfig.bumperWidthX.plus(Units.Inches.of(10.0)).in(Units.Meters),
-        Inches.of(13.75).unaryMinus().in(Meters),
+        Inches.of(16.875 + 9.375).in(Meters),
         // -RobotConfig.bumperWidthY.in(Units.Meters),
-        Inches.of(9).in(Meters),
+        Inches.of(13.75).unaryMinus().in(Meters),
         // RobotConfig.bumperWidthY.in(Units.Meters),
-        Inches.zero().in(Meters),
+        Inches.of(13.75).in(Meters),
         () -> superStructure.isIntaking(),
         RobotState.getInstance()::addFuel);
     // fuelSim.enableAirResistance();
