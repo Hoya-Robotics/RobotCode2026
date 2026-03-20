@@ -91,11 +91,11 @@ public class Intake extends StateSubsystem<IntakeState> {
     switch (getCurrentState()) {
       case IDLE:
         // outputs.extendVoltage = Volts.zero();
-        outputs.extensionDistance = Inches.of(0.0);
+        outputs.extensionDistance = Inches.of(7.25);
         outputs.intakeVoltage = Volts.zero();
         break;
       case RETRACT:
-        outputs.extensionDistance = IntakeConstants.maxRetraction;
+        outputs.extensionDistance = Inches.of(7.25);
         // outputs.extendVoltage = Volts.of(-4.0);
         outputs.intakeVoltage = Volts.of(1.5);
         break;
@@ -114,7 +114,8 @@ public class Intake extends StateSubsystem<IntakeState> {
           agitatingForward = !agitatingForward;
           agitateTimer.restart();
         }
-        outputs.extensionDistance = agitatingForward ? Inches.of(10.75) : Inches.of(7.75);
+        outputs.extensionDistance =
+            agitatingForward ? Inches.of(10.75) : Inches.of(7.25); // 10.75 and 7.75
         // outputs.extendVoltage = Volts.of(6.0 * (agitatingForward ? 1.0 : -1.0));
         outputs.intakeVoltage = Volts.of(2.0);
         break;

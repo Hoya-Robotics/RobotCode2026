@@ -115,7 +115,7 @@ public class RobotConfig {
     public static final PIDGains extendGains = new PIDGains(5.5, 0.0, 0.05);
 
     public static final Distance maxExtension = Inches.of(11.0);
-    public static final Distance maxRetraction = Inches.of(7.5);
+    public static final Distance maxRetraction = Inches.of(7.0); // 7.5
   }
 
   public static final class TurretConstants {
