@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.RobotConfig.IntakeConstants;
 import frc.robot.subsystems.intake.IntakeIO.IntakeIOOutputs;
@@ -24,6 +25,7 @@ public class Intake extends StateSubsystem<IntakeState> {
   private IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
   private IntakeIOOutputs outputs = new IntakeIOOutputs();
   private boolean agitatingForward = false;
+  private boolean hasExtended = false;
 
   private Timer stateChangeTimer = new Timer();
   private Timer agitateTimer = new Timer();
@@ -88,13 +90,21 @@ public class Intake extends StateSubsystem<IntakeState> {
     if (getCurrentState() == IntakeState.INTAKE && isStalled()) {
       setState(IntakeState.REVERSE);
     }
+
     switch (getCurrentState()) {
       case IDLE:
         outputs.extensionDistance = Inches.of(7.25);
         outputs.intakeVoltage = Volts.zero();
         break;
       case RETRACT:
-        outputs.extensionDistance = Inches.of(7.25);
+        if (!hasExtended && DriverStation.isEnabled()) {
+          if (inputs.extendPosition.gt(Inches.of(10.75))) {
+            hasExtended = true;
+          }
+          outputs.extensionDistance = IntakeConstants.maxExtension;
+        } else {
+          outputs.extensionDistance = Inches.of(7.25);
+        }
         outputs.intakeVoltage = Volts.of(1.5);
         break;
       case REVERSE:
