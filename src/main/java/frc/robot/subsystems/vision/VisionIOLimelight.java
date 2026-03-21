@@ -85,6 +85,7 @@ public class VisionIOLimelight implements VisionIO {
     LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(config.name());*/
     LimelightHelpers.PoseEstimate mt2Estimate =
         LimelightHelpers.getBotPoseEstimate_wpiBlue(config.name());
+    inputs.pose3d = LimelightHelpers.getBotPose3d(config.name());
     inputs.avgTagDist = mt2Estimate.avgTagDist;
     inputs.poseEstimate = mt2Estimate.pose;
     inputs.timestamp = mt2Estimate.timestampSeconds;

@@ -188,11 +188,11 @@ public class AutoBuilder {
         .withChoreoTraj(trajName)
         .withStateChange(SuperStructureState.SHOOT)
         .withDriveToPoseAllianceAgnostic(
-            new Pose2d(3.5784, 0.663, endsIntakeToNeutral ? Rotation2d.kZero : Rotation2d.k180deg));
+            new Pose2d(3.4, 0.71, endsIntakeToNeutral ? Rotation2d.kZero : Rotation2d.k180deg));
   }
 
   private static AutoBuilder cleanSwipeTemplate(boolean shouldFlipYAxis) {
-    return swipeTemplate("CleanSwipe", false, shouldFlipYAxis);
+    return swipeTemplate("CleanSwipe", true, shouldFlipYAxis);
   }
 
   private static AutoBuilder fullSwipeTemplate(boolean shouldFlipYAxis) {

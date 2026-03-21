@@ -172,6 +172,8 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         hood.setAngle(turretParams.hoodAngle());
         launcher.setSpeed(turretParams.launcherSpeed());
 
+        boolean underTrench =
+            FieldConstants.underTrench(RobotState.getInstance().getEstimatedPose());
         boolean hoodWithinTolerance =
             hood.getAngle().isNear(turretParams.hoodAngle(), TurretConstants.hoodTolerance);
         boolean azimuthWithinTolerance =
@@ -197,7 +199,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
           simulateTurretShot(turretParams);
         }
 
-        if (upToSpeed && hoodWithinTolerance && azimuthWithinTolerance) {
+        if (upToSpeed && hoodWithinTolerance && azimuthWithinTolerance && (!underTrench)) {
           if (state != SuperStructureState.SHOOT_INTAKE) {
             intake.agitate();
           }

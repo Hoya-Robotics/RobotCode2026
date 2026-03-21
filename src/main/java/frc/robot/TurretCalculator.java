@@ -96,9 +96,10 @@ public class TurretCalculator {
       RobotConfig.TurretTarget trackingTarget, Angle currentAzimuthAngle) {
     Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
     boolean passing = FieldConstants.inNeutralZone(robotPose);
+    /*
     if (!passing && !FieldConstants.inAllianceZone(robotPose)) {
       passing = true;
-    }
+    }*/
     Translation2d target =
         AllianceFlip.apply(
             passing ? getPassingTarget() : FieldConstants.hubCenter.toTranslation2d());
@@ -117,7 +118,7 @@ public class TurretCalculator {
         return new TurretParameters(Rotations.of(0.5), Radians.of(0.0), RadiansPerSecond.of(0.0));
       case MAX_PASSING:
         return new TurretParameters(
-            getStationarySetpoint(target, true, currentAzimuthAngle).azimuthAngle(),
+            turretIterativeMovingSetpoint(target, true, currentAzimuthAngle).azimuthAngle(),
             Degrees.of(25.0),
             RotationsPerSecond.of(33.5));
       default:

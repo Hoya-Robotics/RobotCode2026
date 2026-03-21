@@ -2,6 +2,7 @@ package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -15,6 +16,7 @@ public interface VisionIO {
     public boolean isConnected = false;
 
     public Pose2d poseEstimate = Pose2d.kZero;
+    public Pose3d pose3d = Pose3d.kZero;
     public Matrix<N3, N1> stdDevs;
     public double avgTagDist = 0.0;
     public double timestamp = 0.0;

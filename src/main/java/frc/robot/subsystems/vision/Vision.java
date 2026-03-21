@@ -83,11 +83,11 @@ public class Vision extends SubsystemBase {
       return false;
     }
 
-    // Pose2d fusedEstimate = RobotState.getInstance().getEstimatedPose();
-    // double latentDistance =
-    // state.poseEstimate.getTranslation().getDistance(fusedEstimate.getTranslation());
-    // if (latentDistance > 3.5) return false; dont do it this way, just check the difference
-    // between vision estimates
+    /*
+    if (state.pose3d.getZ() > 0.2) {
+      return false;
+    }
+    */
 
     if (state.stdDevs != null) {
       double maxStd = Math.max(state.stdDevs.get(0, 0), state.stdDevs.get(1, 0));

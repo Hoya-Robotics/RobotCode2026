@@ -8,7 +8,6 @@ import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.RobotConfig.SuperStructureState;
@@ -87,9 +86,11 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopPeriodic() {
-    double timeRemaining = ShiftTracker.shiftTimeRemaining();
-    m_robotContainer.driveController.setRumble(
-        RumbleType.kBothRumble, timeRemaining <= 10.0 ? (10.0 - timeRemaining) / 10.0 : 0.0);
+    /*
+      double timeRemaining = ShiftTracker.shiftTimeRemaining();
+      m_robotContainer.driveController.setRumble(
+          RumbleType.kBothRumble, timeRemaining <= 10.0 ? (10.0 - timeRemaining) / 10.0 : 0.0);
+    */
   }
 
   @Override

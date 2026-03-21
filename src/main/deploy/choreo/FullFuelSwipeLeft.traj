@@ -246,6 +246,25 @@
     "fixTranslation": true,
     "fixHeading": true,
     "overrideIntervals": false
+   },
+   {
+    "x": {
+     "exp": "3.4 m",
+     "val": 3.4
+    },
+    "y": {
+     "exp": "7.359000000000001 m",
+     "val": 7.359000000000001
+    },
+    "heading": {
+     "exp": "-0.0 deg",
+     "val": -0.0
+    },
+    "intervals": 40,
+    "split": false,
+    "fixTranslation": true,
+    "fixHeading": true,
+    "overrideIntervals": false
    }
   ],
   "constraints": [
