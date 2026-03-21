@@ -25,7 +25,8 @@ public interface IntakeIO {
   }
 
   public class IntakeIOOutputs {
-    public Voltage intakeVoltage = Volts.zero();
+    public AngularVelocity intakeVelocity = RotationsPerSecond.of(0.0);
+    // public Voltage intakeVoltage = Volts.zero();
     // public Voltage extendVoltage = Volts.zero();
     public Distance extensionDistance = Meters.of(0.0);
   }

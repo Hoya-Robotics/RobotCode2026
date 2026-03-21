@@ -108,9 +108,11 @@ public class RobotConfig {
     public static final double extensionAgitatePeriod = 0.3;
 
     public static final double extensionRadius = Units.inchesToMeters(0.7);
-    public static final double intakeGearRatio = 1.8667;
+    public static final double intakeGearRatio = 1.0 / 1.8667;
     public static final double extendGearRatio = 1.8364;
     public static final PIDGains extendGains = new PIDGains(5.5, 0.0, 0.05);
+    public static final double intakeKv = 1.1 * (1.0 / 576.8) / intakeGearRatio; // 0.032408;
+    public static final PIDGains intakeGains = new PIDGains(0.0002, 0.0, 0.0);
 
     public static final Distance maxExtension = Inches.of(11.0);
     public static final Distance maxRetraction = Inches.of(7.0); // 7.5

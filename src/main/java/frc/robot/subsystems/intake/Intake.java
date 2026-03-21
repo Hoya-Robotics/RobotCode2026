@@ -45,7 +45,7 @@ public class Intake extends StateSubsystem<IntakeState> {
     Distance intakeZ = Meters.of(Math.cos(8.0) * intakePostion.in(Meters));
     Logger.recordOutput(
         "Intake/IntakePose", new Pose3d(intakeX, Meters.zero(), intakeZ, Rotation3d.kZero));
-
+    Logger.recordOutput("Intake/intakeVelocityRPM", inputs.intakeVelocity.in(RPM));
     applyState();
     io.applyOutputs(outputs);
   }
@@ -94,7 +94,7 @@ public class Intake extends StateSubsystem<IntakeState> {
     switch (getCurrentState()) {
       case IDLE:
         outputs.extensionDistance = Inches.of(7.25);
-        outputs.intakeVoltage = Volts.zero();
+        outputs.intakeVelocity = RPM.of(750);
         break;
       case RETRACT:
         if (!hasExtended && DriverStation.isEnabled()) {
@@ -105,15 +105,18 @@ public class Intake extends StateSubsystem<IntakeState> {
         } else {
           outputs.extensionDistance = Inches.of(7.25);
         }
-        outputs.intakeVoltage = Volts.of(1.5);
+        outputs.intakeVelocity = RPM.of(750);
+        // outputs.intakeVoltage = Volts.of(1.5);
         break;
       case REVERSE:
         outputs.extensionDistance = IntakeConstants.maxExtension;
-        outputs.intakeVoltage = Volts.of(-9.0);
+        outputs.intakeVelocity = RPM.of(-2700);
+        // outputs.intakeVoltage = Volts.of(-9.0);
         break;
       case INTAKE:
         outputs.extensionDistance = IntakeConstants.maxExtension;
-        outputs.intakeVoltage = Volts.of(9.0);
+        outputs.intakeVelocity = RPM.of(2700);
+        // outputs.intakeVoltage = Volts.of(9.0);
         break;
       case AGITATE:
         if (agitateTimer.get() >= 0.3) {
@@ -122,12 +125,9 @@ public class Intake extends StateSubsystem<IntakeState> {
         }
         outputs.extensionDistance =
             agitatingForward ? Inches.of(10.75) : Inches.of(7.25); // 10.75 and 7.75
-        outputs.intakeVoltage = Volts.of(2.0);
+        outputs.intakeVelocity = RPM.of(750);
+        // outputs.intakeVoltage = Volts.of(2.0);
         break;
-    }
-
-    if (inputs.extendPosition.lt(IntakeConstants.maxRetraction.plus(Inches.of(0.25)))) {
-      outputs.intakeVoltage = Volts.of(1.0);
     }
   }
 }

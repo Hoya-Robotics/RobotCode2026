@@ -11,6 +11,8 @@ import com.revrobotics.PersistMode;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -27,16 +29,22 @@ public class IntakeIOHardware implements IntakeIO {
   private PositionVoltage extendRequest = new PositionVoltage(0.0);
 
   private final SparkFlex intakeMotor;
+  private final SparkClosedLoopController intakeController;
   private final RelativeEncoder intakeEncoder;
 
   public IntakeIOHardware(int extendId, int intakeId) {
     this.extendMotor = new TalonFX(extendId);
     this.intakeMotor = new SparkFlex(intakeId, MotorType.kBrushless);
+    intakeController = intakeMotor.getClosedLoopController();
     intakeEncoder = intakeMotor.getEncoder();
 
     var intakeConfig = new SparkFlexConfig();
     intakeConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(80);
     intakeConfig.encoder.positionConversionFactor(IntakeConstants.intakeGearRatio);
+    intakeConfig.encoder.velocityConversionFactor(IntakeConstants.intakeGearRatio);
+    intakeConfig.closedLoopRampRate(0.075);
+    intakeConfig.closedLoop.pid(IntakeConstants.intakeGains.kp(), 0.0, 0.0);
+    intakeConfig.closedLoop.feedForward.kV(IntakeConstants.intakeKv);
     intakeMotor.configure(
         intakeConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
@@ -85,12 +93,14 @@ public class IntakeIOHardware implements IntakeIO {
           .getConfigurator()
           .apply(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake));
     }
-    Logger.recordOutput("Intake/extensionSetpoint", outputs.extensionDistance.in(Meters));
     // Logger.recordOutput("Intake/extensionSetpoint", outputs.extendVoltage);
-    Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVoltage);
+    // Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVoltage);
+    Logger.recordOutput("Intake/extensionSetpoint", outputs.extensionDistance.in(Meters));
+    Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVelocity);
 
     // extendMotor.setVoltage(outputs.extendVoltage.in(Volts));
+    // intakeMotor.setVoltage(outputs.intakeVoltage.in(Volts));
     extendMotor.setControl(extendRequest.withPosition(outputs.extensionDistance.in(Inches)));
-    intakeMotor.setVoltage(outputs.intakeVoltage.in(Volts));
+    intakeController.setSetpoint(outputs.intakeVelocity.in(RPM), ControlType.kVelocity);
   }
 }

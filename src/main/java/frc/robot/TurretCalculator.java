@@ -92,14 +92,15 @@ public class TurretCalculator {
     return 0.076 * x + 0.982;
   }
 
+  public static boolean inPassingZone(Pose2d robotPose) {
+    return AllianceFlip.apply(robotPose).getMeasureX().gt(FieldConstants.neutralZoneStart);
+  }
+
   public static TurretParameters calculateSetpoints(
       RobotConfig.TurretTarget trackingTarget, Angle currentAzimuthAngle) {
     Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
-    boolean passing = FieldConstants.inNeutralZone(robotPose);
-    /*
-    if (!passing && !FieldConstants.inAllianceZone(robotPose)) {
-      passing = true;
-    }*/
+    boolean passing = inPassingZone(robotPose);
+    // boolean passing = FieldConstants.inNeutralZone(robotPose);
     Translation2d target =
         AllianceFlip.apply(
             passing ? getPassingTarget() : FieldConstants.hubCenter.toTranslation2d());

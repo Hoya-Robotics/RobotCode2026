@@ -162,7 +162,7 @@ public class RobotContainer {
         .onTrue(
             superStructure
                 .setStateCommand(SuperStructureState.SHOOT_INTAKE)
-                .andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.0))))
+                .andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.2))))
         .onFalse(
             superStructure
                 .idle()

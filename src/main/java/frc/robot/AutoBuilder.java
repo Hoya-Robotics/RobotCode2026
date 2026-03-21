@@ -188,7 +188,7 @@ public class AutoBuilder {
         .withChoreoTraj(trajName)
         .withStateChange(SuperStructureState.SHOOT)
         .withDriveToPoseAllianceAgnostic(
-            new Pose2d(3.4, 0.71, endsIntakeToNeutral ? Rotation2d.kZero : Rotation2d.k180deg));
+            new Pose2d(3.4, 0.665, endsIntakeToNeutral ? Rotation2d.kZero : Rotation2d.k180deg));
   }
 
   private static AutoBuilder cleanSwipeTemplate(boolean shouldFlipYAxis) {
@@ -202,7 +202,7 @@ public class AutoBuilder {
   public static Command doubleSwipe(
       Drive drive, SuperStructure superStructure, boolean shouldFlipYAxis) {
     return fullSwipeTemplate(shouldFlipYAxis)
-        .withDelay(4.25)
+        .withDelay(4.2)
         .join(cleanSwipeTemplate(shouldFlipYAxis))
         .generate(drive, superStructure);
   }
@@ -210,7 +210,7 @@ public class AutoBuilder {
   public static Command experimentalSwipe(
       Drive drive, SuperStructure superStructure, boolean flipY) {
     return swipeTemplate("MogSwipe", true, flipY)
-        .withDelay(4.0)
+        .withDelay(4.2)
         .join(cleanSwipeTemplate(flipY))
         .generate(drive, superStructure);
   }

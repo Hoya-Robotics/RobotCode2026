@@ -52,7 +52,8 @@ public class IntakeIOSimSimple implements IntakeIO {
   public void applyOutputs(IntakeIOOutputs outputs) {
     Logger.recordOutput("Intake/extensionSetpoint", outputs.extensionDistance.in(Meters));
     // Logger.recordOutput("Intake/extensionSetpoint", outputs.extendVoltage);
-    Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVoltage);
+    // Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVoltage);
+    Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVelocity);
 
     // extendMotor.setVoltage(outputs.extendVoltage.in(Volts));
     // extendMotor.setControl(extendRequest.withPosition(outputs.extensionDistance.in(Inches)));
