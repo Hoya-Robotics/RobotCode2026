@@ -103,7 +103,8 @@ public class RobotContainer {
                     RobotConfig.SpindexerConstants.feedMotorId));
         intake =
             new Intake(
-                new IntakeIOHardware(IntakeConstants.extendMotorId, IntakeConstants.intakeMotorId));
+                new IntakeIOHardware(
+                    IntakeConstants.extendMotorId, 32, IntakeConstants.intakeMotorId));
         azimuth =
             new Azimuth(
                 new AzimuthIOHardware(

@@ -2,11 +2,15 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.revrobotics.PersistMode;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
@@ -25,6 +29,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class IntakeIOHardware implements IntakeIO {
   private final TalonFX extendMotor;
+  private final CANcoder extendEncoder;
   private final TalonFXSignals extendSignals;
   private PositionVoltage extendRequest = new PositionVoltage(0.0);
 
@@ -32,9 +37,10 @@ public class IntakeIOHardware implements IntakeIO {
   private final SparkClosedLoopController intakeController;
   private final RelativeEncoder intakeEncoder;
 
-  public IntakeIOHardware(int extendId, int intakeId) {
+  public IntakeIOHardware(int extendId, int extendEncoderId, int intakeId) {
     this.extendMotor = new TalonFX(extendId);
     this.intakeMotor = new SparkFlex(intakeId, MotorType.kBrushless);
+    this.extendEncoder = new CANcoder(extendEncoderId);
     intakeController = intakeMotor.getClosedLoopController();
     intakeEncoder = intakeMotor.getEncoder();
 
@@ -48,9 +54,18 @@ public class IntakeIOHardware implements IntakeIO {
     intakeMotor.configure(
         intakeConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
+    var extendEncoderConfig = new CANcoderConfiguration();
+    extendEncoderConfig.MagnetSensor.withSensorDirection(
+        SensorDirectionValue.CounterClockwise_Positive);
+    extendEncoder.getConfigurator().apply(extendEncoderConfig);
+
     var extendConfig = new TalonFXConfiguration();
     extendConfig.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(0.175);
-    extendConfig.Feedback.withSensorToMechanismRatio(IntakeConstants.extendGearRatio);
+    extendConfig.Feedback.withRemoteCANcoder(extendEncoder);
+    extendConfig.Feedback.withRotorToSensorRatio(10.3846);
+    extendConfig.Feedback.withSensorToMechanismRatio(0.1768);
+    extendConfig.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive);
+    // extendConfig.Feedback.withSensorToMechanismRatio(IntakeConstants.extendGearRatio);
     extendConfig.MotorOutput.withNeutralMode(NeutralModeValue.Brake);
     extendConfig.withSlot0(IntakeConstants.extendGains.toSlot0Configs());
     extendConfig.CurrentLimits.withStatorCurrentLimit(15);
@@ -62,6 +77,7 @@ public class IntakeIOHardware implements IntakeIO {
         .withReverseSoftLimitThreshold(IntakeConstants.maxRetraction.in(Inches));
     extendMotor.getConfigurator().apply(extendConfig);
     extendMotor.setPosition(0.0);
+    extendEncoder.setPosition(0.0);
 
     extendSignals = PhoenixSync.registerTalonFX(extendMotor, 50);
   }
@@ -93,13 +109,9 @@ public class IntakeIOHardware implements IntakeIO {
           .getConfigurator()
           .apply(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake));
     }
-    // Logger.recordOutput("Intake/extensionSetpoint", outputs.extendVoltage);
-    // Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVoltage);
     Logger.recordOutput("Intake/extensionSetpoint", outputs.extensionDistance.in(Meters));
     Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVelocity);
 
-    // extendMotor.setVoltage(outputs.extendVoltage.in(Volts));
-    // intakeMotor.setVoltage(outputs.intakeVoltage.in(Volts));
     extendMotor.setControl(extendRequest.withPosition(outputs.extensionDistance.in(Inches)));
     intakeController.setSetpoint(outputs.intakeVelocity.in(RPM), ControlType.kVelocity);
   }

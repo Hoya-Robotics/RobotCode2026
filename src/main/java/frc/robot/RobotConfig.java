@@ -110,7 +110,7 @@ public class RobotConfig {
     public static final double extensionRadius = Units.inchesToMeters(0.7);
     public static final double intakeGearRatio = 1.0 / 1.8667;
     public static final double extendGearRatio = 1.8364;
-    public static final PIDGains extendGains = new PIDGains(5.5, 0.0, 0.05);
+    public static final PIDGains extendGains = new PIDGains(3.0, 0.0, 0.05);
     public static final double intakeKv = 1.1 * (1.0 / 576.8) / intakeGearRatio; // 0.032408;
     public static final PIDGains intakeGains = new PIDGains(0.0002, 0.0, 0.0);
 
@@ -174,11 +174,12 @@ public class RobotConfig {
     public static final List<Integer> hubTags = List.of(9, 10, 25, 26);
     public static final boolean rewindEnabled = true;
 
-    public static final double baseStddevMultiplier = 0.9;
+    public static final double baseStddevMultiplier = 0.8; // 0.9
     public static final double maxReliableDistance = 4.0;
     public static final double distanceScalingExponent = 2.0;
-    public static final double singleTagPenalty = 2.5;
+    public static final double singleTagPenalty = 1.2;
 
+		public static final double maxLatentDistance = 2.0;
     public static final double maxAcceptableDistance = 5.0;
     public static final double maxAcceptableStddev = 3.5;
   }

@@ -298,7 +298,7 @@ public class AutoBuilder {
     autoChooser.addOption("PassR", passSweep(drive, superStructure, false));
     autoChooser.addOption("PassL", passSweep(drive, superStructure, true));
 
-    autoChooser.addOption("expR", experimentalSwipe(drive, superStructure, false));
-    autoChooser.addOption("expL", experimentalSwipe(drive, superStructure, true));
+    autoChooser.addOption("Mogged|R", experimentalSwipe(drive, superStructure, false));
+    autoChooser.addOption("Mooged|L", experimentalSwipe(drive, superStructure, true));
   }
 }

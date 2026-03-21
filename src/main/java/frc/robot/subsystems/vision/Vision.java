@@ -70,6 +70,7 @@ public class Vision extends SubsystemBase {
       } else if (state.numTags > 0) {
         rejectedMeasurements++;
       }
+			lastPoseEstimate = state.poseEstimate;
     }
 
     // Log diagnostic counters
@@ -88,6 +89,11 @@ public class Vision extends SubsystemBase {
       return false;
     }
     */
+
+		/*
+		if (lastPoseEstimate.getTranslation().getDistance(state.poseEstimate.getTranslation()) > VisionConstants.maxLatentDistance) {
+			return false;
+		}*/
 
     if (state.stdDevs != null) {
       double maxStd = Math.max(state.stdDevs.get(0, 0), state.stdDevs.get(1, 0));

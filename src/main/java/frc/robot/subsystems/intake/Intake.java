@@ -70,6 +70,10 @@ public class Intake extends StateSubsystem<IntakeState> {
     setState(IntakeState.AGITATE);
   }
 
+  public boolean detectCurrentSpike() {
+    return inputs.extendCurrent.gt(Amps.of(40.0));
+  }
+
   private boolean isStalled() {
     return stateChangeTimer.get() > 0.5 && inputs.intakeVelocity.abs(RotationsPerSecond) < 2.0;
   }
@@ -79,6 +83,7 @@ public class Intake extends StateSubsystem<IntakeState> {
     if (getRequestedState() != getCurrentState() && getCurrentState() != IntakeState.REVERSE) {
       stateChangeTimer.restart();
     }
+
     if (getRequestedState() == IntakeState.AGITATE) {
       agitateTimer.start();
     }
@@ -106,27 +111,22 @@ public class Intake extends StateSubsystem<IntakeState> {
           outputs.extensionDistance = Inches.of(7.25);
         }
         outputs.intakeVelocity = RPM.of(750);
-        // outputs.intakeVoltage = Volts.of(1.5);
         break;
       case REVERSE:
         outputs.extensionDistance = IntakeConstants.maxExtension;
         outputs.intakeVelocity = RPM.of(-2700);
-        // outputs.intakeVoltage = Volts.of(-9.0);
         break;
       case INTAKE:
         outputs.extensionDistance = IntakeConstants.maxExtension;
         outputs.intakeVelocity = RPM.of(2700);
-        // outputs.intakeVoltage = Volts.of(9.0);
         break;
       case AGITATE:
         if (agitateTimer.get() >= 0.3) {
           agitatingForward = !agitatingForward;
           agitateTimer.restart();
         }
-        outputs.extensionDistance =
-            agitatingForward ? Inches.of(10.75) : Inches.of(7.25); // 10.75 and 7.75
+        outputs.extensionDistance = agitatingForward ? Inches.of(10.75) : Inches.of(7.25);
         outputs.intakeVelocity = RPM.of(750);
-        // outputs.intakeVoltage = Volts.of(2.0);
         break;
     }
   }
