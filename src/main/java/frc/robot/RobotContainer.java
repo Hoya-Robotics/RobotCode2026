@@ -154,7 +154,7 @@ public class RobotContainer {
     operatorController
         .rightTrigger(0.3)
         .whileTrue(
-            superStructure.shoot().andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.0))))
+            superStructure.shoot().andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.5))))
         .onFalse(
             superStructure
                 .idle()
@@ -170,19 +170,19 @@ public class RobotContainer {
         .whileTrue(
             superStructure
                 .setStateCommand(SuperStructureState.SHOOT_INTAKE)
-                .andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.2))))
+                .andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(2.0))))
         .onFalse(
-				Commands.either(
-					superStructure.shoot().andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.0))),
-					Commands.runOnce(() -> drive.setTeleopSpeedLimit(DriveConstants.maxDriveSpeedMps)).andThen(
-						Commands.either(
-							superStructure.intake(),
-							superStructure .idle(),
-							() -> driveController.getRightTriggerAxis() > 0.3
-						)
-					),
-						() -> operatorController.getRightTriggerAxis() > 0.3
-				));
+            Commands.either(
+                superStructure
+                    .shoot()
+                    .andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.5))),
+                Commands.runOnce(() -> drive.setTeleopSpeedLimit(DriveConstants.maxDriveSpeedMps))
+                    .andThen(
+                        Commands.either(
+                            superStructure.intake(),
+                            superStructure.idle(),
+                            () -> driveController.getRightTriggerAxis() > 0.3)),
+                () -> operatorController.getRightTriggerAxis() > 0.3));
     driveController
         .rightBumper()
         .onTrue(superStructure.setStateCommand(SuperStructureState.REVERSE_INTAKE))
