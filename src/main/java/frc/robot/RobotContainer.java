@@ -38,6 +38,7 @@ import java.util.Optional;
 
 public class RobotContainer {
   public final CommandXboxController driveController = new CommandXboxController(0);
+  public final CommandXboxController operatorController = new CommandXboxController(1);
   public final Drive drive;
   public final Spindexer spindexer;
   public final Intake intake;
@@ -145,11 +146,14 @@ public class RobotContainer {
   private void configureBindings() {
     driveController
         .rightTrigger(0.3)
-        .onTrue(superStructure.intake())
+        .whileTrue(superStructure.intake())
         .onFalse(superStructure.idle());
+    /*
     driveController
-        .leftTrigger(0.3)
-        .onTrue(
+        .leftTrigger(0.3)*/
+    operatorController
+        .rightTrigger(0.3)
+        .whileTrue(
             superStructure.shoot().andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.0))))
         .onFalse(
             superStructure
@@ -157,19 +161,28 @@ public class RobotContainer {
                 .andThen(
                     Commands.runOnce(
                         () -> drive.setTeleopSpeedLimit(DriveConstants.maxDriveSpeedMps))));
+    /*
     driveController
-        .leftTrigger(0.3)
+        .leftTrigger(0.3)*/
+    operatorController
+        .rightTrigger(0.3)
         .and(driveController.rightTrigger(0.3))
-        .onTrue(
+        .whileTrue(
             superStructure
                 .setStateCommand(SuperStructureState.SHOOT_INTAKE)
                 .andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.2))))
         .onFalse(
-            superStructure
-                .idle()
-                .andThen(
-                    Commands.runOnce(
-                        () -> drive.setTeleopSpeedLimit(DriveConstants.maxDriveSpeedMps))));
+				Commands.either(
+					superStructure.shoot().andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.0))),
+					Commands.runOnce(() -> drive.setTeleopSpeedLimit(DriveConstants.maxDriveSpeedMps)).andThen(
+						Commands.either(
+							superStructure.intake(),
+							superStructure .idle(),
+							() -> driveController.getRightTriggerAxis() > 0.3
+						)
+					),
+						() -> operatorController.getRightTriggerAxis() > 0.3
+				));
     driveController
         .rightBumper()
         .onTrue(superStructure.setStateCommand(SuperStructureState.REVERSE_INTAKE))

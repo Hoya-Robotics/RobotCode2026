@@ -179,7 +179,7 @@ public class RobotConfig {
     public static final double distanceScalingExponent = 2.0;
     public static final double singleTagPenalty = 1.2;
 
-		public static final double maxLatentDistance = 2.0;
+    public static final double maxLatentDistance = 2.0;
     public static final double maxAcceptableDistance = 5.0;
     public static final double maxAcceptableStddev = 3.5;
   }

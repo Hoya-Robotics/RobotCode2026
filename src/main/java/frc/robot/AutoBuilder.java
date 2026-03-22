@@ -287,8 +287,11 @@ public class AutoBuilder {
   }
 
   public static void registerAutoChoices(Drive drive, SuperStructure superStructure) {
-    autoChooser.addDefaultOption("2xR", doubleSwipe(drive, superStructure, false));
-    autoChooser.addOption("2xL", doubleSwipe(drive, superStructure, true));
+    autoChooser.addOption("2Swipe|R", doubleSwipe(drive, superStructure, false));
+    autoChooser.addOption("2Swipe|L", doubleSwipe(drive, superStructure, true));
+    autoChooser.addDefaultOption("Mogged|R", experimentalSwipe(drive, superStructure, false));
+    autoChooser.addOption("Mogged|L", experimentalSwipe(drive, superStructure, true));
+
     autoChooser.addOption("0xOutpost", centerOutpost(drive, superStructure));
     autoChooser.addOption("1xOutpost", swipeOutpost(drive, superStructure));
     autoChooser.addOption("2xOutpost", doubleSwipeOutpost(drive, superStructure));
@@ -297,8 +300,5 @@ public class AutoBuilder {
     autoChooser.addOption("2xDepot", doubleSwipeDepot(drive, superStructure));
     autoChooser.addOption("PassR", passSweep(drive, superStructure, false));
     autoChooser.addOption("PassL", passSweep(drive, superStructure, true));
-
-    autoChooser.addOption("Mogged|R", experimentalSwipe(drive, superStructure, false));
-    autoChooser.addOption("Mooged|L", experimentalSwipe(drive, superStructure, true));
   }
 }

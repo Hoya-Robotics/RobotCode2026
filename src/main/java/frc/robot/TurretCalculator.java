@@ -85,7 +85,7 @@ public class TurretCalculator {
   }
 
   private static double shotRegression(double x) {
-    return 2.27 * x + 22.3;
+    return 2.27 * x + 22.3 + 0.25;
   }
 
   private static double tofRegression(double x) {
@@ -108,7 +108,13 @@ public class TurretCalculator {
         "TurretCalculator/target", new Pose3d(new Translation3d(target), Rotation3d.kZero));
     switch (trackingTarget) {
       case DEFAULT:
-        return turretIterativeMovingSetpoint(target, passing, currentAzimuthAngle);
+        var _setpoint = turretIterativeMovingSetpoint(target, passing, currentAzimuthAngle);
+        if (passing) {
+          _setpoint =
+              new TurretParameters(
+                  _setpoint.azimuthAngle(), Degrees.of(25.0), RotationsPerSecond.of(33.5));
+        }
+        return _setpoint;
       case TUNING:
         var setpoint = turretIterativeMovingSetpoint(target, passing, currentAzimuthAngle);
         return new TurretParameters(
