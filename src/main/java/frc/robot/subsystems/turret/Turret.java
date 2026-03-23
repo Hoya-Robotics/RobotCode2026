@@ -12,6 +12,8 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.TurretTarget;
+import frc.robot.RobotConfig.VisionConstants;
+import frc.robot.RobotState;
 import frc.robot.TurretCalculator;
 import frc.robot.TurretCalculator.TurretParameters;
 import frc.robot.subsystems.turret.TurretIO.TurretIOOutputs;
@@ -95,7 +97,7 @@ public class Turret extends StateSubsystem<TurretState> {
             new Rotation3d(0.0, 0.0, getAzimuthAngle().in(Radians))));
   }
 
-  public Pose3d getCameraPose() {
+  public Transform3d getRobotToCamera() {
     Translation3d cameraOffset =
         new Translation3d(
             new Translation2d(
@@ -106,8 +108,7 @@ public class Turret extends StateSubsystem<TurretState> {
     Rotation3d totalRotation =
         TurretConstants.cameraRotation.plus(
             new Rotation3d(0.0, 0.0, getAzimuthAngle().in(Radians)));
-    Transform3d transform = new Transform3d(totalOffset, totalRotation);
-    return new Pose3d().transformBy(transform);
+    return new Transform3d(totalOffset, totalRotation);
   }
 
   public boolean readyForFeed() {
@@ -127,6 +128,9 @@ public class Turret extends StateSubsystem<TurretState> {
 
   @Override
   public void periodic() {
+    RobotState.getInstance()
+        .getVision()
+        .setRobotToCamera(VisionConstants.turretConfig.name(), getRobotToCamera());
     parameters = TurretCalculator.calculateSetpoints(target, getAzimuthAngle());
 
     io.updateInputs(inputs);

@@ -2,6 +2,7 @@ package frc.robot.subsystems.turret;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -34,8 +35,11 @@ public class TurretIOSim implements TurretIO {
   @Override
   public void updateInputs(TurretIOInputs inputs) {
     double azimuthVoltageApplied =
-        azimuthController.calculate(azimuthSim.getAngularPositionRotations());
-    double hoodVoltageApplied = hoodController.calculate(hoodSim.getAngularPositionRotations());
+        MathUtil.clamp(
+            -12.0, 12.0, azimuthController.calculate(azimuthSim.getAngularPositionRotations()));
+    double hoodVoltageApplied =
+        MathUtil.clamp(
+            -12.0, 12.0, hoodController.calculate(hoodSim.getAngularPositionRotations()));
 
     hoodSim.setInputVoltage(hoodVoltageApplied);
     azimuthSim.setInputVoltage(azimuthVoltageApplied);

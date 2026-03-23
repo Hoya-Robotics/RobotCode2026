@@ -24,12 +24,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class AutoBuilder {
   sealed interface Node
-      permits Node.Wait,
-          Node.DriveToPose,
-          Node.StateChange,
-          Node.ChoreoTraj,
-          Node.Cmd,
-          Node.CaptureRewind {
+      permits Node.Wait, Node.DriveToPose, Node.StateChange, Node.ChoreoTraj, Node.Cmd {
     Command toCommand(Drive drive, SuperStructure superStructure, Timer timer);
 
     record Wait(double seconds) implements Node {
@@ -66,12 +61,6 @@ public class AutoBuilder {
     record Cmd(Command command) implements Node {
       public Command toCommand(Drive drive, SuperStructure superStructure, Timer timer) {
         return command;
-      }
-    }
-
-    record CaptureRewind() implements Node {
-      public Command toCommand(Drive drive, SuperStructure superStructure, Timer timer) {
-        return Commands.runOnce(() -> RobotState.getInstance().captureRewind(timer.get()));
       }
     }
   }
@@ -141,11 +130,6 @@ public class AutoBuilder {
 
   public AutoBuilder copy() {
     return new AutoBuilder(shouldFlipYAxis).append(this);
-  }
-
-  public AutoBuilder captureRewind() {
-    graph.add(new Node.CaptureRewind());
-    return this;
   }
 
   public AutoBuilder withCommand(Command command) {

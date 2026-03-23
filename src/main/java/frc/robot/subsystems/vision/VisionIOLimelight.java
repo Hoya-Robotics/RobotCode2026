@@ -1,129 +1,81 @@
 package frc.robot.subsystems.vision;
 
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose3d;
+import static edu.wpi.first.units.Units.*;
+
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.networktables.DoubleSubscriber;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotController;
-import frc.robot.RobotConfig.*;
-import frc.robot.RobotState;
+import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.util.LimelightHelpers;
-import java.util.Optional;
-import java.util.function.Supplier;
 
 public class VisionIOLimelight implements VisionIO {
-  private static final double[] kdefaultStddevs =
-      new double[] {0, 0, 0, 0, 0, 0, 0.5, 0.5, 0, 0, 0, 0.1};
-
-  private final Optional<Supplier<Pose3d>> dynamicCameraPoseSupplier;
   private final CameraConfig config;
   private final NetworkTable NT;
-  private DoubleSubscriber latencySubscriber;
+  private static final double[] kDefaultStddevs = new double[12];
 
-  // private double heartBeat = 0.0;
-
-  public VisionIOLimelight(
-      CameraConfig config, Optional<Supplier<Pose3d>> dynamicCameraPoseSupplier) {
-    this.dynamicCameraPoseSupplier = dynamicCameraPoseSupplier;
+  public VisionIOLimelight(CameraConfig config) {
     this.config = config;
     this.NT = NetworkTableInstance.getDefault().getTable(config.name());
-    latencySubscriber = NT.getDoubleTopic("tl").subscribe(0.0);
 
-    LimelightHelpers.setCameraPose_RobotSpace(
-        config.name(),
-        config.robotToCamera().getX(),
-        config.robotToCamera().getY(),
-        config.robotToCamera().getZ(),
-        Math.toDegrees(config.robotToCamera().getRotation().getX()),
-        Math.toDegrees(config.robotToCamera().getRotation().getY()),
-        Math.toDegrees(config.robotToCamera().getRotation().getZ()));
+    LimelightHelpers.setRewindEnabled(config.name(), true);
+    setRobotToCamera(config.robotToCamera());
+  }
 
-    LimelightHelpers.setRewindEnabled(config.name(), VisionConstants.rewindEnabled);
-    LimelightHelpers.SetIMUMode(config.name(), 3);
+  @Override
+  public CameraConfig getConfig() {
+    return config;
   }
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
     if (DriverStation.isDisabled()) {
-      LimelightHelpers.SetThrottle(config.name(), 100);
-      // LimelightHelpers.SetIMUMode(config.name(), 1);
+      LimelightHelpers.SetIMUMode(config.name(), 1);
+      LimelightHelpers.SetThrottle(config.name(), 1000);
     } else {
+      LimelightHelpers.SetIMUMode(config.name(), 3);
       LimelightHelpers.SetThrottle(config.name(), 0);
-      // LimelightHelpers.SetIMUMode(config.name(), 3);
     }
 
-    inputs.isConnected =
-        ((RobotController.getFPGATime() - latencySubscriber.getLastChange()) / 1000) < 250;
-    /*
-    double lastHeartbeat = heartBeat;
-    heartBeat = LimelightHelpers.getHeartbeat(config.name());
-    inputs.isConnected = Math.abs(heartBeat - lastHeartbeat) < 10;*/
+    inputs.seesTarget = NT.getEntry("tv").getDouble(0.0) == 1.0;
+    if (!inputs.seesTarget) return;
 
-    if (dynamicCameraPoseSupplier.isPresent()) {
-      Pose3d camPose = dynamicCameraPoseSupplier.get().get();
-      LimelightHelpers.setCameraPose_RobotSpace(
-          config.name(),
-          camPose.getX(),
-          camPose.getY(),
-          camPose.getZ(),
-          Math.toDegrees(camPose.getRotation().getX()),
-          Math.toDegrees(camPose.getRotation().getY()),
-          Math.toDegrees(camPose.getRotation().getZ()));
+    try {
+      inputs.pose3d = LimelightHelpers.getBotPose3d_wpiBlue(config.name());
+      var ll_mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(config.name());
+      var ll_mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(config.name());
+
+      if (ll_mt1 != null) {
+        inputs.mt1 = MultitagEstimate.fromLL(ll_mt1);
+        inputs.fiducials = FiducialObservation.arrayFromLL(ll_mt1.rawFiducials);
+      }
+      if (ll_mt2 != null) {
+        inputs.mt2 = MultitagEstimate.fromLL(ll_mt2);
+      }
+
+      inputs.stddevs = NT.getEntry("stddevs").getDoubleArray(kDefaultStddevs);
+    } catch (Exception e) {
+      DriverStation.reportWarning("Vision update failed: " + e.getMessage(), false);
     }
-
-    Rotation2d gyroYaw = RobotState.getInstance().getEstimatedPose().getRotation();
-    LimelightHelpers.SetRobotOrientation(
-        config.name(), gyroYaw.getDegrees(), 0.0, 0.0, 0.0, 0.0, 0.0);
-
-    /*LimelightHelpers.PoseEstimate mt2Estimate =
-    LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(config.name());*/
-    LimelightHelpers.PoseEstimate mt2Estimate =
-        LimelightHelpers.getBotPoseEstimate_wpiBlue(config.name());
-    inputs.pose3d = LimelightHelpers.getBotPose3d(config.name());
-    inputs.avgTagDist = mt2Estimate.avgTagDist;
-    inputs.poseEstimate = mt2Estimate.pose;
-    inputs.timestamp = mt2Estimate.timestampSeconds;
-    inputs.numTags = mt2Estimate.tagCount;
-
-    double[] rawStdDevs = this.NT.getEntry("stddevs").getDoubleArray(kdefaultStddevs);
-    boolean rawStdDevsPresent = rawStdDevs[6] != 0.0 || rawStdDevs[7] != 0.0;
-    org.littletonrobotics.junction.Logger.recordOutput(
-        "Vision/" + config.name() + "/rawStdDevsPresent", rawStdDevsPresent);
-    org.littletonrobotics.junction.Logger.recordOutput(
-        "Vision/" + config.name() + "/rawStdDevX", rawStdDevs[6]);
-    org.littletonrobotics.junction.Logger.recordOutput(
-        "Vision/" + config.name() + "/rawStdDevY", rawStdDevs[7]);
-    inputs.stdDevs =
-        calculateHybridStdDevs(rawStdDevs, mt2Estimate.avgTagDist, mt2Estimate.tagCount);
-  }
-
-  private Matrix<N3, N1> calculateHybridStdDevs(
-      double[] rawStdDevs, double avgTagDist, int numTags) {
-    double baseX = rawStdDevs[6];
-    double baseY = rawStdDevs[7];
-    double baseYaw = rawStdDevs[11];
-
-    double distanceScalar =
-        1.0
-            + Math.pow(
-                avgTagDist / VisionConstants.maxReliableDistance,
-                VisionConstants.distanceScalingExponent);
-
-    double tagScalar = (numTags == 1) ? VisionConstants.singleTagPenalty : 1.0;
-    double multiplier = VisionConstants.baseStddevMultiplier * distanceScalar * tagScalar;
-    return VecBuilder.fill(baseX * multiplier, baseY * multiplier, Float.POSITIVE_INFINITY);
-    // return VecBuilder.fill(baseX * multiplier, baseY * multiplier, baseYaw * multiplier);
   }
 
   @Override
-  public CameraConfig getConfig() {
-    return this.config;
+  public void setRobotToCamera(Transform3d robotToCamera) {
+    LimelightHelpers.setCameraPose_RobotSpace(
+        config.name(),
+        robotToCamera.getX(),
+        robotToCamera.getY(),
+        robotToCamera.getZ(),
+        robotToCamera.getRotation().getMeasureX().in(Degrees),
+        robotToCamera.getRotation().getMeasureY().in(Degrees),
+        robotToCamera.getRotation().getMeasureZ().in(Degrees));
+  }
+
+  @Override
+  public void setRobotOrientation(Rotation2d gyroYaw) {
+    LimelightHelpers.SetRobotOrientation(
+        config.name(), gyroYaw.getDegrees(), 0.0, 0.0, 0.0, 0.0, 0.0);
   }
 
   @Override

@@ -11,22 +11,20 @@ import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOInputsAutoLogged;
+import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.FuelSim;
-import java.util.Optional;
-import java.util.function.DoubleConsumer;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.Logger;
 
 public class RobotState {
-  private Optional<DoubleConsumer> captureRewind = Optional.empty();
-
   private FuelSim fuelSim;
   private int fuelInHopper = 0;
 
   private Supplier<Pose2d> simulatedDrivePoseSupplier = () -> Pose2d.kZero;
   private Drive drive;
+  private Vision vision;
   private DriveIOInputsAutoLogged driveInputs;
 
   private static RobotState instance;
@@ -46,20 +44,20 @@ public class RobotState {
     this.drive = drive;
   }
 
+  public void registerVision(Vision vision) {
+    this.vision = vision;
+  }
+
+  public Vision getVision() {
+    return vision;
+  }
+
   public void registerFuelSim(FuelSim fuelSim) {
     this.fuelSim = fuelSim;
   }
 
   public void registerSimPoseSupplier(Supplier<Pose2d> supplier) {
     simulatedDrivePoseSupplier = supplier;
-  }
-
-  public void registerRewindCallback(DoubleConsumer callback) {
-    captureRewind = Optional.of(callback);
-  }
-
-  public void captureRewind(double duration) {
-    captureRewind.ifPresent(capture -> capture.accept(duration));
   }
 
   public void resetOdometry(Pose2d pose) {

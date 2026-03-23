@@ -15,9 +15,6 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.subsystems.drive.TunerConstants;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.BooleanSupplier;
 
 public class RobotConfig {
   public enum TurretTarget {
@@ -57,8 +54,7 @@ public class RobotConfig {
     }
   }
 
-  public record CameraConfig(
-      String name, Transform3d robotToCamera, Optional<BooleanSupplier> filter) {}
+  public record CameraConfig(String name, Transform3d robotToCamera) {}
 
   public static OperationMode getMode() {
     return RobotBase.isReal() ? OperationMode.REAL : OperationMode.SIM;
@@ -160,28 +156,24 @@ public class RobotConfig {
   }
 
   public static final class VisionConstants {
-    public static final Transform3d turretRobotToCamera =
-        TurretConstants.robotToTurret.plus(
-            new Transform3d(Translation3d.kZero, TurretConstants.cameraRotation));
-    public static final Transform3d hopperRobotToCamera =
-        new Transform3d(
-            new Translation3d(
-                -Units.inchesToMeters(9.125),
-                -Units.inchesToMeters(11.396),
-                Units.inchesToMeters(19.828)),
-            new Rotation3d(0.0, Units.degreesToRadians(20.0), 0.0));
+    public static final CameraConfig turretConfig =
+        new CameraConfig(
+            "limelight-turret",
+            TurretConstants.robotToTurret.plus(
+                new Transform3d(Translation3d.kZero, TurretConstants.cameraRotation)));
+    public static final CameraConfig hopperConfig =
+        new CameraConfig(
+            "limelight-hopper",
+            new Transform3d(
+                new Translation3d(
+                    -Units.inchesToMeters(9.125),
+                    -Units.inchesToMeters(11.396),
+                    Units.inchesToMeters(19.828)),
+                new Rotation3d(0.0, Units.degreesToRadians(20.0), 0.0)));
 
-    public static final List<Integer> hubTags = List.of(9, 10, 25, 26);
-    public static final boolean rewindEnabled = true;
-
-    public static final double baseStddevMultiplier = 0.8; // 0.9
-    public static final double maxReliableDistance = 4.0;
-    public static final double distanceScalingExponent = 2.0;
-    public static final double singleTagPenalty = 1.2;
-
-    public static final double maxLatentDistance = 2.0;
-    public static final double maxAcceptableDistance = 5.0;
-    public static final double maxAcceptableStddev = 3.5;
+    public static final double zThreshold = 0.2;
+    public static final double minSingleTagArea = 1.0;
+    public static final double maxSingleTagAmbiguity = 0.19;
   }
 
   public static final class SimConstants {

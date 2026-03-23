@@ -9,13 +9,10 @@ import static edu.wpi.first.units.Units.Meters;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.RobotConfig.DriveConstants;
 import frc.robot.RobotConfig.IntakeConstants;
 import frc.robot.RobotConfig.SuperStructureState;
@@ -33,9 +30,9 @@ import frc.robot.subsystems.turret.TurretIOSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
+import frc.robot.subsystems.vision.VisionIOSim;
 import frc.robot.util.FuelSim;
 import frc.robot.util.PhoenixSync;
-import java.util.Optional;
 
 public class RobotContainer {
   public final CommandXboxController driveController = new CommandXboxController(0);
@@ -63,7 +60,10 @@ public class RobotContainer {
         spindexer = new Spindexer(new SpindexerIO() {});
         intake = new Intake(new IntakeIOSimSimple());
         turret = new Turret(new TurretIOSim());
-        vision = new Vision(new VisionIO() {});
+        vision =
+            new Vision(
+                new VisionIOSim(VisionConstants.turretConfig),
+                new VisionIOSim(VisionConstants.hopperConfig));
         configureFuelSim();
         break;
       case REAL:
@@ -95,17 +95,8 @@ public class RobotContainer {
                     TurretConstants.launcherMotorId));
         vision =
             new Vision(
-                new VisionIOLimelight(
-                    new CameraConfig(
-                        "limelight-hopper", VisionConstants.hopperRobotToCamera, Optional.empty()),
-                    Optional.empty()),
-                new VisionIOLimelight(
-                    new CameraConfig(
-                        "limelight-turret",
-                        TurretConstants.robotToTurret.plus(
-                            new Transform3d(Translation3d.kZero, TurretConstants.cameraRotation)),
-                        Optional.empty()),
-                    Optional.of(turret::getCameraPose)));
+                new VisionIOLimelight(VisionConstants.turretConfig),
+                new VisionIOLimelight(VisionConstants.hopperConfig));
         break;
       default:
         vision = new Vision(new VisionIO() {});
