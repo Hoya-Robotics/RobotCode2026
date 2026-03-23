@@ -33,16 +33,17 @@ public class TurretIOSim implements TurretIO {
   public TurretIOSim() {
     azimuthSim.setState(0.0, 0.0);
     hoodSim.setState(0.0, 0.0);
+    azimuthController.enableContinuousInput(-0.5, 0.5);
   }
 
   @Override
   public void updateInputs(TurretIOInputs inputs) {
     double azimuthVoltageApplied =
         MathUtil.clamp(
-            -12.0, 12.0, azimuthController.calculate(azimuthSim.getAngularPositionRotations()));
+            azimuthController.calculate(azimuthSim.getAngularPositionRotations()), -12.0, 12.0);
     double hoodVoltageApplied =
         MathUtil.clamp(
-            -12.0, 12.0, hoodController.calculate(hoodSim.getAngularPositionRotations()));
+            hoodController.calculate(hoodSim.getAngularPositionRotations()), -12.0, 12.0);
 
     hoodSim.setInputVoltage(hoodVoltageApplied);
     azimuthSim.setInputVoltage(azimuthVoltageApplied);

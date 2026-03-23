@@ -151,7 +151,10 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
       LinearVelocity launchSpeed =
           MetersPerSecond.of(
               TurretConstants.launcherWheelRadius.times(2.0 * Math.PI).in(Meters)
-                  * params.launcherSpeed().minus(RotationsPerSecond.of(4.0)).in(RotationsPerSecond));
+                  * params
+                      .launcherSpeed()
+                      .minus(RotationsPerSecond.of(4.0))
+                      .in(RotationsPerSecond));
 
       // Calculate velocity components: hoodAngle=0 is horizontal, 90 deg is straight up
       double hoodAngleRad = Degrees.of(90).minus(params.hoodAngle()).in(Radians);
