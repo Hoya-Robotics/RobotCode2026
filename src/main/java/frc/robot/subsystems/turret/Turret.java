@@ -125,6 +125,10 @@ public class Turret extends StateSubsystem<TurretState> {
     return hoodReady && azimuthReady && upToSpeed;
   }
 
+  public TurretParameters getTurretParameters() {
+    return parameters;
+  }
+
   @Override
   public void periodic() {
     parameters = TurretCalculator.calculateSetpoints(target, getAzimuthAngle());
