@@ -24,7 +24,6 @@ public interface SpindexerIO {
   public class SpindexerIOOutputs {
     public AngularVelocity indexMotorVelocity = RotationsPerSecond.of(0.0);
     public AngularVelocity feedVelocity = RotationsPerSecond.of(0.0);
-    // public Voltage feedMotorVoltage = Volts.zero();
   }
 
   public default void updateInputs(SpindexerIOInputs inputs) {}

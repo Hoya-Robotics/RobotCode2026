@@ -68,13 +68,10 @@ public class SpindexerIOHardware implements SpindexerIO {
 
   @Override
   public void applyOutputs(SpindexerIOOutputs outputs) {
-    Logger.recordOutput(
-        "Spindexer/indexSetpoint_velocityRotationsPerSecond", outputs.indexMotorVelocity);
-    Logger.recordOutput("Spindexer/feedSetpoint_velocityRotationsPerSecond", outputs.feedVelocity);
-    // Logger.recordOutput("Spindexer/feedSetpoint", outputs.feedMotorVoltage);
+    Logger.recordOutput("Spindexer/indexSetpointRPS", outputs.indexMotorVelocity);
+    Logger.recordOutput("Spindexer/feedSetpointRPS", outputs.feedVelocity);
 
     indexController.setSetpoint(outputs.indexMotorVelocity.in(RPM), ControlType.kVelocity);
     feedController.setSetpoint(outputs.feedVelocity.in(RPM), ControlType.kVelocity);
-    // feedMotor.setVoltage(outputs.feedMotorVoltage.in(Volts));
   }
 }
