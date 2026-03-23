@@ -23,12 +23,12 @@ import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.TurretTarget;
 import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.subsystems.SuperStructure;
-import frc.robot.subsystems.azimuth.*;
 import frc.robot.subsystems.drive.*;
-import frc.robot.subsystems.hood.*;
 import frc.robot.subsystems.intake.*;
-import frc.robot.subsystems.launcher.*;
 import frc.robot.subsystems.spindexer.*;
+import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.turret.TurretIO;
+import frc.robot.subsystems.turret.TurretIOHardware;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
@@ -42,9 +42,7 @@ public class RobotContainer {
   public final Drive drive;
   public final Spindexer spindexer;
   public final Intake intake;
-  public final Azimuth azimuth;
-  public final Hood hood;
-  public final Launcher launcher;
+  public final Turret turret;
   public final SuperStructure superStructure;
   public final Vision vision;
   public FuelSim fuelSim = null;
@@ -63,13 +61,7 @@ public class RobotContainer {
                     TunerConstants.BackRight));
         spindexer = new Spindexer(new SpindexerIO() {});
         intake = new Intake(new IntakeIOSimSimple());
-        azimuth =
-            new Azimuth(
-                // new AzimuthIOSimAdvanced(TurretConstants.azimuthMotorId,
-                // TurretConstants.azimuthEncoderId));
-                new AzimuthIOSimSimple());
-        hood = new Hood(new HoodIOSimSimple(), azimuth::getAngle);
-        launcher = new Launcher(new LauncherIO() {});
+        turret = new Turret(new TurretIO() {});
         vision = new Vision(new VisionIO() {});
         configureFuelSim();
         break;
@@ -93,12 +85,13 @@ public class RobotContainer {
             new Intake(
                 new IntakeIOHardware(
                     IntakeConstants.extendMotorId, 32, IntakeConstants.intakeMotorId));
-        azimuth =
-            new Azimuth(
-                new AzimuthIOHardware(
-                    TurretConstants.azimuthMotorId, TurretConstants.azimuthEncoderId));
-        hood = new Hood(new HoodIOHardware(TurretConstants.hoodMotorId), azimuth::getAngle);
-        launcher = new Launcher(new LauncherIOHardware(TurretConstants.launcherMotorId));
+        turret =
+            new Turret(
+                new TurretIOHardware(
+                    TurretConstants.azimuthMotorId,
+                    TurretConstants.azimuthEncoderId,
+                    TurretConstants.hoodMotorId,
+                    TurretConstants.launcherMotorId));
         vision =
             new Vision(
                 new VisionIOLimelight(
@@ -110,20 +103,18 @@ public class RobotContainer {
                         "limelight-turret",
                         TurretConstants.robotToTurret.plus(
                             new Transform3d(Translation3d.kZero, TurretConstants.cameraRotation)),
-                        Optional.of(azimuth::isCameraAccurate)),
-                    Optional.of(azimuth::getTurretCameraPose)));
+                        Optional.empty()),
+                    Optional.of(turret::getCameraPose)));
         break;
       default:
         vision = new Vision(new VisionIO() {});
         drive = new Drive(driveController, new DriveIO() {});
         spindexer = new Spindexer(new SpindexerIO() {});
+        turret = new Turret(new TurretIO() {});
         intake = new Intake(new IntakeIO() {});
-        azimuth = new Azimuth(new AzimuthIO() {});
-        hood = new Hood(new HoodIO() {}, azimuth::getAngle);
-        launcher = new Launcher(new LauncherIO() {});
         break;
     }
-    superStructure = new SuperStructure(spindexer, hood, azimuth, launcher, intake);
+    superStructure = new SuperStructure(spindexer, turret, intake);
     PhoenixSync.optimizeAll();
     AutoBuilder.registerAutoChoices(drive, superStructure);
 

@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -114,15 +115,11 @@ public class AutoBuilder {
 
   public Command generate(Drive drive, SuperStructure superStructure) {
     List<Command> commands = new ArrayList<>();
-    Node.ChoreoTraj firstTraj =
-        (Node.ChoreoTraj)
-            graph.stream()
-                .filter(n -> n.getClass().equals(Node.ChoreoTraj.class))
-                .findFirst()
-                .get();
-
     commands.add(Commands.runOnce(autoTimer::restart));
-    commands.add(firstTraj.resetOdometry());
+
+    Optional<Node> firstTraj =
+        graph.stream().filter(n -> n.getClass().equals(Node.ChoreoTraj.class)).findFirst();
+    firstTraj.ifPresent(n -> commands.add(((Node.ChoreoTraj) n).resetOdometry()));
 
     for (int i = 0; i < graph.size(); ++i) {
       Node node = graph.get(i);

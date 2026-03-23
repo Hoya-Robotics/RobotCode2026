@@ -14,13 +14,10 @@ import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.TurretTarget;
 import frc.robot.RobotState;
-import frc.robot.TurretCalculator;
 import frc.robot.TurretCalculator.TurretParameters;
-import frc.robot.subsystems.azimuth.Azimuth;
-import frc.robot.subsystems.hood.Hood;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.launcher.Launcher;
 import frc.robot.subsystems.spindexer.Spindexer;
+import frc.robot.subsystems.turret.Turret;
 import frc.robot.util.StateSubsystem;
 import org.littletonrobotics.junction.Logger;
 
@@ -28,23 +25,16 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
   private Timer simShotTimer = new Timer();
   private Timer shotCooldownTimer = new Timer();
   private boolean coolingDown = false;
-  private TurretParameters cooldownParams =
-      new TurretParameters(Radians.of(0.0), Radians.of(0.0), RotationsPerSecond.of(0.0));
 
   private final Spindexer spindexer;
-  private final Hood hood;
-  private final Azimuth azimuth;
-  private final Launcher launcher;
+  private final Turret turret;
   private final Intake intake;
   private TurretTarget target;
 
-  public SuperStructure(
-      Spindexer spindexer, Hood hood, Azimuth azimuth, Launcher launcher, Intake intake) {
+  public SuperStructure(Spindexer spindexer, Turret turret, Intake intake) {
     this.target = TurretTarget.DEFAULT;
     this.spindexer = spindexer;
-    this.hood = hood;
-    this.azimuth = azimuth;
-    this.launcher = launcher;
+    this.turret = turret;
     this.intake = intake;
 
     setState(SuperStructureState.IDLE);
@@ -62,17 +52,13 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
   @Override
   public SuperStructureState handleStateTransitions() {
     if (getCurrentState() == null) return getRequestedState();
-    SuperStructureState state = getCurrentState();
-    switch (state) {
-      case SHOOT:
-        TurretParameters turretParams =
-            TurretCalculator.calculateSetpoints(target, azimuth.getAngle());
-        coolingDown = true;
-        shotCooldownTimer.restart();
-        cooldownParams = turretParams;
-        break;
-      default:
-        break;
+    if (getCurrentState() == SuperStructureState.SHOOT
+        && getRequestedState() != SuperStructureState.SHOOT) {
+      coolingDown = true;
+      shotCooldownTimer.restart();
+    }
+    if (coolingDown && getRequestedState() == SuperStructureState.SHOOT) {
+      coolingDown = false;
     }
     return getRequestedState();
   }
@@ -82,14 +68,6 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     Logger.recordOutput("SuperStructure/state", getCurrentState());
     Logger.recordOutput("SuperStructure/trackingTarget", target);
 
-    TurretParameters turretParams = TurretCalculator.calculateSetpoints(target, azimuth.getAngle());
-
-    // Track target + idle speed
-    azimuth.setAngle(turretParams.azimuthAngle());
-    hood.setAngle(turretParams.hoodAngle());
-    launcher.setSpeed(TurretConstants.shotIdleSpeed);
-
-    // Update cooldown state
     if (coolingDown && shotCooldownTimer.get() > TurretConstants.cooldownSeconds) {
       shotCooldownTimer.stop();
       coolingDown = false;
@@ -97,24 +75,21 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
 
     applyState();
 
-    // Cooldown override
-    if (coolingDown && getCurrentState() != SuperStructureState.SHOOT) {
-      launcher.setSpeed(cooldownParams.launcherSpeed());
-      hood.setAngle(cooldownParams.hoodAngle());
+    if (coolingDown) {
+      turret.cooldown();
       spindexer.cooldown();
     }
 
-    // Hood down under trench
     if (FieldConstants.underTrench(RobotState.getInstance().getEstimatedPose())) {
-      hood.setAngle(Degrees.of(0.0));
+      turret.duck();
     }
   }
 
   @Override
   public void applyState() {
     SuperStructureState state = getCurrentState();
-    TurretParameters turretParams = TurretCalculator.calculateSetpoints(target, azimuth.getAngle());
 
+    turret.track();
     switch (state) {
       case REVERSE_INTAKE:
         intake.reverse();
@@ -130,9 +105,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         break;
       case SHOOT_INTAKE:
       case SHOOT:
-        hood.setAngle(turretParams.hoodAngle());
-        launcher.setSpeed(turretParams.launcherSpeed());
-
+        turret.shoot();
         if (state == SuperStructureState.SHOOT_INTAKE) {
           intake.run();
         }
@@ -150,7 +123,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
           underTrench = false;
         }*/
 
-        if (shouldShoot(turretParams)) {
+        if (shouldShoot()) {
           if (state != SuperStructureState.SHOOT_INTAKE) {
             intake.agitate();
           }
@@ -199,23 +172,11 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     }
   }
 
-  private boolean shouldShoot(TurretParameters turretParams) {
+  private boolean shouldShoot() {
     boolean underTrench = FieldConstants.underTrench(RobotState.getInstance().getEstimatedPose());
-    boolean hoodWithinTolerance =
-        hood.getAngle().isNear(turretParams.hoodAngle(), TurretConstants.hoodTolerance);
-    boolean azimuthWithinTolerance =
-        azimuth.getAngle().isNear(turretParams.azimuthAngle(), TurretConstants.azimuthTolerance);
-    boolean upToSpeed =
-        launcher
-            .getSpeed()
-            .isNear(turretParams.launcherSpeed(), TurretConstants.shotSpeedTolerance);
-
-    Logger.recordOutput("SuperStructure/hoodWithinTolerance", hoodWithinTolerance);
-    Logger.recordOutput("SuperStructure/azimuthWithinTolerance", azimuthWithinTolerance);
-    Logger.recordOutput("SuperStructure/upToSpeed", upToSpeed);
     Logger.recordOutput("SuperStructure/underTrench", underTrench);
 
-    return hoodWithinTolerance && azimuthWithinTolerance && upToSpeed && (!underTrench);
+    return turret.readyForFeed() && (!underTrench);
   }
 
   public boolean isIntaking() {

@@ -86,10 +86,10 @@ public class IntakeIOHardware implements IntakeIO {
   public void updateInputs(IntakeIOInputs inputs) {
     inputs.extendConnected = extendSignals.isConnected();
     // Position is in inches due to SensorToMechanismRatio converting rotations to inches
-    inputs.extendPosition = Inches.of(extendSignals.getPosition().in(Rotations));
-    inputs.extendVelocity = MetersPerSecond.of(extendSignals.getVelocity().in(RotationsPerSecond));
-    inputs.extendVoltageApplied = extendSignals.getVoltage();
-    inputs.extendCurrent = extendSignals.getCurrent();
+    inputs.extendPosition = Inches.of(extendSignals.getNativePosition());
+    inputs.extendVelocity = MetersPerSecond.of(extendSignals.getNativeVelocity());
+    inputs.extendVoltageApplied = Volts.of(extendSignals.getVoltage());
+    inputs.extendCurrent = Amps.of(extendSignals.getCurrent());
 
     inputs.intakeConnected = intakeMotor.getLastError() == REVLibError.kOk;
     inputs.intakeVoltageApplied =

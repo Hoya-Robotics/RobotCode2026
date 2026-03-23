@@ -23,24 +23,24 @@ public class PhoenixSync {
       StatusSignal<Temperature> temp,
       StatusSignal<Current> current) {
 
-    public Angle getPosition() {
-      return BaseStatusSignal.getLatencyCompensatedValue(position, velocity);
+    public double getNativePosition() {
+      return BaseStatusSignal.getLatencyCompensatedValueAsDouble(position, velocity);
     }
 
-    public AngularVelocity getVelocity() {
-      return BaseStatusSignal.getLatencyCompensatedValue(velocity, acceleration);
+    public double getNativeVelocity() {
+      return BaseStatusSignal.getLatencyCompensatedValueAsDouble(velocity, acceleration);
     }
 
-    public Voltage getVoltage() {
-      return voltage.getValue();
+    public double getVoltage() {
+      return voltage.getValueAsDouble();
     }
 
-    public Temperature getTemp() {
-      return temp.getValue();
+    public double getTemp() {
+      return temp.getValueAsDouble();
     }
 
-    public Current getCurrent() {
-      return current.getValue();
+    public double getCurrent() {
+      return current.getValueAsDouble();
     }
 
     public boolean isConnected() {
