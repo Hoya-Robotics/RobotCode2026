@@ -77,7 +77,7 @@ public class Turret extends StateSubsystem<TurretState> {
 
   private void logMechanisms() {
     Logger.recordOutput(
-        "Hood/HoodPose",
+        "Turret/HoodPose",
         new Pose3d(
                 Inches.of(-6),
                 Inches.of(-6),
@@ -87,7 +87,7 @@ public class Turret extends StateSubsystem<TurretState> {
                 new Transform3d(
                     Inches.of(3.77617094), Inches.zero(), Inches.zero(), Rotation3d.kZero)));
     Logger.recordOutput(
-        "Azimuth/TurretPose",
+        "Turret/AzimuthPose",
         new Pose3d(
             Inches.of(-6),
             Inches.of(-6),

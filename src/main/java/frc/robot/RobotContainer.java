@@ -29,6 +29,7 @@ import frc.robot.subsystems.spindexer.*;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.TurretIO;
 import frc.robot.subsystems.turret.TurretIOHardware;
+import frc.robot.subsystems.turret.TurretIOSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
@@ -61,7 +62,7 @@ public class RobotContainer {
                     TunerConstants.BackRight));
         spindexer = new Spindexer(new SpindexerIO() {});
         intake = new Intake(new IntakeIOSimSimple());
-        turret = new Turret(new TurretIO() {});
+        turret = new Turret(new TurretIOSim());
         vision = new Vision(new VisionIO() {});
         configureFuelSim();
         break;
