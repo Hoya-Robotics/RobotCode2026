@@ -26,12 +26,17 @@ public class FieldConstants {
     }
   }
 
+  // Field
   public static final Distance fieldLength = Meters.of(aprilLayout.getFieldLength());
   public static final Distance fieldWidth = Meters.of(aprilLayout.getFieldWidth());
   public static final Distance centerLine = fieldLength.div(2.0);
+
+  // Neutral Zone
   public static final Distance neutralZoneLength = Inches.of(283);
   public static final Distance neutralZoneStart = centerLine.minus(neutralZoneLength.div(2.0));
   public static final Distance neutralZoneEnd = centerLine.plus(neutralZoneLength.div(2.0));
+
+  // Bump/Trench
   public static final Distance bumpWidth = Inches.of(73.0);
   public static final Distance trenchWidth = Inches.of(65.65);
   public static final Distance trenchDepth = Inches.of(47.0);

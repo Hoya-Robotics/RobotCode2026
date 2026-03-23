@@ -6,13 +6,10 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.LinearVelocity;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.FieldConstants;
-import frc.robot.RobotConfig;
-import frc.robot.RobotConfig.OperationMode;
 import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.TurretTarget;
@@ -54,34 +51,116 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     simShotTimer.start();
   }
 
-  @Override
-  public void periodic() {
-    applyState();
-  }
-
-  public boolean isIntaking() {
-    return getCurrentState() == SuperStructureState.INTAKE
-        || getCurrentState() == SuperStructureState.SHOOT_INTAKE;
-  }
-
   public Command setStateCommand(SuperStructureState state) {
     return Commands.runOnce(() -> setState(state));
   }
 
-  public Command setTarget(TurretTarget target) {
+  public Command setTargetCommand(TurretTarget target) {
     return Commands.runOnce(() -> this.target = target);
   }
 
-  public Command idle() {
-    return Commands.runOnce(() -> setState(SuperStructureState.IDLE));
+  @Override
+  public SuperStructureState handleStateTransitions() {
+    if (getCurrentState() == null) return getRequestedState();
+    SuperStructureState state = getCurrentState();
+    switch (state) {
+      case SHOOT:
+        TurretParameters turretParams =
+            TurretCalculator.calculateSetpoints(target, azimuth.getAngle());
+        coolingDown = true;
+        shotCooldownTimer.restart();
+        cooldownParams = turretParams;
+        break;
+      default:
+        break;
+    }
+    return getRequestedState();
   }
 
-  public Command intake() {
-    return Commands.runOnce(() -> setState(SuperStructureState.INTAKE));
+  @Override
+  public void periodic() {
+    Logger.recordOutput("SuperStructure/state", getCurrentState());
+    Logger.recordOutput("SuperStructure/trackingTarget", target);
+
+    TurretParameters turretParams = TurretCalculator.calculateSetpoints(target, azimuth.getAngle());
+
+    // Track target + idle speed
+    azimuth.setAngle(turretParams.azimuthAngle());
+    hood.setAngle(turretParams.hoodAngle());
+    launcher.setSpeed(TurretConstants.shotIdleSpeed);
+
+    // Update cooldown state
+    if (coolingDown && shotCooldownTimer.get() > TurretConstants.cooldownSeconds) {
+      shotCooldownTimer.stop();
+      coolingDown = false;
+    }
+
+    applyState();
+
+    // Cooldown override
+    if (coolingDown && getCurrentState() != SuperStructureState.SHOOT) {
+      launcher.setSpeed(cooldownParams.launcherSpeed());
+      hood.setAngle(cooldownParams.hoodAngle());
+      spindexer.cooldown();
+    }
+
+    // Hood down under trench
+    if (FieldConstants.underTrench(RobotState.getInstance().getEstimatedPose())) {
+      hood.setAngle(Degrees.of(0.0));
+    }
   }
 
-  public Command shoot() {
-    return Commands.runOnce(() -> setState(SuperStructureState.SHOOT));
+  @Override
+  public void applyState() {
+    SuperStructureState state = getCurrentState();
+    TurretParameters turretParams = TurretCalculator.calculateSetpoints(target, azimuth.getAngle());
+
+    switch (state) {
+      case REVERSE_INTAKE:
+        intake.reverse();
+        spindexer.hold();
+        break;
+      case IDLE:
+        intake.retract();
+        spindexer.hold();
+        break;
+      case INTAKE:
+        intake.run();
+        spindexer.hold();
+        break;
+      case SHOOT_INTAKE:
+      case SHOOT:
+        hood.setAngle(turretParams.hoodAngle());
+        launcher.setSpeed(turretParams.launcherSpeed());
+
+        if (state == SuperStructureState.SHOOT_INTAKE) {
+          intake.run();
+        }
+
+        /*
+        if (RobotConfig.getMode() == OperationMode.SIM
+            && hoodWithinTolerance
+            && azimuthWithinTolerance) {
+          simulateTurretShot(turretParams);
+        }
+        var chassisSpeeds = RobotState.getInstance().getRobotVelocity();
+        if (DriverStation.isAutonomous()
+            && Math.hypot(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond)
+                < 0.05) {
+          underTrench = false;
+        }*/
+
+        if (shouldShoot(turretParams)) {
+          if (state != SuperStructureState.SHOOT_INTAKE) {
+            intake.agitate();
+          }
+          spindexer.feed();
+        } else {
+          intake.idle();
+          spindexer.idle();
+        }
+        break;
+    }
   }
 
   private void simulateTurretShot(TurretParameters params) {
@@ -120,113 +199,27 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     }
   }
 
-  @Override
-  public SuperStructureState handleStateTransitions() {
-    if (getCurrentState() == null) return getRequestedState();
-    SuperStructureState state = getCurrentState();
-    switch (state) {
-      case SHOOT:
-        TurretParameters turretParams =
-            TurretCalculator.calculateSetpoints(target, azimuth.getAngle());
-        coolingDown = true;
-        shotCooldownTimer.restart();
-        cooldownParams = turretParams;
-        break;
-      default:
-        break;
-    }
-    return getRequestedState();
+  private boolean shouldShoot(TurretParameters turretParams) {
+    boolean underTrench = FieldConstants.underTrench(RobotState.getInstance().getEstimatedPose());
+    boolean hoodWithinTolerance =
+        hood.getAngle().isNear(turretParams.hoodAngle(), TurretConstants.hoodTolerance);
+    boolean azimuthWithinTolerance =
+        azimuth.getAngle().isNear(turretParams.azimuthAngle(), TurretConstants.azimuthTolerance);
+    boolean upToSpeed =
+        launcher
+            .getSpeed()
+            .isNear(turretParams.launcherSpeed(), TurretConstants.shotSpeedTolerance);
+
+    Logger.recordOutput("SuperStructure/hoodWithinTolerance", hoodWithinTolerance);
+    Logger.recordOutput("SuperStructure/azimuthWithinTolerance", azimuthWithinTolerance);
+    Logger.recordOutput("SuperStructure/upToSpeed", upToSpeed);
+    Logger.recordOutput("SuperStructure/underTrench", underTrench);
+
+    return hoodWithinTolerance && azimuthWithinTolerance && upToSpeed && (!underTrench);
   }
 
-  @Override
-  public void applyState() {
-    Logger.recordOutput("SuperStructure/state", getCurrentState());
-    Logger.recordOutput("SuperStructure/trackingTarget", target);
-    TurretParameters turretParams = TurretCalculator.calculateSetpoints(target, azimuth.getAngle());
-
-    azimuth.setAngle(turretParams.azimuthAngle());
-    hood.setAngle(Radians.of(0.0));
-    launcher.setSpeed(RotationsPerSecond.of(10.0)); // idle speed
-
-    // TODO: hood down on trench
-    SuperStructureState state = getCurrentState();
-    if (coolingDown && shotCooldownTimer.get() > TurretConstants.cooldownSeconds) {
-      shotCooldownTimer.stop();
-      coolingDown = false;
-    }
-
-    switch (state) {
-      case REVERSE_INTAKE:
-        intake.reverse();
-        spindexer.hold();
-        break;
-      case IDLE:
-        intake.retract();
-        spindexer.hold();
-        break;
-      case INTAKE:
-        intake.run();
-        spindexer.hold();
-        break;
-      case SHOOT_INTAKE:
-      case SHOOT:
-        hood.setAngle(turretParams.hoodAngle());
-        launcher.setSpeed(turretParams.launcherSpeed());
-
-        boolean underTrench =
-            FieldConstants.underTrench(RobotState.getInstance().getEstimatedPose());
-        boolean hoodWithinTolerance =
-            hood.getAngle().isNear(turretParams.hoodAngle(), TurretConstants.hoodTolerance);
-        boolean azimuthWithinTolerance =
-            azimuth
-                .getAngle()
-                .isNear(turretParams.azimuthAngle(), TurretConstants.azimuthTolerance);
-        boolean upToSpeed =
-            launcher
-                .getSpeed()
-                .isNear(turretParams.launcherSpeed(), TurretConstants.shotSpeedTolerance);
-
-        Logger.recordOutput("SuperStructure/hoodWithinTolerance", hoodWithinTolerance);
-        Logger.recordOutput("SuperStructure/azimuthWithinTolerance", azimuthWithinTolerance);
-        Logger.recordOutput("SuperStructure/upToSpeed", upToSpeed);
-
-        if (state == SuperStructureState.SHOOT_INTAKE) {
-          intake.run();
-        }
-
-        if (RobotConfig.getMode() == OperationMode.SIM
-            && hoodWithinTolerance
-            && azimuthWithinTolerance) {
-          simulateTurretShot(turretParams);
-        }
-
-        var chassisSpeeds = RobotState.getInstance().getRobotVelocity();
-        if (DriverStation.isAutonomous()
-            && Math.hypot(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond)
-                < 0.05) {
-          underTrench = false;
-        }
-
-        if (upToSpeed && hoodWithinTolerance && azimuthWithinTolerance && (!underTrench)) {
-          if (state != SuperStructureState.SHOOT_INTAKE) {
-            intake.agitate();
-          }
-          spindexer.feed();
-        } else {
-          intake.idle();
-          spindexer.idle();
-        }
-        break;
-    }
-
-    if (coolingDown && state != SuperStructureState.SHOOT) {
-      launcher.setSpeed(cooldownParams.launcherSpeed());
-      hood.setAngle(cooldownParams.hoodAngle());
-      spindexer.cooldown();
-    }
-
-    if (FieldConstants.underTrench(RobotState.getInstance().getEstimatedPose())) {
-      hood.setAngle(Degrees.of(0.0));
-    }
+  public boolean isIntaking() {
+    return getCurrentState() == SuperStructureState.INTAKE
+        || getCurrentState() == SuperStructureState.SHOOT_INTAKE;
   }
 }

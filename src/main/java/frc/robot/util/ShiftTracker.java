@@ -43,7 +43,7 @@ public class ShiftTracker {
   public static void run() {
     String fmsMessage = DriverStation.getGameSpecificMessage();
     boolean redInactiveFirst = false;
-		if (fmsMessage.isEmpty()) return;
+    if (fmsMessage.isEmpty()) return;
     switch (fmsMessage.charAt(0)) {
       case 'R' -> redInactiveFirst = true;
       case 'B' -> redInactiveFirst = false;

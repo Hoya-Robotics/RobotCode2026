@@ -84,7 +84,7 @@ public class AutoBuilder {
             case DRIVE_TO_POSE ->
                 drive.driveToPoseCommandDeferred(
                     () -> flipPoseYAxis(targetPoses.get(ctxIndex).get()));
-            case TARGET_TRACK -> superStructure.setTarget(turretTargets.get(ctxIndex));
+            case TARGET_TRACK -> superStructure.setTargetCommand(turretTargets.get(ctxIndex));
             case STATE_CHANGE -> superStructure.setStateCommand(superStates.get(ctxIndex));
             case CHOREO_TRAJ -> drive.followChoreoTrajectoryCommand(trajectories.get(ctxIndex));
             case COMMAND -> miscCommands.get(ctxIndex);

@@ -71,19 +71,6 @@ public class RobotContainer {
         hood = new Hood(new HoodIOSimSimple(), azimuth::getAngle);
         launcher = new Launcher(new LauncherIO() {});
         vision = new Vision(new VisionIO() {});
-        /*
-        vision =
-            new Vision(
-                new VisionIOSim(
-                    new CameraConfig(
-                        "limelight-hopper", VisionConstants.hopperRobotToCamera, Optional.empty()),
-                    Optional.empty()),
-                new VisionIOSim(
-                    new CameraConfig(
-                        "limelight-turret",
-                        VisionConstants.turretRobotToCamera,
-                        Optional.of(azimuth::isCameraAccurate)),
-                    Optional.of(azimuth::getTurretCameraPose)));*/
         configureFuelSim();
         break;
       case REAL:
@@ -146,24 +133,20 @@ public class RobotContainer {
   private void configureBindings() {
     driveController
         .rightTrigger(0.3)
-        .whileTrue(superStructure.intake())
+        .whileTrue(superStructure.setStateCommand(SuperStructureState.INTAKE))
         .onFalse(superStructure.idle());
-    /*
-    driveController
-        .leftTrigger(0.3)*/
     operatorController
         .rightTrigger(0.3)
         .whileTrue(
-            superStructure.shoot().andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.5))))
+            superStructure
+                .setStateCommand(SuperStructureState.SHOOT)
+                .andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.5))))
         .onFalse(
             superStructure
                 .idle()
                 .andThen(
                     Commands.runOnce(
                         () -> drive.setTeleopSpeedLimit(DriveConstants.maxDriveSpeedMps))));
-    /*
-    driveController
-        .leftTrigger(0.3)*/
     operatorController
         .rightTrigger(0.3)
         .and(driveController.rightTrigger(0.3))
@@ -174,13 +157,13 @@ public class RobotContainer {
         .onFalse(
             Commands.either(
                 superStructure
-                    .shoot()
+                    .setStateCommand(SuperStructureState.SHOOT)
                     .andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.5))),
                 Commands.runOnce(() -> drive.setTeleopSpeedLimit(DriveConstants.maxDriveSpeedMps))
                     .andThen(
                         Commands.either(
-                            superStructure.intake(),
-                            superStructure.idle(),
+                            superStructure.setStateCommand(SuperStructureState.INTAKE),
+                            superStructure.setStateCommand(SuperStructureState.IDLE),
                             () -> driveController.getRightTriggerAxis() > 0.3)),
                 () -> operatorController.getRightTriggerAxis() > 0.3));
     driveController
@@ -189,12 +172,8 @@ public class RobotContainer {
         .onFalse(superStructure.setStateCommand(SuperStructureState.IDLE));
     driveController
         .b()
-        .onTrue(superStructure.setTarget(TurretTarget.CONSTANT_FORWARD))
-        .onFalse(superStructure.setTarget(TurretTarget.DEFAULT));
-    driveController
-        .a()
-        .onTrue(superStructure.setTarget(TurretTarget.MAX_PASSING))
-        .onFalse(superStructure.setTarget(TurretTarget.DEFAULT));
+        .onTrue(superStructure.setTargetCommand(TurretTarget.CONSTANT_FORWARD))
+        .onFalse(superStructure.setTargetCommand(TurretTarget.DEFAULT));
     driveController
         .start()
         .onTrue(
@@ -206,8 +185,8 @@ public class RobotContainer {
                             Rotation2d.kZero))));
     driveController
         .x()
-        .onTrue(superStructure.setTarget(TurretTarget.TUNING))
-        .onFalse(superStructure.setTarget(TurretTarget.DEFAULT));
+        .onTrue(superStructure.setTargetCommand(TurretTarget.TUNING))
+        .onFalse(superStructure.setTargetCommand(TurretTarget.DEFAULT));
   }
 
   private void configureFuelSim() {

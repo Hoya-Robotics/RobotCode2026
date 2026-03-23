@@ -141,7 +141,7 @@ public class RobotConfig {
     public static final Angle hoodTolerance = Degrees.of(1.0);
     public static final AngularVelocity shotSpeedTolerance = RotationsPerSecond.of(5.0);
 
-    public static final double shooterIdleVoltage = 1.5;
+    public static final AngularVelocity shotIdleSpeed = RotationsPerSecond.of(15.0);
 
     public static final double cooldownSeconds = 0.5;
 
