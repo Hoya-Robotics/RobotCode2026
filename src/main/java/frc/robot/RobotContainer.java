@@ -118,8 +118,10 @@ public class RobotContainer {
         .rightTrigger(0.3)
         .whileTrue(superStructure.setStateCommand(SuperStructureState.INTAKE))
         .onFalse(superStructure.idle());
-    operatorController
-        .rightTrigger(0.3)
+    // operatorController
+    driveController
+        // .rightTrigger(0.3)
+        .leftTrigger(0.3)
         .whileTrue(
             superStructure
                 .setStateCommand(SuperStructureState.SHOOT)
@@ -130,8 +132,10 @@ public class RobotContainer {
                 .andThen(
                     Commands.runOnce(
                         () -> drive.setTeleopSpeedLimit(DriveConstants.maxDriveSpeedMps))));
-    operatorController
-        .rightTrigger(0.3)
+    // operatorController
+    driveController
+        // .rightTrigger(0.3)
+        .leftTrigger(0.3)
         .and(driveController.rightTrigger(0.3))
         .whileTrue(
             superStructure
@@ -148,7 +152,8 @@ public class RobotContainer {
                             superStructure.setStateCommand(SuperStructureState.INTAKE),
                             superStructure.setStateCommand(SuperStructureState.IDLE),
                             () -> driveController.getRightTriggerAxis() > 0.3)),
-                () -> operatorController.getRightTriggerAxis() > 0.3));
+                // () -> operatorController.getRightTriggerAxis() > 0.3));
+                () -> driveController.getLeftTriggerAxis() > 0.3));
     driveController
         .rightBumper()
         .onTrue(superStructure.setStateCommand(SuperStructureState.REVERSE_INTAKE))
@@ -188,7 +193,7 @@ public class RobotContainer {
         Inches.of(13.75).in(Meters),
         () -> superStructure.isIntaking(),
         RobotState.getInstance()::addFuel);
-    // fuelSim.enableAirResistance();
+    fuelSim.enableAirResistance();
     fuelSim.start();
 
     RobotState.getInstance().registerFuelSim(fuelSim);

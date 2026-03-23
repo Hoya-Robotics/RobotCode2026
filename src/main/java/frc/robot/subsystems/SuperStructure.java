@@ -10,6 +10,8 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.FieldConstants;
+import frc.robot.RobotConfig;
+import frc.robot.RobotConfig.OperationMode;
 import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.TurretTarget;
@@ -128,6 +130,9 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
             intake.agitate();
           }
           spindexer.feed();
+          if (RobotConfig.getMode() == OperationMode.SIM) {
+            simulateTurretShot(turret.getParameters());
+          }
         } else {
           intake.idle();
           spindexer.idle();
@@ -146,7 +151,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
       LinearVelocity launchSpeed =
           MetersPerSecond.of(
               TurretConstants.launcherWheelRadius.times(2.0 * Math.PI).in(Meters)
-                  * params.launcherSpeed().in(RotationsPerSecond));
+                  * params.launcherSpeed().minus(RotationsPerSecond.of(4.0)).in(RotationsPerSecond));
 
       // Calculate velocity components: hoodAngle=0 is horizontal, 90 deg is straight up
       double hoodAngleRad = Degrees.of(90).minus(params.hoodAngle()).in(Radians);

@@ -6,6 +6,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.util.MotorState;
@@ -26,6 +27,8 @@ public class TurretIOSim implements TurretIO {
               hoodGearbox, 0.07867078, TurretConstants.hoodGearRatio),
           hoodGearbox);
   private PIDController hoodController = new PIDController(200, 0, 0);
+
+  private AngularVelocity shooterVelocity = RotationsPerSecond.zero();
 
   public TurretIOSim() {
     azimuthSim.setState(0.0, 0.0);
@@ -63,11 +66,15 @@ public class TurretIOSim implements TurretIO {
             azimuthSim.getAngularPositionRotations(),
             azimuthSim.getAngularVelocity().in(RotationsPerSecond),
             0.0);
+
+    inputs.shooterState =
+        new MotorState(true, 0.0, 0.0, 0.0, shooterVelocity.in(RotationsPerSecond), 0.0);
   }
 
   @Override
   public void applyOutputs(TurretIOOutputs outputs) {
     hoodController.setSetpoint(outputs.hoodSetpoint.in(Rotations));
     azimuthController.setSetpoint(outputs.azimuthSetpoint.in(Rotations));
+    shooterVelocity = outputs.shooterSetpoint;
   }
 }
