@@ -44,6 +44,7 @@ public class Robot extends LoggedRobot {
   public void robotPeriodic() {
     PhoenixSync.refreshAll(0.020);
     CommandScheduler.getInstance().run();
+    ShiftTracker.run();
   }
 
   @Override
@@ -80,8 +81,6 @@ public class Robot extends LoggedRobot {
     }
     m_robotContainer.drive.setIdle();
     m_robotContainer.superStructure.setState(SuperStructureState.IDLE);
-
-    ShiftTracker.initialize();
   }
 
   @Override
