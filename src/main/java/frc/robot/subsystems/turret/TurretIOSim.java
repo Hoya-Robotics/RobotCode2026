@@ -33,7 +33,7 @@ public class TurretIOSim implements TurretIO {
   public TurretIOSim() {
     azimuthSim.setState(0.0, 0.0);
     hoodSim.setState(0.0, 0.0);
-    azimuthController.enableContinuousInput(-0.5, 0.5);
+    // azimuthController.enableContinuousInput(-0.5, 0.5);
   }
 
   @Override

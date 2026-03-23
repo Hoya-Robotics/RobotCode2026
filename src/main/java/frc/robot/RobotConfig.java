@@ -152,6 +152,7 @@ public class RobotConfig {
 
     public static final Rotation3d cameraRotation =
         new Rotation3d(0.0, Units.degreesToRadians(30), 0.0);
+
     public static final double azimuthRadiusMeters = Units.inchesToMeters(7.0733);
   }
 
@@ -161,6 +162,7 @@ public class RobotConfig {
             "limelight-turret",
             TurretConstants.robotToTurret.plus(
                 new Transform3d(Translation3d.kZero, TurretConstants.cameraRotation)));
+
     public static final CameraConfig hopperConfig =
         new CameraConfig(
             "limelight-hopper",
@@ -170,6 +172,16 @@ public class RobotConfig {
                     -Units.inchesToMeters(11.396),
                     Units.inchesToMeters(19.828)),
                 new Rotation3d(0.0, Units.degreesToRadians(20.0), 0.0)));
+
+    public static final CameraConfig hopperConfigSim =
+        new CameraConfig(
+            "limelight-hopper",
+            new Transform3d(
+                new Translation3d(
+                    -Units.inchesToMeters(9.125),
+                    -Units.inchesToMeters(11.396),
+                    Units.inchesToMeters(19.828)),
+                new Rotation3d(0.0, Units.degreesToRadians(-20.0), 0.0)));
 
     public static final double zThreshold = 0.2;
     public static final double minSingleTagArea = 1.0;

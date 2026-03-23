@@ -63,7 +63,7 @@ public class RobotContainer {
         vision =
             new Vision(
                 new VisionIOSim(VisionConstants.turretConfig),
-                new VisionIOSim(VisionConstants.hopperConfig));
+                new VisionIOSim(VisionConstants.hopperConfigSim));
         configureFuelSim();
         break;
       case REAL:
