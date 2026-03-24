@@ -25,7 +25,6 @@ import org.littletonrobotics.junction.Logger;
 enum TurretState {
   IDLE_TRACK,
   NEAR_TRENCH,
-  COOLDOWN,
   SHOOT
 }
 
@@ -35,7 +34,6 @@ public class Turret extends StateSubsystem<TurretState> {
   private TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
   private TurretParameters parameters =
       new TurretParameters(Rotations.of(0.0), Rotations.of(0.0), RotationsPerSecond.of(0.0));
-  private TurretParameters cooldownParams;
   private TurretIOOutputs outputs = new TurretIOOutputs();
   private Timer simShotTimer = new Timer();
 
@@ -43,10 +41,6 @@ public class Turret extends StateSubsystem<TurretState> {
     this.io = io;
     setState(TurretState.IDLE_TRACK);
     simShotTimer.start();
-  }
-
-  public void cooldown() {
-    setState(TurretState.COOLDOWN);
   }
 
   public void track() {
@@ -170,13 +164,6 @@ public class Turret extends StateSubsystem<TurretState> {
   }
 
   @Override
-  public TurretState handleStateTransitions() {
-    if (getRequestedState() == TurretState.COOLDOWN && getCurrentState() != TurretState.COOLDOWN)
-      cooldownParams = parameters;
-    return getRequestedState();
-  }
-
-  @Override
   public void applyState() {
     outputs.azimuthSetpoint = parameters.azimuthAngle();
     switch (getCurrentState()) {
@@ -186,15 +173,15 @@ public class Turret extends StateSubsystem<TurretState> {
         break;
       case NEAR_TRENCH:
         outputs.shooterSetpoint = TurretConstants.shotIdleSpeed;
-        outputs.hoodSetpoint = Degrees.of(0.0);
+        outputs.hoodSetpoint =
+            Degrees.of(
+                Math.min(
+                    parameters.hoodAngle().in(Degrees),
+                    TurretConstants.trenchHoodAngle.in(Degrees)));
         break;
       case SHOOT:
         outputs.shooterSetpoint = parameters.launcherSpeed();
         outputs.hoodSetpoint = parameters.hoodAngle();
-        break;
-      case COOLDOWN:
-        outputs.shooterSetpoint = cooldownParams.launcherSpeed();
-        outputs.hoodSetpoint = cooldownParams.hoodAngle();
         break;
     }
   }

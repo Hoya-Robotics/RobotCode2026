@@ -71,7 +71,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     applyState();
 
     if (coolingDown) {
-      turret.cooldown();
+      turret.shoot();
       spindexer.cooldown();
     }
 
@@ -101,21 +101,21 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
       case SHOOT_INTAKE:
       case SHOOT:
         turret.shoot();
-        if (state == SuperStructureState.SHOOT_INTAKE) {
-          intake.run();
-        }
 
         if (shouldShoot()) {
-          if (state != SuperStructureState.SHOOT_INTAKE) {
-            intake.agitate();
-          }
+          intake.agitate();
           spindexer.feed();
+
           if (RobotConfig.getMode() == OperationMode.SIM) {
             turret.simulateShot();
           }
         } else {
           intake.idle();
           spindexer.idle();
+        }
+
+        if (state == SuperStructureState.SHOOT_INTAKE) {
+          intake.run();
         }
         break;
     }
