@@ -102,6 +102,7 @@ public class RobotConfig {
   public static final class IntakeConstants {
     public static final int extendMotorId = 30;
     public static final int intakeMotorId = 31;
+    public static final int intakeEncoderId = 32;
 
     public static final double extensionRampRate = 0.125;
     public static final double extensionAgitatePeriod = 0.3;

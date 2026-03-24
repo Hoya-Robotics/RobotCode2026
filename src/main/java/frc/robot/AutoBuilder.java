@@ -258,14 +258,14 @@ public class AutoBuilder {
         .withChoreoTraj("CenterOutpost")
         .withStateChange(SuperStructureState.SHOOT)
         .generate(drive, superStructure);
-  }
+  }*/
 
   public static Command passSweep(Drive drive, SuperStructure superStructure, boolean flipY) {
     return new AutoBuilder(flipY)
         .withStateChange(SuperStructureState.SHOOT_INTAKE)
         .withChoreoTraj("OrbitPass")
         .generate(drive, superStructure);
-  }*/
+  }
 
   public static Command sotmTest(Drive drive, SuperStructure superStructure) {
     return new AutoBuilder(false)
@@ -283,7 +283,9 @@ public class AutoBuilder {
     registerAuto("2Swipe|L", doubleSwipe(drive, superStructure, true));
     registerAuto("Mogged|R", experimentalSwipe(drive, superStructure, false));
     registerAuto("Mogged|L", experimentalSwipe(drive, superStructure, true));
-    registerAuto("test", sotmTest(drive, superStructure));
+
+    registerAuto("OP", sotmTest(drive, superStructure));
+    registerAuto("Orbit", passSweep(drive, superStructure, false));
 
     /*
       registerAuto("0xOutpost", centerOutpost(drive, superStructure));

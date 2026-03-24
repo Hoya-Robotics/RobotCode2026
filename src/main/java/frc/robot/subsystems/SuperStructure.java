@@ -53,9 +53,6 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
       coolingDown = true;
       shotCooldownTimer.restart();
     }
-    if (coolingDown && getRequestedState() == SuperStructureState.SHOOT) {
-      coolingDown = false;
-    }
     return getRequestedState();
   }
 
@@ -64,17 +61,17 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     Logger.recordOutput("SuperStructure/state", getCurrentState());
     Logger.recordOutput("SuperStructure/trackingTarget", target);
 
-    if (coolingDown && shotCooldownTimer.get() > TurretConstants.cooldownSeconds) {
-      shotCooldownTimer.stop();
+    if (coolingDown
+        && (getCurrentState() == SuperStructureState.SHOOT
+            || shotCooldownTimer.get() > TurretConstants.cooldownSeconds)) {
       coolingDown = false;
     }
 
-    applyState();
-
     if (coolingDown) {
-      turret.shoot();
-      spindexer.cooldown();
+      setState(SuperStructureState.SHOOT);
     }
+
+    applyState();
 
     if (FieldConstants.underTrench(RobotState.getInstance().getEstimatedPose())) {
       turret.duck();
@@ -111,7 +108,11 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
 
         if (shouldShoot()) {
           intake.agitate();
-          spindexer.feed();
+          if (coolingDown) {
+            spindexer.cooldown();
+          } else {
+            spindexer.feed();
+          }
 
           if (RobotConfig.getMode() == OperationMode.SIM) {
             turret.simulateShot();

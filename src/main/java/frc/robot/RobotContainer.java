@@ -84,7 +84,9 @@ public class RobotContainer {
         intake =
             new Intake(
                 new IntakeIOHardware(
-                    IntakeConstants.extendMotorId, 32, IntakeConstants.intakeMotorId));
+                    IntakeConstants.extendMotorId,
+                    IntakeConstants.intakeEncoderId,
+                    IntakeConstants.intakeMotorId));
         turret =
             new Turret(
                 new TurretIOHardware(
