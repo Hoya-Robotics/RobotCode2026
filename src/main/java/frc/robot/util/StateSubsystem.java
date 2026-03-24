@@ -13,7 +13,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
  *  ex. moving to certain position to avoid objects
  */
 public abstract class StateSubsystem<E extends Enum<E>> extends SubsystemBase {
-  private E currentState;
+  protected E currentState;
   protected E requestedState;
 
   public void setState(E state) {

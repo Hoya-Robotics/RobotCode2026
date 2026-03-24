@@ -20,8 +20,7 @@ public class RobotConfig {
   public enum TurretTarget {
     DEFAULT,
     TUNING,
-    CONSTANT_FORWARD,
-    MAX_PASSING
+    CONSTANT_FORWARD
   }
 
   public enum SuperStructureState {

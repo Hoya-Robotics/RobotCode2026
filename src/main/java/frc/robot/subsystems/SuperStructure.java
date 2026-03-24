@@ -60,15 +60,12 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
   public void periodic() {
     Logger.recordOutput("SuperStructure/state", getCurrentState());
     Logger.recordOutput("SuperStructure/trackingTarget", target);
+		Logger.recordOutput("SuperStructure/coolingDown", coolingDown);
 
     if (coolingDown
         && (getCurrentState() == SuperStructureState.SHOOT
             || shotCooldownTimer.get() > TurretConstants.cooldownSeconds)) {
       coolingDown = false;
-    }
-
-    if (coolingDown) {
-      setState(SuperStructureState.SHOOT);
     }
 
     applyState();
@@ -84,6 +81,10 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
 
     turret.track();
     RobotState.getInstance().limitDriveSpeed(DriveConstants.maxDriveSpeedMps);
+
+		if (coolingDown) {
+			state = SuperStructureState.SHOOT;
+		}
     switch (state) {
       case REVERSE_INTAKE:
         intake.reverse();
