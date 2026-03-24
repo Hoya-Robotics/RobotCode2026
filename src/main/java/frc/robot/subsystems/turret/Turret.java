@@ -10,6 +10,8 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.TurretTarget;
 import frc.robot.RobotConfig.VisionConstants;
@@ -35,10 +37,12 @@ public class Turret extends StateSubsystem<TurretState> {
       new TurretParameters(Rotations.of(0.0), Rotations.of(0.0), RotationsPerSecond.of(0.0));
   private TurretParameters cooldownParams;
   private TurretIOOutputs outputs = new TurretIOOutputs();
+  private Timer simShotTimer = new Timer();
 
   public Turret(TurretIO io) {
     this.io = io;
     setState(TurretState.IDLE_TRACK);
+    simShotTimer.start();
   }
 
   public void cooldown() {
@@ -97,6 +101,25 @@ public class Turret extends StateSubsystem<TurretState> {
             new Rotation3d(0.0, 0.0, getAzimuthAngle().in(Radians))));
   }
 
+  public void simulateShot() {
+    if (simShotTimer.get() < 0.25) return;
+    LinearVelocity launchSpeed =
+        MetersPerSecond.of(
+            TurretConstants.launcherWheelRadius.times(2.0 * Math.PI).in(Meters)
+                * parameters
+                    .launcherSpeed()
+                    .minus(RotationsPerSecond.of(4.0))
+                    .in(RotationsPerSecond));
+    RobotState.getInstance()
+        .getFuelSim()
+        .launchFuel(
+            launchSpeed,
+            parameters.hoodAngle().unaryMinus().plus(Degrees.of(83.0)),
+            parameters.azimuthAngle(),
+            Inches.of(18.66694637));
+    simShotTimer.restart();
+  }
+
   public Transform3d getRobotToCamera() {
     Translation3d cameraOffset =
         new Translation3d(
@@ -124,10 +147,6 @@ public class Turret extends StateSubsystem<TurretState> {
     Logger.recordOutput("Turret/upToSpeed", upToSpeed);
 
     return hoodReady && azimuthReady && upToSpeed;
-  }
-
-  public TurretParameters getTurretParameters() {
-    return parameters;
   }
 
   @Override

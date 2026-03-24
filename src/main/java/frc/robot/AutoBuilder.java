@@ -267,6 +267,13 @@ public class AutoBuilder {
         .generate(drive, superStructure);
   }*/
 
+  public static Command sotmTest(Drive drive, SuperStructure superStructure) {
+    return new AutoBuilder(false)
+        .withStateChange(SuperStructureState.SHOOT)
+        .withChoreoTraj("SOTMTest")
+        .generate(drive, superStructure);
+  }
+
   private static void registerAuto(String name, Command auto) {
     autoChooser.addOption(name, auto);
   }
@@ -276,6 +283,7 @@ public class AutoBuilder {
     registerAuto("2Swipe|L", doubleSwipe(drive, superStructure, true));
     registerAuto("Mogged|R", experimentalSwipe(drive, superStructure, false));
     registerAuto("Mogged|L", experimentalSwipe(drive, superStructure, true));
+    registerAuto("test", sotmTest(drive, superStructure));
 
     /*
       registerAuto("0xOutpost", centerOutpost(drive, superStructure));
