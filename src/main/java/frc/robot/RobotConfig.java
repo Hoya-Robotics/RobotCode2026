@@ -86,6 +86,9 @@ public class RobotConfig {
     public static final PIDGains choreoXGains = new PIDGains(7.5, 0.0, 0.0);
     public static final PIDGains choreoYGains = new PIDGains(7.5, 0.0, 0.0);
     public static final PIDGains choreoOmegaGains = new PIDGains(5.25, 0.0, 0.0);
+
+    public static final double maxSOTMSpeed = 1.5;
+    public static final double maxSOTMISpeed = 2.2;
   }
 
   public static final class SpindexerConstants {

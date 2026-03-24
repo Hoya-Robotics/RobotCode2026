@@ -13,7 +13,6 @@ import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.RobotConfig.DriveConstants;
 import frc.robot.RobotConfig.IntakeConstants;
 import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.RobotConfig.TurretConstants;
@@ -122,38 +121,24 @@ public class RobotContainer {
     driveController
         // .rightTrigger(0.3)
         .leftTrigger(0.3)
-        .whileTrue(
-            superStructure
-                .setStateCommand(SuperStructureState.SHOOT)
-                .andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.5))))
-        .onFalse(
-            superStructure
-                .idle()
-                .andThen(
-                    Commands.runOnce(
-                        () -> drive.setTeleopSpeedLimit(DriveConstants.maxDriveSpeedMps))));
+        .whileTrue(superStructure.setStateCommand(SuperStructureState.SHOOT))
+        .onFalse(superStructure.idle());
     // operatorController
     driveController
         // .rightTrigger(0.3)
         .leftTrigger(0.3)
         .and(driveController.rightTrigger(0.3))
-        .whileTrue(
-            superStructure
-                .setStateCommand(SuperStructureState.SHOOT_INTAKE)
-                .andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(2.0))))
+        .whileTrue(superStructure.setStateCommand(SuperStructureState.SHOOT_INTAKE))
         .onFalse(
             Commands.either(
-                superStructure
-                    .setStateCommand(SuperStructureState.SHOOT)
-                    .andThen(Commands.runOnce(() -> drive.setTeleopSpeedLimit(1.5))),
-                Commands.runOnce(() -> drive.setTeleopSpeedLimit(DriveConstants.maxDriveSpeedMps))
-                    .andThen(
-                        Commands.either(
-                            superStructure.setStateCommand(SuperStructureState.INTAKE),
-                            superStructure.setStateCommand(SuperStructureState.IDLE),
-                            () -> driveController.getRightTriggerAxis() > 0.3)),
+                superStructure.setStateCommand(SuperStructureState.SHOOT),
+                Commands.either(
+                    superStructure.setStateCommand(SuperStructureState.INTAKE),
+                    superStructure.setStateCommand(SuperStructureState.IDLE),
+                    () -> driveController.getRightTriggerAxis() > 0.3),
                 // () -> operatorController.getRightTriggerAxis() > 0.3));
                 () -> driveController.getLeftTriggerAxis() > 0.3));
+
     driveController
         .rightBumper()
         .onTrue(superStructure.setStateCommand(SuperStructureState.REVERSE_INTAKE))

@@ -60,6 +60,10 @@ public class RobotState {
     simulatedDrivePoseSupplier = supplier;
   }
 
+  public void limitDriveSpeed(double maxSpeed) {
+    drive.setTeleopSpeedLimit(maxSpeed);
+  }
+
   public void resetOdometry(Pose2d pose) {
     if (drive != null) {
       drive.resetOdometry(pose);

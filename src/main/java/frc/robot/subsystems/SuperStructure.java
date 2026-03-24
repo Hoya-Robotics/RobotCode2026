@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.FieldConstants;
 import frc.robot.RobotConfig;
+import frc.robot.RobotConfig.DriveConstants;
 import frc.robot.RobotConfig.OperationMode;
 import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.RobotConfig.TurretConstants;
@@ -85,6 +86,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     SuperStructureState state = getCurrentState();
 
     turret.track();
+    RobotState.getInstance().limitDriveSpeed(DriveConstants.maxDriveSpeedMps);
     switch (state) {
       case REVERSE_INTAKE:
         intake.reverse();
@@ -100,6 +102,11 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         break;
       case SHOOT_INTAKE:
       case SHOOT:
+        if (state == SuperStructureState.SHOOT) {
+          RobotState.getInstance().limitDriveSpeed(DriveConstants.maxSOTMSpeed);
+        } else {
+          RobotState.getInstance().limitDriveSpeed(DriveConstants.maxSOTMISpeed);
+        }
         turret.shoot();
 
         if (shouldShoot()) {
