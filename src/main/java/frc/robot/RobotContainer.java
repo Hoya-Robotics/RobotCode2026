@@ -9,6 +9,7 @@ import static edu.wpi.first.units.Units.Meters;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -115,40 +116,37 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
+		superStructure.setDefaultCommand(
+			superStructure.setStateCommand(SuperStructureState.IDLE).andThen(
+				superStructure.setTargetCommand(TurretTarget.DEFAULT)
+			));
     driveController
         .rightTrigger(0.3)
-        .whileTrue(superStructure.setStateCommand(SuperStructureState.INTAKE))
-        .onFalse(superStructure.idle());
+				.and(driveController.leftTrigger(0.3).negate())
+        .whileTrue(superStructure.setStateCommand(SuperStructureState.INTAKE));
     // operatorController
     driveController
         // .rightTrigger(0.3)
         .leftTrigger(0.3)
-        .whileTrue(superStructure.setStateCommand(SuperStructureState.SHOOT))
-        .onFalse(superStructure.idle());
+				.and(driveController.rightTrigger(0.3).negate())
+        .whileTrue(superStructure.setStateCommand(SuperStructureState.SHOOT));
     // operatorController
     driveController
         // .rightTrigger(0.3)
         .leftTrigger(0.3)
         .and(driveController.rightTrigger(0.3))
-        .whileTrue(superStructure.setStateCommand(SuperStructureState.SHOOT_INTAKE))
-        .onFalse(
-            Commands.either(
-                superStructure.setStateCommand(SuperStructureState.SHOOT),
-                Commands.either(
-                    superStructure.setStateCommand(SuperStructureState.INTAKE),
-                    superStructure.setStateCommand(SuperStructureState.IDLE),
-                    () -> driveController.getRightTriggerAxis() > 0.3),
-                // () -> operatorController.getRightTriggerAxis() > 0.3));
-                () -> driveController.getLeftTriggerAxis() > 0.3));
+        .whileTrue(superStructure.setStateCommand(SuperStructureState.SHOOT_INTAKE));
 
     driveController
         .rightBumper()
-        .onTrue(superStructure.setStateCommand(SuperStructureState.REVERSE_INTAKE))
-        .onFalse(superStructure.setStateCommand(SuperStructureState.IDLE));
+        .whileTrue(superStructure.setStateCommand(SuperStructureState.REVERSE_INTAKE));
     driveController
         .b()
-        .onTrue(superStructure.setTargetCommand(TurretTarget.CONSTANT_FORWARD))
-        .onFalse(superStructure.setTargetCommand(TurretTarget.DEFAULT));
+        .whileTrue(superStructure.setTargetCommand(TurretTarget.CONSTANT_FORWARD));
+    driveController
+        .x()
+        .whileTrue(superStructure.setTargetCommand(TurretTarget.TUNING));
+
     driveController
         .start()
         .onTrue(
@@ -158,10 +156,6 @@ public class RobotContainer {
                         new Pose2d(
                             RobotState.getInstance().getEstimatedPose().getTranslation(),
                             Rotation2d.kZero))));
-    driveController
-        .x()
-        .onTrue(superStructure.setTargetCommand(TurretTarget.TUNING))
-        .onFalse(superStructure.setTargetCommand(TurretTarget.DEFAULT));
   }
 
   private void configureFuelSim() {
@@ -171,7 +165,13 @@ public class RobotContainer {
         RobotConfig.bumperWidthY.times(2.0).in(Units.Meters),
         RobotConfig.bumperWidthX.times(2.0).in(Units.Meters),
         edu.wpi.first.math.util.Units.inchesToMeters(6.5),
-        RobotState.getInstance()::getSimulatedPose,
+        () ->
+            RobotState.getInstance()
+                .getSimulatedPose()
+                .transformBy(
+                    new Transform2d(
+                        TurretConstants.robotToTurret.getTranslation().toTranslation2d(),
+                        Rotation2d.kZero)),
         RobotState.getInstance()::getFieldVelocity);
     fuelSim.registerIntake(
         Inches.of(16.875).in(Meters),

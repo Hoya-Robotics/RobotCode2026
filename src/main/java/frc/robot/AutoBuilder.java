@@ -166,7 +166,6 @@ public class AutoBuilder {
     return new AutoBuilder(shouldFlipYAxis)
         .withStateChange(SuperStructureState.INTAKE)
         .withChoreoTraj(trajName)
-        .withStateChange(SuperStructureState.SHOOT)
         .withDriveToPoseAllianceAgnostic(
             new Pose2d(3.4, 0.665, endsIntakeToNeutral ? Rotation2d.kZero : Rotation2d.k180deg));
   }
@@ -267,10 +266,12 @@ public class AutoBuilder {
         .generate(drive, superStructure);
   }
 
-  public static Command sotmTest(Drive drive, SuperStructure superStructure) {
+  public static Command OP(Drive drive, SuperStructure superStructure) {
     return new AutoBuilder(false)
-        .withStateChange(SuperStructureState.SHOOT)
-        .withChoreoTraj("SOTMTest")
+        .withStateChange(SuperStructureState.INTAKE)
+        .withChoreoTraj("OPStart")
+        .withStateChange(SuperStructureState.INTAKE)
+        .withChoreoTraj("OPSecond")
         .generate(drive, superStructure);
   }
 
@@ -284,7 +285,7 @@ public class AutoBuilder {
     registerAuto("Mogged|R", experimentalSwipe(drive, superStructure, false));
     registerAuto("Mogged|L", experimentalSwipe(drive, superStructure, true));
 
-    registerAuto("OP", sotmTest(drive, superStructure));
+    registerAuto("OP", OP(drive, superStructure));
     registerAuto("Orbit", passSweep(drive, superStructure, false));
 
     /*

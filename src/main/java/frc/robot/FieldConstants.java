@@ -73,7 +73,9 @@ public class FieldConstants {
   }
 
   public static boolean inAllianceZone(Pose2d pose) {
-    return pose.getMeasureX().lt(Meters.of(AllianceFlip.applyX(neutralZoneStart.in(Meters))));
+    double agnosticX = AllianceFlip.applyX(pose.getX());
+    return agnosticX
+        < neutralZoneStart.minus(trenchDepth.div(2)).minus(RobotConfig.bumperWidthX).in(Meters);
   }
 
   public static boolean isBlueAlliance() {
