@@ -1,6 +1,7 @@
 package frc.robot.util;
 
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.FieldConstants;
 
 public class ShiftTracker {
@@ -13,9 +14,9 @@ public class ShiftTracker {
     Endgame
   }
 
-  private static final int[] matchShiftTimes = new int[] {105, 80, 55, 30};
   private static GameShift currentShift = GameShift.Transition;
   private static boolean activeFirst = false;
+  private static Timer teleopTimer = new Timer();
 
   public static boolean isHubActive() {
     return switch (currentShift) {
@@ -25,44 +26,44 @@ public class ShiftTracker {
     };
   }
 
-  public static double timeTillHubActive() {
-    if (isHubActive()) return -1.0;
-    double timeRemainingNext = matchShiftTimes[currentShift.ordinal()];
-    return DriverStation.getMatchTime() - timeRemainingNext;
+  public static double timeTillShiftEnds() {
+    double t = teleopTimer.get();
+    return Math.max(
+        0.0,
+        switch (currentShift) {
+          case Transition -> 10 - t;
+          case Endgame -> 140 - t;
+          default -> (10 + 25 * currentShift.ordinal()) - t;
+        });
   }
 
-  public static double timeTillShiftEnds() {
-    double mt = DriverStation.getMatchTime();
-    return switch (currentShift) {
-      case Transition -> mt - 130;
-      case Endgame -> mt;
-      default -> mt - matchShiftTimes[currentShift.ordinal() - 1];
-    };
+  public static void start() {
+    teleopTimer.start();
   }
 
   public static void run() {
     String fmsMessage = DriverStation.getGameSpecificMessage();
     boolean redInactiveFirst = false;
-    if (fmsMessage.isEmpty()) return;
-    switch (fmsMessage.charAt(0)) {
-      case 'R' -> redInactiveFirst = true;
-      case 'B' -> redInactiveFirst = false;
-      default -> {}
+    // if (fmsMessage.isEmpty()) return;
+    if (fmsMessage.isEmpty()) {
+      redInactiveFirst = true;
+    } else {
+      switch (fmsMessage.charAt(0)) {
+        case 'R' -> redInactiveFirst = true;
+        case 'B' -> redInactiveFirst = false;
+        default -> redInactiveFirst = true;
+      }
     }
     activeFirst = FieldConstants.isBlueAlliance() == redInactiveFirst;
 
-    double matchTime = DriverStation.getMatchTime();
-    if (matchTime > 130) {
+    double teleopTime = teleopTimer.get();
+    if (teleopTime <= 10) {
       currentShift = GameShift.Transition;
-    } else if (matchTime <= 30.0) {
+    } else if (teleopTime >= 110) {
       currentShift = GameShift.Endgame;
     } else {
-      for (int i = 0; i < matchShiftTimes.length; ++i) {
-        if (matchTime > matchShiftTimes[i]) {
-          currentShift = GameShift.values()[i + 1];
-          break;
-        }
-      }
+      int n = (int) ((teleopTime - 10) / 25);
+      currentShift = GameShift.values()[n + 1];
     }
   }
 }

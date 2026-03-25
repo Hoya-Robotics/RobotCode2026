@@ -116,19 +116,19 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-		superStructure.setDefaultCommand(
-			superStructure.setStateCommand(SuperStructureState.IDLE).andThen(
-				superStructure.setTargetCommand(TurretTarget.DEFAULT)
-			));
+    superStructure.setDefaultCommand(
+        superStructure
+            .setStateCommand(SuperStructureState.IDLE)
+            .andThen(superStructure.setTargetCommand(TurretTarget.DEFAULT)));
     driveController
         .rightTrigger(0.3)
-				.and(driveController.leftTrigger(0.3).negate())
+        .and(driveController.leftTrigger(0.3).negate())
         .whileTrue(superStructure.setStateCommand(SuperStructureState.INTAKE));
     // operatorController
     driveController
         // .rightTrigger(0.3)
         .leftTrigger(0.3)
-				.and(driveController.rightTrigger(0.3).negate())
+        .and(driveController.rightTrigger(0.3).negate())
         .whileTrue(superStructure.setStateCommand(SuperStructureState.SHOOT));
     // operatorController
     driveController
@@ -140,12 +140,8 @@ public class RobotContainer {
     driveController
         .rightBumper()
         .whileTrue(superStructure.setStateCommand(SuperStructureState.REVERSE_INTAKE));
-    driveController
-        .b()
-        .whileTrue(superStructure.setTargetCommand(TurretTarget.CONSTANT_FORWARD));
-    driveController
-        .x()
-        .whileTrue(superStructure.setTargetCommand(TurretTarget.TUNING));
+    driveController.b().whileTrue(superStructure.setTargetCommand(TurretTarget.CONSTANT_FORWARD));
+    driveController.x().whileTrue(superStructure.setTargetCommand(TurretTarget.TUNING));
 
     driveController
         .start()

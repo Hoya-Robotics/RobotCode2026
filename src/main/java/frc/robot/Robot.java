@@ -10,7 +10,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.util.PhoenixSync;
 import frc.robot.util.ShiftTracker;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -44,7 +43,6 @@ public class Robot extends LoggedRobot {
   public void robotPeriodic() {
     PhoenixSync.refreshAll(0.020);
     CommandScheduler.getInstance().run();
-    ShiftTracker.run();
   }
 
   @Override
@@ -71,25 +69,24 @@ public class Robot extends LoggedRobot {
   @Override
   public void autonomousExit() {
     m_robotContainer.vision.captureRewind(20.0);
+    m_robotContainer.drive.setIdle();
   }
 
   @Override
   public void teleopInit() {
+    ShiftTracker.start();
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
-    m_robotContainer.drive.setIdle();
-    m_robotContainer.superStructure.setState(SuperStructureState.IDLE);
   }
 
   @Override
   public void teleopPeriodic() {
-    /*
-      double timeRemaining = ShiftTracker.shiftTimeRemaining();
-      m_robotContainer.driveController.setRumble(
-          RumbleType.kBothRumble, timeRemaining <= 10.0 ? (10.0 - timeRemaining) / 10.0 : 0.0);
-    */
+    ShiftTracker.run();
+
+    Logger.recordOutput("ShiftTracker/shiftRemainingSeconds", ShiftTracker.timeTillShiftEnds());
+    Logger.recordOutput("ShiftTracker/hubActive", ShiftTracker.isHubActive());
   }
 
   @Override
