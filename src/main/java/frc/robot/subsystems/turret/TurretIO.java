@@ -17,6 +17,7 @@ public interface TurretIO {
 
   public class TurretIOOutputs {
     public Angle azimuthSetpoint = Rotations.of(0.0);
+    public AngularVelocity azimuthVelocitySetpoint = RotationsPerSecond.of(0.0);
     public Angle hoodSetpoint = Rotations.of(0.0);
     public AngularVelocity shooterSetpoint = RotationsPerSecond.of(0.0);
   }

@@ -33,7 +33,11 @@ public class Turret extends StateSubsystem<TurretState> {
   private TurretTarget target = TurretTarget.DEFAULT;
   private TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
   private TurretParameters parameters =
-      new TurretParameters(Rotations.of(0.0), Rotations.of(0.0), RotationsPerSecond.of(0.0));
+      new TurretParameters(
+          Rotations.of(0.0),
+          RotationsPerSecond.of(0.0),
+          Rotations.of(0.0),
+          RotationsPerSecond.of(0.0));
   private TurretIOOutputs outputs = new TurretIOOutputs();
   private Timer simShotTimer = new Timer();
 
@@ -166,6 +170,7 @@ public class Turret extends StateSubsystem<TurretState> {
   @Override
   public void applyState() {
     outputs.azimuthSetpoint = parameters.azimuthAngle();
+    outputs.azimuthVelocitySetpoint = parameters.azimuthVelocity();
     switch (getCurrentState()) {
       case IDLE_TRACK:
         outputs.shooterSetpoint = TurretConstants.shotIdleSpeed;

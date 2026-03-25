@@ -23,7 +23,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class TurretCalculator {
   public record TurretParameters(
-      Angle azimuthAngle, Angle hoodAngle, AngularVelocity launcherSpeed) {}
+      Angle azimuthAngle, AngularVelocity azimuthVelocity, Angle hoodAngle, AngularVelocity launcherSpeed) {}
 
   private static final InterpolatingDoubleTreeMap timeOfFlightMap =
       new InterpolatingDoubleTreeMap();
@@ -85,7 +85,7 @@ public class TurretCalculator {
   }
 
   private static AngularVelocity shotRegression(double x) {
-    return RotationsPerSecond.of(2.27 * x + 22.3 + 0.25);
+    return RotationsPerSecond.of(2.27 * x + 22.3);
   }
 
   private static double tofRegression(double x) {
@@ -93,12 +93,12 @@ public class TurretCalculator {
   }
 
   public static TurretParameters getShotParameters(
-      Angle azimuth, double distance, boolean passing) {
+      Angle azimuth, AngularVelocity azimuthVelocity, double distance, boolean passing) {
     if (passing) {
-      return new TurretParameters(azimuth, Degrees.of(25.0), RotationsPerSecond.of(33.5));
+      return new TurretParameters(azimuth, azimuthVelocity, Degrees.of(25.0), RotationsPerSecond.of(33.5));
     } else {
       return new TurretParameters(
-          azimuth, hoodRegression(distance).getMeasure(), shotRegression(distance));
+          azimuth, azimuthVelocity, hoodRegression(distance).getMeasure(), shotRegression(distance));
     }
   }
 
@@ -123,12 +123,13 @@ public class TurretCalculator {
         var setpoint = turretIterativeMovingSetpoint(target, passing, currentAzimuthAngle);
         return new TurretParameters(
             setpoint.azimuthAngle(),
+						setpoint.azimuthVelocity(),
             Degrees.of(hoodAngleTuning.getAsDouble()),
             RotationsPerSecond.of(launcherSpeedTuning.getAsDouble()));
       case CONSTANT_FORWARD:
-        return new TurretParameters(Rotations.of(0.5), Radians.of(0.0), RadiansPerSecond.of(0.0));
+        return new TurretParameters(Rotations.of(0.5), RadiansPerSecond.of(0.0), Radians.of(0.0), RadiansPerSecond.of(0.0));
       default:
-        return new TurretParameters(Radians.of(0), Radians.of(0), RotationsPerSecond.of(0.0));
+        return new TurretParameters(Radians.of(0), RadiansPerSecond.of(0.0), Radians.of(0), RotationsPerSecond.of(0.0));
     }
   }
 
@@ -170,7 +171,7 @@ public class TurretCalculator {
     double distance = turretPose.getTranslation().getDistance(target);
     Logger.recordOutput("Tuning/targetDistance", distance);
     return getShotParameters(
-        calculateAzimuthAngle(azimuth.getMeasure(), currentAzimuthAngle), distance, passing);
+        calculateAzimuthAngle(azimuth.getMeasure(), currentAzimuthAngle), RadiansPerSecond.of(0.0), distance, passing);
   }
 
   // https://frc-docs--3242.org.readthedocs.build/en/3242/docs/software/advanced-controls/fire-control/dynamic-shooting.html
@@ -185,6 +186,7 @@ public class TurretCalculator {
             .rotateBy(robotPose.getRotation());
     if (fieldVelocity.getNorm() < 0.25)
       return getStationarySetpoint(target, passing, currentAzimuthAngle);
+
     double distance = turretPose.getTranslation().getDistance(target);
     double tof = tofRegression(distance);
     for (int i = 0; i < kMaxIterations; ++i) {
@@ -194,12 +196,15 @@ public class TurretCalculator {
       if (Math.abs(distance - lastDist) < kConvergenceEpsilon) break;
       tof = tofRegression(distance);
     }
-
     Translation2d aimVector =
         target.minus(turretPose.getTranslation().plus(fieldVelocity.times(tof)));
+
     Rotation2d azimuthAngle = aimVector.getAngle().minus(robotPose.getRotation());
+		double cross2d = aimVector.getY() * fieldVelocity.getX() - aimVector.getX() * fieldVelocity.getY();
+		double azVelRPS = (cross2d / aimVector.getSquaredNorm()) - RobotState.getInstance().getFieldVelocity().omegaRadiansPerSecond;
+
     return getShotParameters(
-        calculateAzimuthAngle(azimuthAngle.getMeasure(), currentAzimuthAngle), distance, passing);
+        calculateAzimuthAngle(azimuthAngle.getMeasure(), currentAzimuthAngle), RadiansPerSecond.of(azVelRPS), distance, passing);
   }
 
   private static Translation2d rigidPointVelocity(ChassisSpeeds speeds, Translation2d r) {
