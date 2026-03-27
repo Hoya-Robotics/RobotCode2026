@@ -156,14 +156,15 @@ public class Turret extends StateSubsystem<TurretState> {
 
     io.updateInputs(inputs);
     Logger.processInputs("Turret", inputs);
-
-    Logger.recordOutput("Turret/hoodSetpoint", outputs.hoodSetpoint);
-    Logger.recordOutput("Turret/azimuthSetpoint", outputs.azimuthSetpoint);
-    Logger.recordOutput("Turret/shooterSetpoint", outputs.shooterSetpoint);
-
+    Logger.recordOutput("Turret/state", getCurrentState());
     logMechanisms();
 
     applyState();
+
+    Logger.recordOutput("Turret/hoodSetpoint", outputs.hoodSetpoint.in(Degrees));
+    Logger.recordOutput("Turret/azimuthSetpoint", outputs.azimuthSetpoint);
+    Logger.recordOutput("Turret/shooterSetpoint", outputs.shooterSetpoint);
+
     io.applyOutputs(outputs);
   }
 

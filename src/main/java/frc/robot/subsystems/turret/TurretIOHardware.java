@@ -59,8 +59,8 @@ public class TurretIOHardware implements TurretIO {
   public void applyOutputs(TurretIOOutputs outputs) {
     azimuthMotor.setControl(
         azimuthRequest
-            .withPosition(outputs.azimuthSetpoint)
-            .withVelocity(outputs.azimuthVelocitySetpoint));
+            .withPosition(outputs.azimuthSetpoint));
+            //.withVelocity(outputs.azimuthVelocitySetpoint));
     hoodMotor.setControl(hoodRequest.withPosition(outputs.hoodSetpoint));
     shooterMotor.setControl(shooterRequest.withVelocity(outputs.shooterSetpoint));
   }

@@ -2,7 +2,6 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -34,6 +33,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     this.spindexer = spindexer;
     this.turret = turret;
     this.intake = intake;
+    this.target = TurretTarget.DEFAULT;
 
     setState(SuperStructureState.IDLE);
   }
@@ -43,7 +43,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
   }
 
   public Command setTargetCommand(TurretTarget target) {
-    return Commands.runOnce(() -> this.target = target, this);
+    return Commands.runOnce(() -> this.target = target);
   }
 
   @Override
@@ -69,6 +69,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
       coolingDown = false;
     }
 
+    turret.setTarget(target);
     applyState();
 
     if (FieldConstants.underTrench(RobotState.getInstance().getEstimatedPose())) {
@@ -84,10 +85,11 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     RobotState.getInstance().limitDriveSpeed(DriveConstants.maxDriveSpeedMps);
 
     // State guards
+    /*
     if (DriverStation.isAutonomousEnabled()
         && FieldConstants.inAllianceZone(RobotState.getInstance().getEstimatedPose())) {
       state = SuperStructureState.SHOOT;
-    }
+    }*/
 
     if (coolingDown) {
       state = SuperStructureState.SHOOT;

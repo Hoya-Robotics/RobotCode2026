@@ -72,9 +72,11 @@ public class AutoBuilder {
 
   private List<Node> graph = new ArrayList<>();
   private boolean shouldFlipYAxis;
+  private boolean autoshootNeutral;
 
-  public AutoBuilder(boolean shouldFlipYAxis) {
+  public AutoBuilder(boolean shouldFlipYAxis, boolean autoshootNeutral) {
     this.shouldFlipYAxis = shouldFlipYAxis;
+    this.autoshootNeutral = autoshootNeutral;
   }
 
   private static final Map<String, Trajectory<SwerveSample>> trajCache = new HashMap<>();
@@ -116,7 +118,15 @@ public class AutoBuilder {
       String key = "Auto/" + i + "-" + node.getClass().getSimpleName();
       commands.add(Commands.runOnce(() -> Logger.recordOutput(key, autoTimer.get())));
     }
-    return Commands.sequence(commands.toArray(Command[]::new));
+    return Commands.sequence(commands.toArray(Command[]::new))
+        .alongWith(
+            Commands.run(
+                () ->
+                    superStructure.setState(
+                        FieldConstants.inAllianceZone(RobotState.getInstance().getEstimatedPose())
+                            ? SuperStructureState.SHOOT
+                            : SuperStructureState.INTAKE),
+                superStructure));
   }
 
   private AutoBuilder append(AutoBuilder other) {
@@ -129,7 +139,7 @@ public class AutoBuilder {
   }
 
   public AutoBuilder copy() {
-    return new AutoBuilder(shouldFlipYAxis).append(this);
+    return new AutoBuilder(shouldFlipYAxis, autoshootNeutral).append(this);
   }
 
   public AutoBuilder withCommand(Command command) {
@@ -163,26 +173,17 @@ public class AutoBuilder {
 
   private static AutoBuilder swipeTemplate(
       String trajName, boolean endsIntakeToNeutral, boolean shouldFlipYAxis) {
-    return new AutoBuilder(shouldFlipYAxis)
-        .withStateChange(SuperStructureState.INTAKE)
+    return new AutoBuilder(shouldFlipYAxis, true)
         .withChoreoTraj(trajName)
         .withDriveToPoseAllianceAgnostic(
             new Pose2d(3.4, 0.665, endsIntakeToNeutral ? Rotation2d.kZero : Rotation2d.k180deg));
   }
 
-  private static AutoBuilder cleanSwipeTemplate(boolean shouldFlipYAxis) {
-    return swipeTemplate("CleanSwipe", true, shouldFlipYAxis);
-  }
-
-  private static AutoBuilder fullSwipeTemplate(boolean shouldFlipYAxis) {
-    return swipeTemplate("FullFuelSwipe", true, shouldFlipYAxis);
-  }
-
   public static Command doubleSwipe(
       Drive drive, SuperStructure superStructure, boolean shouldFlipYAxis) {
-    return fullSwipeTemplate(shouldFlipYAxis)
+    return swipeTemplate("FullFuelSwipe", true, shouldFlipYAxis)
         .withDelay(4.2)
-        .join(cleanSwipeTemplate(shouldFlipYAxis))
+        .join(swipeTemplate("CleanSwipe", true, shouldFlipYAxis))
         .generate(drive, superStructure);
   }
 
@@ -190,59 +191,18 @@ public class AutoBuilder {
       Drive drive, SuperStructure superStructure, boolean flipY) {
     return swipeTemplate("MogSwipe", true, flipY)
         .withDelay(4.2)
-        .join(cleanSwipeTemplate(flipY))
+        .join(swipeTemplate("CleanSwipe", true, flipY))
+        .generate(drive, superStructure);
+  }
+
+  public static Command OP(Drive drive, SuperStructure superStructure, boolean flipY) {
+    return new AutoBuilder(flipY, true)
+        .withChoreoTraj("OPStart")
+        .withChoreoTraj("OPSecond")
         .generate(drive, superStructure);
   }
 
   /*
-  public static Command doubleSwipeOutpost(Drive drive, SuperStructure superStructure) {
-    return fullSwipeTemplate(false)
-        .withDelay(2.75)
-        .withStateChange(SuperStructureState.INTAKE)
-        .withChoreoTraj("CleanSwipe")
-        .withDriveToPose(
-            () -> AllianceFlip.apply(new Pose2d(FieldConstants.humanOutpost, Rotation2d.kZero)))
-        .withDelayTillRemaining(1.25)
-        .withStateChange(SuperStructureState.IDLE)
-        .withChoreoTraj("LeaveOutpost")
-        .generate(drive, superStructure);
-  }
-
-  public static Command swipeOutpost(Drive drive, SuperStructure superStructure) {
-    return fullSwipeTemplate(false)
-        .withDelay(2.75)
-        .withDriveToPose(
-            () -> AllianceFlip.apply(new Pose2d(FieldConstants.humanOutpost, Rotation2d.kZero)))
-        .withDelayTillRemaining(0.75)
-        .withStateChange(SuperStructureState.IDLE)
-        .withChoreoTraj("LeaveOutpost")
-        .generate(drive, superStructure);
-  }
-
-  public static Command doubleSwipeDepot(Drive drive, SuperStructure superStructure) {
-    return fullSwipeTemplate(true)
-        .withDelay(2.5)
-        .join(cleanSwipeTemplate(true))
-        .withDelay(1.25)
-        .withStateChange(SuperStructureState.INTAKE)
-        .withChoreoTraj("DepotCycle180")
-        .withStateChange(SuperStructureState.SHOOT)
-        .generate(drive, superStructure);
-  }
-
-  public static Command swipeAndDepot(Drive drive, SuperStructure superStructure) {
-    return fullSwipeTemplate(true)
-        .withDelay(3.0)
-        .withStateChange(SuperStructureState.INTAKE)
-        .withChoreoTraj("DepotCycle")
-        .withStateChange(SuperStructureState.SHOOT)
-        .withDelayTillRemaining(0.75)
-        // .captureRewind()
-        .withStateChange(SuperStructureState.IDLE)
-        .withChoreoTraj("ExitDepot")
-        .generate(drive, superStructure);
-  }
-
   public static Command centerDepot(Drive drive, SuperStructure superStructure) {
     return new AutoBuilder(true)
         .withStateChange(SuperStructureState.INTAKE)
@@ -259,21 +219,14 @@ public class AutoBuilder {
         .generate(drive, superStructure);
   }*/
 
+  /*
   public static Command passSweep(Drive drive, SuperStructure superStructure, boolean flipY) {
-    return new AutoBuilder(flipY)
+    return new AutoBuilder(flipY, false)
         .withStateChange(SuperStructureState.SHOOT_INTAKE)
         .withChoreoTraj("OrbitPass")
         .generate(drive, superStructure);
-  }
+  }*/
 
-  public static Command OP(Drive drive, SuperStructure superStructure) {
-    return new AutoBuilder(false)
-        .withStateChange(SuperStructureState.INTAKE)
-        .withChoreoTraj("OPStart")
-        .withStateChange(SuperStructureState.INTAKE)
-        .withChoreoTraj("OPSecond")
-        .generate(drive, superStructure);
-  }
 
   private static void registerAuto(String name, Command auto) {
     autoChooser.addOption(name, auto);
@@ -284,18 +237,13 @@ public class AutoBuilder {
     registerAuto("2Swipe|L", doubleSwipe(drive, superStructure, true));
     registerAuto("Mogged|R", experimentalSwipe(drive, superStructure, false));
     registerAuto("Mogged|L", experimentalSwipe(drive, superStructure, true));
+    registerAuto("OP|R", OP(drive, superStructure, false));
+    registerAuto("OP|L", OP(drive, superStructure, true));
 
-    registerAuto("OP", OP(drive, superStructure));
-    registerAuto("Orbit", passSweep(drive, superStructure, false));
-
+    // registerAuto("Orbit", passSweep(drive, superStructure, false));
     /*
-      registerAuto("0xOutpost", centerOutpost(drive, superStructure));
-      registerAuto("1xOutpost", swipeOutpost(drive, superStructure));
-      registerAuto("2xOutpost", doubleSwipeOutpost(drive, superStructure));
-
-      registerAuto("0xDepot", centerDepot(drive, superStructure));
-      registerAuto("1xDepot", swipeAndDepot(drive, superStructure));
-      registerAuto("2xDepot", doubleSwipeDepot(drive, superStructure));
+      registerAuto("Outpost|C", centerOutpost(drive, superStructure));
+      registerAuto("Depot|C", centerDepot(drive, superStructure));
     */
   }
 }
