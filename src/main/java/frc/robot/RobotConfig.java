@@ -87,7 +87,7 @@ public class RobotConfig {
     public static final PIDGains choreoOmegaGains = new PIDGains(5.25, 0.0, 0.0);
 
     public static final double maxSOTMSpeed = 1.5;
-    public static final double maxSOTMISpeed = 2.2;
+    public static final double maxSOTMISpeed = 1.25; // SOTM + Intake
   }
 
   public static final class SpindexerConstants {
@@ -138,11 +138,11 @@ public class RobotConfig {
     public static final Angle maxAzimuthAngle = Rotations.of(0.73);
     public static final Angle minAzimuthAngle = Rotations.of(-0.35);
 
-    public static final Angle azimuthTolerance = Degrees.of(3.5);
-    public static final Angle hoodTolerance = Degrees.of(1.0);
-    public static final AngularVelocity shotSpeedTolerance = RotationsPerSecond.of(5.0);
+    public static final Angle azimuthTolerance = Degrees.of(2.0);
+    public static final Angle hoodTolerance = Degrees.of(1.5);
+    public static final AngularVelocity shotSpeedTolerance = RotationsPerSecond.of(2.5);
 
-    public static final AngularVelocity shotIdleSpeed = RotationsPerSecond.of(15.0);
+    public static final AngularVelocity shotIdleSpeed = RotationsPerSecond.of(17.5);
 
     public static final double cooldownSeconds = 0.5;
 

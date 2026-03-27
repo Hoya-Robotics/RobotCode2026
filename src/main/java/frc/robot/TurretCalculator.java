@@ -30,13 +30,10 @@ public class TurretCalculator {
 
   private static final InterpolatingDoubleTreeMap timeOfFlightMap =
       new InterpolatingDoubleTreeMap();
-  private static final InterpolatingTreeMap<Double, Rotation2d> newHoodLUT =
-      new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), Rotation2d::interpolate);
-  private static final InterpolatingDoubleTreeMap newLauncherLUT = new InterpolatingDoubleTreeMap();
 
-  private static final InterpolatingTreeMap<Double, Rotation2d> passingHoodAngleMap =
+  private static final InterpolatingTreeMap<Double, Rotation2d> PASSING_HOODMAP =
       new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), Rotation2d::interpolate);
-  private static final InterpolatingDoubleTreeMap passingLauncherSpeedMap =
+  private static final InterpolatingDoubleTreeMap PASSING_FLYWHEELMAP =
       new InterpolatingDoubleTreeMap();
 
   private static LoggedTunableNumber hoodAngleTuning =
@@ -49,30 +46,12 @@ public class TurretCalculator {
 
   static {
     // Passing hood angles
-    passingHoodAngleMap.put(3.5, Rotation2d.fromDegrees(11.0));
-    passingHoodAngleMap.put(4.0, Rotation2d.fromDegrees(12.5));
-    passingHoodAngleMap.put(4.5, Rotation2d.fromDegrees(13.75));
+    PASSING_HOODMAP.put(6.0, Rotation2d.fromDegrees(28.0));
+    PASSING_HOODMAP.put(5.0, Rotation2d.fromDegrees(30.0));
 
     // Passing launcher angles
-    passingLauncherSpeedMap.put(3.5, 24.0);
-    passingLauncherSpeedMap.put(4.0, 25.3);
-    passingLauncherSpeedMap.put(4.5, 27.5);
-
-    // Hood angle in
-    newHoodLUT.put(1.5, Rotation2d.fromDegrees(5.0));
-    newHoodLUT.put(2.0, Rotation2d.fromDegrees(8.5));
-    newHoodLUT.put(2.6, Rotation2d.fromDegrees(15.0));
-    newHoodLUT.put(3.0, Rotation2d.fromDegrees(18.5));
-    newHoodLUT.put(3.5, Rotation2d.fromDegrees(19.75));
-    newHoodLUT.put(4.0, Rotation2d.fromDegrees(22.25));
-
-    // Speed in Revolutions Per Second
-    newLauncherLUT.put(1.5, 26.75);
-    newLauncherLUT.put(2.0, 27.0);
-    newLauncherLUT.put(2.6, 29.0);
-    newLauncherLUT.put(3.0, 29.25);
-    newLauncherLUT.put(3.5, 31.5);
-    newLauncherLUT.put(4.0, 33.5);
+    PASSING_FLYWHEELMAP.put(6.0, 30.0);
+    PASSING_FLYWHEELMAP.put(5.0, 28.0);
 
     // TOF Data (needs to be retested)
     timeOfFlightMap.put(1.5, 0.95);
@@ -98,8 +77,13 @@ public class TurretCalculator {
   public static TurretParameters getShotParameters(
       Angle azimuth, AngularVelocity azimuthVelocity, double distance, boolean passing) {
     if (passing) {
+      /* return new TurretParameters(
+      azimuth, azimuthVelocity, Degrees.of(28.0), RotationsPerSecond.of(33.5));*/
       return new TurretParameters(
-          azimuth, azimuthVelocity, Degrees.of(25.0), RotationsPerSecond.of(33.5));
+          azimuth,
+          azimuthVelocity,
+          PASSING_HOODMAP.get(distance).getMeasure(),
+          RotationsPerSecond.of(PASSING_FLYWHEELMAP.get(distance)));
     } else {
       return new TurretParameters(
           azimuth,
@@ -178,7 +162,7 @@ public class TurretCalculator {
         target.minus(robotPose.getTranslation()).getAngle().minus(robotPose.getRotation());
     Pose2d turretPose = new Pose3d(robotPose).transformBy(TurretConstants.robotToTurret).toPose2d();
     double distance = turretPose.getTranslation().getDistance(target);
-    Logger.recordOutput("Tuning/targetDistance", distance);
+    Logger.recordOutput("TurretCalculator/targetDistance", distance);
     return getShotParameters(
         calculateAzimuthAngle(azimuth.getMeasure(), currentAzimuthAngle),
         RadiansPerSecond.of(0.0),
@@ -190,6 +174,8 @@ public class TurretCalculator {
   private static TurretParameters turretIterativeMovingSetpoint(
       Translation2d target, boolean passing, Angle currentAzimuthAngle) {
     Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
+    robotPose =
+        robotPose.exp(RobotState.getInstance().getFieldVelocity().toTwist2d(0.003)); // phase shift
     Pose2d turretPose = new Pose3d(robotPose).transformBy(TurretConstants.robotToTurret).toPose2d();
     Translation2d fieldVelocity =
         rigidPointVelocity(
@@ -200,6 +186,7 @@ public class TurretCalculator {
       return getStationarySetpoint(target, passing, currentAzimuthAngle);
 
     double distance = turretPose.getTranslation().getDistance(target);
+    Logger.recordOutput("TurretCalculator/targetDistance", distance);
     double tof = tofRegression(distance);
     for (int i = 0; i < kMaxIterations; ++i) {
       Translation2d futureTurretPos = turretPose.getTranslation().plus(fieldVelocity.times(tof));

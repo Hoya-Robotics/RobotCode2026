@@ -12,6 +12,8 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.Timer;
+import frc.robot.RobotConfig;
+import frc.robot.RobotConfig.OperationMode;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.TurretTarget;
 import frc.robot.RobotConfig.VisionConstants;
@@ -139,12 +141,14 @@ public class Turret extends StateSubsystem<TurretState> {
         getAzimuthAngle().isNear(parameters.azimuthAngle(), TurretConstants.azimuthTolerance);
     boolean upToSpeed =
         getShooterSpeed().isNear(parameters.launcherSpeed(), TurretConstants.shotSpeedTolerance);
+    boolean simHasFuel =
+        RobotConfig.getMode() == OperationMode.SIM ? RobotState.getInstance().consumeFuel() : true;
 
     Logger.recordOutput("Turret/hoodReady", hoodReady);
     Logger.recordOutput("Turret/azimuthReady", azimuthReady);
     Logger.recordOutput("Turret/upToSpeed", upToSpeed);
 
-    return hoodReady && azimuthReady && upToSpeed;
+    return hoodReady && azimuthReady && upToSpeed && simHasFuel;
   }
 
   @Override

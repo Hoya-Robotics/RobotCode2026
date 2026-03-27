@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -120,13 +121,18 @@ public class AutoBuilder {
     }
     return Commands.sequence(commands.toArray(Command[]::new))
         .alongWith(
-            Commands.run(
+            Commands.defer(
                 () ->
-                    superStructure.setState(
-                        FieldConstants.inAllianceZone(RobotState.getInstance().getEstimatedPose())
-                            ? SuperStructureState.SHOOT
-                            : SuperStructureState.INTAKE),
-                superStructure));
+                    autoshootNeutral
+                        ? Commands.run(
+                            () ->
+                                superStructure.setState(
+                                    FieldConstants.inAllianceZone(
+                                            RobotState.getInstance().getEstimatedPose())
+                                        ? SuperStructureState.SHOOT
+                                        : SuperStructureState.INTAKE))
+                        : Commands.none(),
+                autoshootNeutral ? Set.of(superStructure) : Set.of()));
   }
 
   private AutoBuilder append(AutoBuilder other) {
@@ -202,6 +208,13 @@ public class AutoBuilder {
         .generate(drive, superStructure);
   }
 
+  public static Command Orbit(Drive drive, SuperStructure superStructure, boolean flipY) {
+    return new AutoBuilder(flipY, false)
+        .withStateChange(SuperStructureState.SHOOT_INTAKE)
+        .withChoreoTraj("OrbitPass")
+        .generate(drive, superStructure);
+  }
+
   /*
   public static Command centerDepot(Drive drive, SuperStructure superStructure) {
     return new AutoBuilder(true)
@@ -219,15 +232,6 @@ public class AutoBuilder {
         .generate(drive, superStructure);
   }*/
 
-  /*
-  public static Command passSweep(Drive drive, SuperStructure superStructure, boolean flipY) {
-    return new AutoBuilder(flipY, false)
-        .withStateChange(SuperStructureState.SHOOT_INTAKE)
-        .withChoreoTraj("OrbitPass")
-        .generate(drive, superStructure);
-  }*/
-
-
   private static void registerAuto(String name, Command auto) {
     autoChooser.addOption(name, auto);
   }
@@ -239,8 +243,8 @@ public class AutoBuilder {
     registerAuto("Mogged|L", experimentalSwipe(drive, superStructure, true));
     registerAuto("OP|R", OP(drive, superStructure, false));
     registerAuto("OP|L", OP(drive, superStructure, true));
-
-    // registerAuto("Orbit", passSweep(drive, superStructure, false));
+    registerAuto("Orbit|R", Orbit(drive, superStructure, false));
+    registerAuto("Orbit|L", Orbit(drive, superStructure, true));
     /*
       registerAuto("Outpost|C", centerOutpost(drive, superStructure));
       registerAuto("Depot|C", centerDepot(drive, superStructure));

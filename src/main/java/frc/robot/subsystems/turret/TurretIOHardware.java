@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.CANcoder;
@@ -12,6 +13,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.util.MotorState;
 import frc.robot.util.PhoenixSync;
@@ -21,7 +23,8 @@ public class TurretIOHardware implements TurretIO {
   private final TalonFX azimuthMotor;
   private final CANcoder azimuthEncoder;
   private final TalonFXSignals azimuthSignals;
-  private final PositionVoltage azimuthRequest = new PositionVoltage(0.0);
+  // private final PositionVoltage azimuthRequest = new PositionVoltage(0.0);
+  private final PositionTorqueCurrentFOC azimuthRequest = new PositionTorqueCurrentFOC(0.0);
 
   private final TalonFX hoodMotor;
   private final TalonFXSignals hoodSignals;
@@ -57,10 +60,8 @@ public class TurretIOHardware implements TurretIO {
 
   @Override
   public void applyOutputs(TurretIOOutputs outputs) {
-    azimuthMotor.setControl(
-        azimuthRequest
-            .withPosition(outputs.azimuthSetpoint));
-            //.withVelocity(outputs.azimuthVelocitySetpoint));
+    azimuthMotor.setControl(azimuthRequest.withPosition(outputs.azimuthSetpoint));
+    // .withVelocity(outputs.azimuthVelocitySetpoint));
     hoodMotor.setControl(hoodRequest.withPosition(outputs.hoodSetpoint));
     shooterMotor.setControl(shooterRequest.withVelocity(outputs.shooterSetpoint));
   }
@@ -72,7 +73,15 @@ public class TurretIOHardware implements TurretIO {
     azimuthEncoder.getConfigurator().apply(encoderConfig);
 
     var config = new TalonFXConfiguration();
-    config.withSlot0(TurretConstants.azimuthGains.toSlot0Configs());
+
+    config.withSlot0(
+        new Slot0Configs()
+            .withKS(12.0)
+            .withKP(90)
+            .withKA(2.13)
+            .withKD(7.5)
+            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign));
+    // config.withSlot0(TurretConstants.azimuthGains.toSlot0Configs());
     config.CurrentLimits.withStatorCurrentLimit(20);
     config.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive)
         .withNeutralMode(NeutralModeValue.Coast);

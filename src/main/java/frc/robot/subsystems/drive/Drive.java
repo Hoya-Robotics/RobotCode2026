@@ -12,6 +12,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -56,8 +57,10 @@ public class Drive extends StateSubsystem<DriveState> {
   private Timer choreoTimer = new Timer();
   private Optional<Trajectory<SwerveSample>> choreoTrajectory = Optional.empty();
 
+  private SlewRateLimiter sotmAccelLimiter = new SlewRateLimiter(0.5); // (m/s2) / s
+  private boolean limitTeleopAccel = false;
+
   private double teleopSpeedLimit = DriveConstants.maxDriveSpeedMps;
-  private Pose2d trenchPose = null;
   private Pose2d targetDrivePose = null;
   private SwerveRequest.ApplyRobotSpeeds robotRelativeRequest =
       new SwerveRequest.ApplyRobotSpeeds();
@@ -104,6 +107,10 @@ public class Drive extends StateSubsystem<DriveState> {
 
   public void setTeleopSpeedLimit(double limit) {
     teleopSpeedLimit = limit;
+  }
+
+  public void setTeleopAccelLimitEnabled(boolean enabled) {
+    limitTeleopAccel = enabled;
   }
 
   public Command driveToPoseCommand(Pose2d target) {
@@ -272,7 +279,12 @@ public class Drive extends StateSubsystem<DriveState> {
     magnitude = magnitude * magnitude; // heuristic
     magnitude *= DriveConstants.maxDriveSpeedMps;
 
+    Logger.recordOutput("Drive/rawInputMagnitude", magnitude);
+    Logger.recordOutput("Drive/speedLimit", teleopSpeedLimit);
     if (magnitude > teleopSpeedLimit) magnitude = teleopSpeedLimit;
+    if (limitTeleopAccel) magnitude = sotmAccelLimiter.calculate(magnitude);
+    Logger.recordOutput("Drive/processedInputMagnitude", magnitude);
+
     double xVelocity = magnitude * heading.getCos() * (FieldConstants.isBlueAlliance() ? 1 : -1);
     double yVelocity = magnitude * heading.getSin() * (FieldConstants.isBlueAlliance() ? 1 : -1);
     return VecBuilder.fill(xVelocity, yVelocity, omega);
