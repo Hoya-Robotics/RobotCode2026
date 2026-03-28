@@ -42,7 +42,7 @@ public class FieldConstants {
   public static final Distance trenchDepth = Inches.of(47.0);
 
   public static final Distance passingY =
-      trenchWidth.plus(bumpWidth.div(2.0)).minus(Inches.of(42.5));
+      trenchWidth.plus(bumpWidth.div(2.0)).minus(Inches.of(25.0));
   public static final Distance passingX = Meters.of(3.0);
 
   public static final Translation3d hubCenter =

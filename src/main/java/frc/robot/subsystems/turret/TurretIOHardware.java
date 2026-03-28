@@ -60,8 +60,10 @@ public class TurretIOHardware implements TurretIO {
 
   @Override
   public void applyOutputs(TurretIOOutputs outputs) {
-    azimuthMotor.setControl(azimuthRequest.withPosition(outputs.azimuthSetpoint));
-    // .withVelocity(outputs.azimuthVelocitySetpoint));
+    azimuthMotor.setControl(
+        azimuthRequest
+            .withPosition(outputs.azimuthSetpoint)
+            .withVelocity(outputs.azimuthVelocitySetpoint));
     hoodMotor.setControl(hoodRequest.withPosition(outputs.hoodSetpoint));
     shooterMotor.setControl(shooterRequest.withVelocity(outputs.shooterSetpoint));
   }
@@ -78,6 +80,7 @@ public class TurretIOHardware implements TurretIO {
         new Slot0Configs()
             .withKS(12.0)
             .withKP(90)
+            .withKI(6.0)
             .withKA(2.13)
             .withKD(7.5)
             .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign));

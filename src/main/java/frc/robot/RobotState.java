@@ -9,7 +9,6 @@ import edu.wpi.first.math.numbers.*;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.RobotConfig.CameraConfig;
-import frc.robot.RobotConfig.DriveConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOInputsAutoLogged;
 import frc.robot.subsystems.vision.Vision;
@@ -61,10 +60,8 @@ public class RobotState {
     simulatedDrivePoseSupplier = supplier;
   }
 
-  public void limitDriveSpeed(double maxSpeed) {
-    boolean sotm = maxSpeed != DriveConstants.maxDriveSpeedMps;
-    drive.setTeleopAccelLimitEnabled(sotm);
-    drive.setTeleopSpeedLimit(maxSpeed);
+  public void setDriveSOTM(boolean enabled) {
+    drive.setSOTMEnabled(enabled);
   }
 
   public void resetOdometry(Pose2d pose) {

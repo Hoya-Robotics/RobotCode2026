@@ -148,7 +148,25 @@ public class Turret extends StateSubsystem<TurretState> {
     Logger.recordOutput("Turret/azimuthReady", azimuthReady);
     Logger.recordOutput("Turret/upToSpeed", upToSpeed);
 
-    return hoodReady && azimuthReady && upToSpeed && simHasFuel;
+    return hoodReady && azimuthReady && upToSpeed && simHasFuel && (!willTurretWrap(0.4));
+  }
+
+  public boolean willTurretWrap(double dt) {
+    double pos = inputs.azimuthState.nativePosition();
+    double robotContrib =
+        RadiansPerSecond.of(RobotState.getInstance().getFieldVelocity().omegaRadiansPerSecond)
+            .in(RotationsPerSecond);
+    double futurePos =
+        inputs.azimuthState.nativePosition()
+            + (inputs.azimuthState.nativeVelocity() + robotContrib) * dt;
+    boolean tooFar =
+        pos < TurretConstants.maxAzimuthAngle.in(Rotations)
+            && futurePos > TurretConstants.maxAzimuthAngle.in(Rotations);
+    boolean tooShort =
+        pos > TurretConstants.minAzimuthAngle.in(Rotations)
+            && futurePos < TurretConstants.minAzimuthAngle.in(Rotations);
+
+    return tooFar || tooShort;
   }
 
   @Override

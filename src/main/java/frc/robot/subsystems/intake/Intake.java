@@ -125,7 +125,7 @@ public class Intake extends StateSubsystem<IntakeState> {
           agitatingForward = !agitatingForward;
           agitateTimer.restart();
         }
-        outputs.extensionDistance = agitatingForward ? Inches.of(10.75) : Inches.of(7.25);
+        outputs.extensionDistance = agitatingForward ? Inches.of(9.75) : Inches.of(7.15);
         outputs.intakeVelocity = RPM.of(750);
         break;
     }

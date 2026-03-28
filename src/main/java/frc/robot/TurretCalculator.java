@@ -35,6 +35,7 @@ public class TurretCalculator {
       new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), Rotation2d::interpolate);
   private static final InterpolatingDoubleTreeMap PASSING_FLYWHEELMAP =
       new InterpolatingDoubleTreeMap();
+  private static final InterpolatingDoubleTreeMap PASSING_TOFMAP = new InterpolatingDoubleTreeMap();
 
   private static LoggedTunableNumber hoodAngleTuning =
       new LoggedTunableNumber("hoodAngleDegrees", 0.0);
@@ -46,12 +47,18 @@ public class TurretCalculator {
 
   static {
     // Passing hood angles
-    PASSING_HOODMAP.put(6.0, Rotation2d.fromDegrees(28.0));
-    PASSING_HOODMAP.put(5.0, Rotation2d.fromDegrees(30.0));
+    PASSING_HOODMAP.put(6.0, Rotation2d.fromDegrees(36.0));
+    PASSING_HOODMAP.put(5.0, Rotation2d.fromDegrees(32.0));
+    PASSING_HOODMAP.put(4.0, Rotation2d.fromDegrees(29.0));
 
     // Passing launcher angles
     PASSING_FLYWHEELMAP.put(6.0, 30.0);
     PASSING_FLYWHEELMAP.put(5.0, 28.0);
+    PASSING_FLYWHEELMAP.put(4.0, 26.0);
+
+    PASSING_TOFMAP.put(4.0, 1.25);
+    PASSING_TOFMAP.put(5.0, 1.27);
+    PASSING_TOFMAP.put(6.0, 1.28);
 
     // TOF Data (needs to be retested)
     timeOfFlightMap.put(1.5, 0.95);
@@ -72,6 +79,10 @@ public class TurretCalculator {
 
   private static double tofRegression(double x) {
     return 0.076 * x + 0.982;
+  }
+
+  public static double getTOF(double distance, boolean passing) {
+    return passing ? PASSING_TOFMAP.get(distance) : tofRegression(distance);
   }
 
   public static TurretParameters getShotParameters(
@@ -187,13 +198,13 @@ public class TurretCalculator {
 
     double distance = turretPose.getTranslation().getDistance(target);
     Logger.recordOutput("TurretCalculator/targetDistance", distance);
-    double tof = tofRegression(distance);
+    double tof = getTOF(distance, passing);
     for (int i = 0; i < kMaxIterations; ++i) {
       Translation2d futureTurretPos = turretPose.getTranslation().plus(fieldVelocity.times(tof));
       double lastDist = distance;
       distance = futureTurretPos.getDistance(target);
       if (Math.abs(distance - lastDist) < kConvergenceEpsilon) break;
-      tof = tofRegression(distance);
+      tof = getTOF(distance, passing);
     }
     Translation2d aimVector =
         target.minus(turretPose.getTranslation().plus(fieldVelocity.times(tof)));

@@ -57,10 +57,10 @@ public class Drive extends StateSubsystem<DriveState> {
   private Timer choreoTimer = new Timer();
   private Optional<Trajectory<SwerveSample>> choreoTrajectory = Optional.empty();
 
-  private SlewRateLimiter sotmAccelLimiter = new SlewRateLimiter(0.5); // (m/s2) / s
-  private boolean limitTeleopAccel = false;
+  private SlewRateLimiter sotmAccelLimiter =
+      new SlewRateLimiter(DriveConstants.SOTMAccelLimit); // (m/s2) / s
+  private boolean SOTM = false;
 
-  private double teleopSpeedLimit = DriveConstants.maxDriveSpeedMps;
   private Pose2d targetDrivePose = null;
   private SwerveRequest.ApplyRobotSpeeds robotRelativeRequest =
       new SwerveRequest.ApplyRobotSpeeds();
@@ -105,12 +105,8 @@ public class Drive extends StateSubsystem<DriveState> {
     setState(DriveState.IDLE);
   }
 
-  public void setTeleopSpeedLimit(double limit) {
-    teleopSpeedLimit = limit;
-  }
-
-  public void setTeleopAccelLimitEnabled(boolean enabled) {
-    limitTeleopAccel = enabled;
+  public void setSOTMEnabled(boolean enabled) {
+    SOTM = enabled;
   }
 
   public Command driveToPoseCommand(Pose2d target) {
@@ -280,9 +276,10 @@ public class Drive extends StateSubsystem<DriveState> {
     magnitude *= DriveConstants.maxDriveSpeedMps;
 
     Logger.recordOutput("Drive/rawInputMagnitude", magnitude);
-    Logger.recordOutput("Drive/speedLimit", teleopSpeedLimit);
-    if (magnitude > teleopSpeedLimit) magnitude = teleopSpeedLimit;
-    if (limitTeleopAccel) magnitude = sotmAccelLimiter.calculate(magnitude);
+    if (SOTM) {
+      magnitude = sotmAccelLimiter.calculate(magnitude * DriveConstants.SOTMSpeedFactor);
+      omega *= DriveConstants.SOTMOmegaFactor;
+    }
     Logger.recordOutput("Drive/processedInputMagnitude", magnitude);
 
     double xVelocity = magnitude * heading.getCos() * (FieldConstants.isBlueAlliance() ? 1 : -1);
