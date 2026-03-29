@@ -38,10 +38,6 @@ public class RobotConfig {
     SIM,
   }
 
-  // TODO: make this be tunable in advantage scope using 'LoggedTunableNumber'
-  // - make slot0configs / pid controller wrappers that have an reapply command when constants
-  // change
-
   public record PIDGains(double kp, double ki, double kd) {
     public PIDController toController() {
       return new PIDController(kp, ki, kd);
@@ -154,16 +150,17 @@ public class RobotConfig {
 
     public static final Distance launcherWheelRadius = Inches.of(2.0);
 
-    // public static final PIDGains hoodGains = new PIDGains(180.0, 0.0, 0.0);
-    // public static final PIDGains azimuthGains = new PIDGains(100.0, 0.0, 5.0);
-    // public static final PIDGains shootGains = new PIDGains(0.75, 0.0, 0.0);
     public static final TalonTunableGains azimuthGains = new TalonTunableGains("Turret/azimuth", 0);
     public static final TalonTunableGains flywheelGains =
         new TalonTunableGains("Turret/flywheel", 0);
     public static final TalonTunableGains hoodGains = new TalonTunableGains("Turret/hood", 0);
 
     static {
-      hoodGains.registerGain("kp", 100);
+      hoodGains.registerGain("kp", 150);
+      hoodGains.registerGain("ki", 0);
+      hoodGains.registerGain("kd", 0);
+      hoodGains.registerGain("ks", 1.75);
+      hoodGains.registerGain("ka", 0);
 
       azimuthGains.registerGain("kp", 125);
       azimuthGains.registerGain("kd", 8.0);
@@ -173,6 +170,7 @@ public class RobotConfig {
 
       flywheelGains.registerGain("kv", 0.36);
       flywheelGains.registerGain("ks", 12.3);
+
       flywheelGains.registerGain("kp", 30.0);
     }
 

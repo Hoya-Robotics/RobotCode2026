@@ -6,7 +6,6 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
-import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -28,7 +27,8 @@ public class TurretIOHardware implements TurretIO {
 
   private final TalonFX hoodMotor;
   private final TalonFXSignals hoodSignals;
-  private final PositionVoltage hoodRequest = new PositionVoltage(0.0);
+  private final PositionTorqueCurrentFOC hoodRequest =
+      new PositionTorqueCurrentFOC(0.0).withUpdateFreqHz(250);
 
   private final TalonFX shooterMotor;
   private final TalonFXSignals shooterSignals;
@@ -97,10 +97,12 @@ public class TurretIOHardware implements TurretIO {
   private void configureHood() {
     var config = new TalonFXConfiguration();
     // config.withSlot0(TurretConstants.hoodGains.toSlot0Configs());
+    config.withSlot0(
+        new Slot0Configs().withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign));
     config.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive)
         .withNeutralMode(NeutralModeValue.Coast);
     config.Feedback.withSensorToMechanismRatio(TurretConstants.hoodGearRatio);
-    config.CurrentLimits.withStatorCurrentLimit(20);
+    config.CurrentLimits.withStatorCurrentLimit(60);
     config.SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
         .withForwardSoftLimitThreshold(0.107)
         .withReverseSoftLimitEnable(true)

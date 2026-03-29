@@ -170,7 +170,10 @@ public class Turret extends StateSubsystem<TurretState> {
         .setRobotToCamera(VisionConstants.turretConfig.name(), getRobotToCamera());
     parameters = TurretCalculator.calculateSetpoints(target, getAzimuthAngle());
 
-    if (parameters.wrapTriggered()) wrapTriggered = true;
+    if (parameters.wrapTriggered()) {
+      wrapTriggered = true;
+      wrapTimer.restart();
+    }
     /*
     azimuthReady =
         azimuthErrorDebouncer.calculate(
