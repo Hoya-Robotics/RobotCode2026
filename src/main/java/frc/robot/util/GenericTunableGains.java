@@ -1,6 +1,6 @@
 package frc.robot.util;
 
-import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.SlotConfigs;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
@@ -58,8 +58,9 @@ public class GenericTunableGains {
   }
 
   public static class TalonTunableGains extends GenericTunableGains {
+    private final int slotNumber;
     private Optional<TalonFX> motor = Optional.empty();
-    private static final Map<String, BiConsumer<Slot0Configs, Double>> gainSetters =
+    private static final Map<String, BiConsumer<SlotConfigs, Double>> gainSetters =
         Map.of(
             "kp", (c, v) -> c.kP = v,
             "ki", (c, v) -> c.kI = v,
@@ -68,8 +69,9 @@ public class GenericTunableGains {
             "ka", (c, v) -> c.kA = v,
             "ks", (c, v) -> c.kS = v);
 
-    public TalonTunableGains(String tableKey) {
+    public TalonTunableGains(String tableKey, int slotNumber) {
       super(tableKey);
+      this.slotNumber = slotNumber;
       super.registerUpdateCallback(this::applyGains);
     }
 
@@ -80,14 +82,15 @@ public class GenericTunableGains {
     private void applyGains(Map<String, Double> newGains) {
       motor.ifPresent(
           talon -> {
-            var slot0 = new Slot0Configs();
-            talon.getConfigurator().refresh(slot0);
+            var slot = new SlotConfigs();
+            slot.SlotNumber = slotNumber;
+            talon.getConfigurator().refresh(slot);
             newGains.forEach(
                 (k, v) -> {
                   var setter = gainSetters.get(k);
-                  if (setter != null) setter.accept(slot0, v);
+                  if (setter != null) setter.accept(slot, v);
                 });
-            talon.getConfigurator().apply(slot0);
+            talon.getConfigurator().apply(slot);
           });
     }
   }

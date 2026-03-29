@@ -3,6 +3,7 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -26,7 +27,8 @@ public class TurretCalculator {
       Angle azimuthAngle,
       AngularVelocity azimuthVelocity,
       Angle hoodAngle,
-      AngularVelocity launcherSpeed) {}
+      AngularVelocity launcherSpeed,
+      boolean wrapTriggered) {}
 
   private static final InterpolatingDoubleTreeMap timeOfFlightMap =
       new InterpolatingDoubleTreeMap();
@@ -86,7 +88,11 @@ public class TurretCalculator {
   }
 
   public static TurretParameters getShotParameters(
-      Angle azimuth, AngularVelocity azimuthVelocity, double distance, boolean passing) {
+      Angle azimuth,
+      AngularVelocity azimuthVelocity,
+      double distance,
+      boolean passing,
+      boolean wrapTriggered) {
     if (passing) {
       /* return new TurretParameters(
       azimuth, azimuthVelocity, Degrees.of(28.0), RotationsPerSecond.of(33.5));*/
@@ -94,13 +100,15 @@ public class TurretCalculator {
           azimuth,
           azimuthVelocity,
           PASSING_HOODMAP.get(distance).getMeasure(),
-          RotationsPerSecond.of(PASSING_FLYWHEELMAP.get(distance)));
+          RotationsPerSecond.of(PASSING_FLYWHEELMAP.get(distance)),
+          wrapTriggered);
     } else {
       return new TurretParameters(
           azimuth,
           azimuthVelocity,
           hoodRegression(distance).getMeasure(),
-          shotRegression(distance));
+          shotRegression(distance),
+          wrapTriggered);
     }
   }
 
@@ -127,17 +135,26 @@ public class TurretCalculator {
             setpoint.azimuthAngle(),
             setpoint.azimuthVelocity(),
             Degrees.of(hoodAngleTuning.getAsDouble()),
-            RotationsPerSecond.of(launcherSpeedTuning.getAsDouble()));
+            RotationsPerSecond.of(launcherSpeedTuning.getAsDouble()),
+            setpoint.wrapTriggered);
       case CONSTANT_FORWARD:
         return new TurretParameters(
-            Rotations.of(0.5), RadiansPerSecond.of(0.0), Radians.of(0.0), RadiansPerSecond.of(0.0));
+            Rotations.of(0.5),
+            RadiansPerSecond.of(0.0),
+            Radians.of(0.0),
+            RadiansPerSecond.of(0.0),
+            false);
       default:
         return new TurretParameters(
-            Radians.of(0), RadiansPerSecond.of(0.0), Radians.of(0), RotationsPerSecond.of(0.0));
+            Radians.of(0),
+            RadiansPerSecond.of(0.0),
+            Radians.of(0),
+            RotationsPerSecond.of(0.0),
+            false);
     }
   }
 
-  private static Angle calculateAzimuthAngle(Angle angle, Angle currentAngle) {
+  private static Pair<Angle, Boolean> calculateAzimuthAngle(Angle angle, Angle currentAngle) {
     double targetRotations = angle.in(Rotations);
     double currentRotations = currentAngle.in(Rotations);
     double diff = targetRotations - currentRotations;
@@ -145,14 +162,15 @@ public class TurretCalculator {
     diff = MathUtil.inputModulus(diff, -0.5, 0.5);
     double closestTarget = currentRotations + diff;
     // Wrapping
+    boolean wrap = false;
     if (closestTarget > TurretConstants.maxAzimuthAngle.in(Rotations)) {
+      wrap = true;
       closestTarget -= 1;
-    }
-    if (closestTarget < TurretConstants.minAzimuthAngle.in(Rotations)) {
+    } else if (closestTarget < TurretConstants.minAzimuthAngle.in(Rotations)) {
       closestTarget += 1;
+      wrap = true;
     }
-
-    return Rotations.of(closestTarget);
+    return Pair.of(Rotations.of(closestTarget), wrap);
   }
 
   private static Translation2d getPassingTarget() {
@@ -174,11 +192,9 @@ public class TurretCalculator {
     Pose2d turretPose = new Pose3d(robotPose).transformBy(TurretConstants.robotToTurret).toPose2d();
     double distance = turretPose.getTranslation().getDistance(target);
     Logger.recordOutput("TurretCalculator/targetDistance", distance);
+    var az = calculateAzimuthAngle(azimuth.getMeasure(), currentAzimuthAngle);
     return getShotParameters(
-        calculateAzimuthAngle(azimuth.getMeasure(), currentAzimuthAngle),
-        RadiansPerSecond.of(0.0),
-        distance,
-        passing);
+        az.getFirst(), RadiansPerSecond.of(0.0), distance, passing, az.getSecond());
   }
 
   // https://frc-docs--3242.org.readthedocs.build/en/3242/docs/software/advanced-controls/fire-control/dynamic-shooting.html
@@ -216,11 +232,9 @@ public class TurretCalculator {
         (cross2d / aimVector.getSquaredNorm())
             - RobotState.getInstance().getFieldVelocity().omegaRadiansPerSecond;
 
+    var az = calculateAzimuthAngle(azimuthAngle.getMeasure(), currentAzimuthAngle);
     return getShotParameters(
-        calculateAzimuthAngle(azimuthAngle.getMeasure(), currentAzimuthAngle),
-        RadiansPerSecond.of(azVelRPS),
-        distance,
-        passing);
+        az.getFirst(), RadiansPerSecond.of(azVelRPS), distance, passing, az.getSecond());
   }
 
   private static Translation2d rigidPointVelocity(ChassisSpeeds speeds, Translation2d r) {

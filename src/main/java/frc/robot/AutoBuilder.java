@@ -202,10 +202,7 @@ public class AutoBuilder {
   }
 
   public static Command OP(Drive drive, SuperStructure superStructure, boolean flipY) {
-    return new AutoBuilder(flipY, true)
-        .withChoreoTraj("OPStart")
-        .withChoreoTraj("OPSecond")
-        .generate(drive, superStructure);
+    return new AutoBuilder(flipY, true).withChoreoTraj("OP").generate(drive, superStructure);
   }
 
   public static Command Orbit(Drive drive, SuperStructure superStructure, boolean flipY) {

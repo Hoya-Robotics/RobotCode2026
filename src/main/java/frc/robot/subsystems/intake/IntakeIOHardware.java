@@ -49,7 +49,7 @@ public class IntakeIOHardware implements IntakeIO {
     intakeConfig.encoder.positionConversionFactor(IntakeConstants.intakeGearRatio);
     intakeConfig.encoder.velocityConversionFactor(IntakeConstants.intakeGearRatio);
     intakeConfig.closedLoopRampRate(0.075);
-    intakeConfig.closedLoop.pid(IntakeConstants.intakeGains.kp(), 0.0, 0.0);
+    // intakeConfig.closedLoop.pid(IntakeConstants.intakeGains.kp(), 0.0, 0.0);
     intakeConfig.closedLoop.feedForward.kV(IntakeConstants.intakeKv);
     intakeMotor.configure(
         intakeConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
@@ -67,7 +67,7 @@ public class IntakeIOHardware implements IntakeIO {
     extendConfig.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive);
     // extendConfig.Feedback.withSensorToMechanismRatio(IntakeConstants.extendGearRatio);
     extendConfig.MotorOutput.withNeutralMode(NeutralModeValue.Brake);
-    extendConfig.withSlot0(IntakeConstants.extendGains.toSlot0Configs());
+    // extendConfig.withSlot0(IntakeConstants.extendGains.toSlot0Configs());
     extendConfig.CurrentLimits.withStatorCurrentLimit(20);
     extendConfig
         .SoftwareLimitSwitch
@@ -78,6 +78,9 @@ public class IntakeIOHardware implements IntakeIO {
     extendMotor.getConfigurator().apply(extendConfig);
     extendMotor.setPosition(0.0);
     extendEncoder.setPosition(0.0);
+
+    IntakeConstants.intakeGains.registerMotor(intakeMotor);
+    IntakeConstants.extendGains.registerMotor(extendMotor);
 
     extendSignals = PhoenixSync.registerTalonFX(extendMotor, 50);
   }
