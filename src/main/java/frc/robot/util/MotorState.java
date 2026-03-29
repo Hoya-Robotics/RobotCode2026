@@ -8,8 +8,9 @@ public record MotorState(
     double currentAmps,
     double nativePosition,
     double nativeVelocity,
+    double nativeAcceleration,
     double temperature) {
-  public static MotorState kZero = new MotorState(false, 0.0, 0.0, 0.0, 0.0, 0.0);
+  public static MotorState kZero = new MotorState(false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
   public static MotorState fromTalonSignals(TalonFXSignals signals) {
     return new MotorState(
@@ -18,6 +19,7 @@ public record MotorState(
         signals.getCurrent(),
         signals.getNativePosition(),
         signals.getNativeVelocity(),
+        signals.getNativeAcceleration(),
         signals.getTemp());
   }
 }

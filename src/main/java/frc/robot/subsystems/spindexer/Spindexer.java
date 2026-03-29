@@ -3,6 +3,7 @@ package frc.robot.subsystems.spindexer;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.wpilibj.Timer;
+import frc.robot.Robot;
 import frc.robot.subsystems.spindexer.SpindexerIO.SpindexerIOOutputs;
 import frc.robot.util.StateSubsystem;
 import org.littletonrobotics.junction.Logger;
@@ -32,6 +33,9 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Spindexer", inputs);
+
+    Robot.batteryLogger.reportCurrentUsage("Spindexer/Indexer", inputs.indexMotorCurrent.in(Amps));
+    Robot.batteryLogger.reportCurrentUsage("Spindexer/Feeder", inputs.feedMotorCurrent.in(Amps));
 
     // Update unjamming state
     if (unjamming && unjamTimer.get() > 0.45) {

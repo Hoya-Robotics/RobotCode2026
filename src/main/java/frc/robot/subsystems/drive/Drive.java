@@ -64,6 +64,11 @@ public class Drive extends StateSubsystem<DriveState> {
   private Pose2d targetDrivePose = null;
   private SwerveRequest.ApplyRobotSpeeds robotRelativeRequest =
       new SwerveRequest.ApplyRobotSpeeds();
+  private SwerveRequest.FieldCentric choreoRequest =
+      new SwerveRequest.FieldCentric()
+          .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance)
+          .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
+          .withSteerRequestType(SteerRequestType.Position);
   private SwerveRequest.FieldCentric fieldRequest =
       new SwerveRequest.FieldCentric()
           .withForwardPerspective(ForwardPerspectiveValue.BlueAlliance)
@@ -225,7 +230,7 @@ public class Drive extends StateSubsystem<DriveState> {
 
   private SwerveRequest choreoSampleRequest(Pose2d pose, SwerveSample sample) {
     Logger.recordOutput("Drive/Choreo/targetPose", sample.getPose());
-    return fieldRequest
+    return choreoRequest
         .withVelocityX(sample.vx + choreoXController.calculate(pose.getX(), sample.x))
         .withVelocityY(sample.vy + choreoYController.calculate(pose.getY(), sample.y))
         .withRotationalRate(

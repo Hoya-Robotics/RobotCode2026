@@ -31,6 +31,10 @@ public class PhoenixSync {
       return BaseStatusSignal.getLatencyCompensatedValueAsDouble(velocity, acceleration);
     }
 
+    public double getNativeAcceleration() {
+      return acceleration().getValueAsDouble();
+    }
+
     public double getVoltage() {
       return voltage.getValueAsDouble();
     }

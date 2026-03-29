@@ -32,15 +32,15 @@ public class SpindexerIOHardware implements SpindexerIO {
     feedController = feedMotor.getClosedLoopController();
 
     SparkFlexConfig indexConfig = new SparkFlexConfig();
-    indexConfig.closedLoop.pid(0.0002, 0.0, 0.0);
-    indexConfig.closedLoop.feedForward.kV(0.0054);
+    // indexConfig.closedLoop.pid(0.0002, 0.0, 0.0);
+    // indexConfig.closedLoop.feedForward.kV(0.0054);
     indexConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(80); // 29
     indexConfig.encoder.positionConversionFactor(SpindexerConstants.indexGearRatio);
     indexConfig.encoder.velocityConversionFactor(SpindexerConstants.indexGearRatio);
 
     SparkFlexConfig feedConfig = new SparkFlexConfig();
-    feedConfig.closedLoop.pid(0.00002, 0.0, 0.0);
-    feedConfig.closedLoop.feedForward.kV(0.0018); // 0.05
+    // feedConfig.closedLoop.pid(0.00002, 0.0, 0.0);
+    // feedConfig.closedLoop.feedForward.kV(0.0018); // 0.05
     feedConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(60);
     feedConfig.encoder.positionConversionFactor(SpindexerConstants.feedGearRatio);
     feedConfig.encoder.velocityConversionFactor(SpindexerConstants.feedGearRatio);
@@ -49,6 +49,9 @@ public class SpindexerIOHardware implements SpindexerIO {
         indexConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     feedMotor.configure(
         feedConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+
+    SpindexerConstants.indexGains.registerMotor(indexMotor);
+    SpindexerConstants.feederGains.registerMotor(feedMotor);
   }
 
   @Override

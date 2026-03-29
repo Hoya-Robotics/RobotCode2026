@@ -12,6 +12,7 @@ import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Time;
+import frc.robot.Robot;
 import frc.robot.RobotState.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -31,14 +32,6 @@ public class DriveIOHardware extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder
     Consumer<SwerveDriveState> telemetryConsumer =
         swerveDriveState -> {
           telemetryCache.set(swerveDriveState.clone());
-          /*
-          RobotState.getInstance()
-              .addOdometryObservation(
-                  new OdometryObservation(
-                      swerveDriveState.Speeds,
-                      swerveDriveState.ModulePositions,
-                      swerveDriveState.Pose.getRotation(),
-                      swerveDriveState.Timestamp));*/
         };
     registerTelemetry(telemetryConsumer);
   }
@@ -47,6 +40,17 @@ public class DriveIOHardware extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder
   public void updateInputs(DriveIOInputs inputs) {
     if (telemetryCache.get() == null) return;
     inputs.fromDriveState(telemetryCache.get());
+
+    int i = 0;
+    for (var module : getModules()) {
+      Robot.batteryLogger.reportCurrentUsage(
+          "Drive/module" + i + "/drive",
+          module.getDriveMotor().getStatorCurrent().getValueAsDouble());
+      Robot.batteryLogger.reportCurrentUsage(
+          "Drive/module" + i + "/steer",
+          module.getSteerMotor().getStatorCurrent().getValueAsDouble());
+      i += 1;
+    }
   }
 
   @Override

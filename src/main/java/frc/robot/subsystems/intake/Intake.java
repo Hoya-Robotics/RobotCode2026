@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import frc.robot.Robot;
 import frc.robot.RobotConfig.IntakeConstants;
 import frc.robot.subsystems.intake.IntakeIO.IntakeIOOutputs;
 import frc.robot.util.StateSubsystem;
@@ -35,17 +36,26 @@ public class Intake extends StateSubsystem<IntakeState> {
     setState(IntakeState.IDLE);
   }
 
-  @Override
-  public void periodic() {
-    io.updateInputs(inputs);
-    Logger.processInputs("Intake", inputs);
-    Logger.recordOutput("Intake/state", getCurrentState());
+  private void logMechanism() {
     Distance intakePostion = inputs.extendPosition;
     Distance intakeX = Meters.of(Math.sin(8.0) * intakePostion.in(Meters));
     Distance intakeZ = Meters.of(Math.cos(8.0) * intakePostion.in(Meters));
     Logger.recordOutput(
         "Intake/IntakePose", new Pose3d(intakeX, Meters.zero(), intakeZ, Rotation3d.kZero));
+  }
+
+  @Override
+  public void periodic() {
+    io.updateInputs(inputs);
+    Logger.processInputs("Intake", inputs);
     Logger.recordOutput("Intake/intakeVelocityRPM", inputs.intakeVelocity.in(RPM));
+    Logger.recordOutput("Intake/state", getCurrentState());
+
+    logMechanism();
+
+    Robot.batteryLogger.reportCurrentUsage("Intake/spin", inputs.intakeCurrent.in(Amps));
+    Robot.batteryLogger.reportCurrentUsage("Intake/extend", inputs.extendCurrent.in(Amps));
+
     applyState();
     io.applyOutputs(outputs);
   }

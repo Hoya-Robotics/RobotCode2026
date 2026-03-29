@@ -38,7 +38,7 @@ public class ShiftTracker {
   }
 
   public static void start() {
-    teleopTimer.start();
+    teleopTimer.restart();
   }
 
   public static void run() {

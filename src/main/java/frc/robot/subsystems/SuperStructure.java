@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -108,7 +109,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         break;
       case SHOOT_INTAKE:
       case SHOOT:
-        RobotState.getInstance().setDriveSOTM(true);
+        if (DriverStation.isTeleopEnabled()) RobotState.getInstance().setDriveSOTM(true);
         turret.shoot();
 
         if (shouldShoot()) {

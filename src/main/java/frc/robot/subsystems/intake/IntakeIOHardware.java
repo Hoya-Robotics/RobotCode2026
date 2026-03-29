@@ -60,7 +60,7 @@ public class IntakeIOHardware implements IntakeIO {
     extendEncoder.getConfigurator().apply(extendEncoderConfig);
 
     var extendConfig = new TalonFXConfiguration();
-    extendConfig.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(0.175);
+    extendConfig.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(0.125);
     extendConfig.Feedback.withRemoteCANcoder(extendEncoder);
     extendConfig.Feedback.withRotorToSensorRatio(10.3846);
     extendConfig.Feedback.withSensorToMechanismRatio(0.1768);

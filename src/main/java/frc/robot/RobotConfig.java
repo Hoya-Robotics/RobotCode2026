@@ -15,6 +15,8 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.subsystems.drive.TunerConstants;
+import frc.robot.util.GenericTunableGains.SparkTunableGains;
+import frc.robot.util.GenericTunableGains.TalonTunableGains;
 
 public class RobotConfig {
   public enum TurretTarget {
@@ -39,6 +41,7 @@ public class RobotConfig {
   // TODO: make this be tunable in advantage scope using 'LoggedTunableNumber'
   // - make slot0configs / pid controller wrappers that have an reapply command when constants
   // change
+
   public record PIDGains(double kp, double ki, double kd) {
     public PIDController toController() {
       return new PIDController(kp, ki, kd);
@@ -87,7 +90,7 @@ public class RobotConfig {
     public static final PIDGains choreoOmegaGains = new PIDGains(5.25, 0.0, 0.0);
 
     public static final double SOTMSpeedFactor = 0.25;
-    public static final double SOTMOmegaFactor = 0.15;
+    public static final double SOTMOmegaFactor = 0.125;
     public static final double SOTMAccelLimit = 0.5;
   }
 
@@ -97,6 +100,17 @@ public class RobotConfig {
 
     public static final double feedGearRatio = 1.0;
     public static final double indexGearRatio = 1.0 / 3.0;
+
+    public static final SparkTunableGains indexGains = new SparkTunableGains("Spindexer/indexer");
+    public static final SparkTunableGains feederGains = new SparkTunableGains("Spindexer/feeder");
+
+    static {
+      indexGains.registerGain("kp", 0.0002);
+      indexGains.registerGain("kv", 0.0054);
+
+      feederGains.registerGain("kp", 0.0002);
+      feederGains.registerGain("kv", 0.0018);
+    }
   }
 
   public static final class IntakeConstants {
@@ -133,6 +147,15 @@ public class RobotConfig {
     public static final PIDGains hoodGains = new PIDGains(180.0, 0.0, 0.0);
     public static final PIDGains azimuthGains = new PIDGains(100.0, 0.0, 5.0);
     public static final PIDGains shootGains = new PIDGains(0.75, 0.0, 0.0);
+    public static final TalonTunableGains azimuthGains2 = new TalonTunableGains("turret/azimuth");
+
+    static {
+      azimuthGains2.registerGain("kp", 125);
+      azimuthGains2.registerGain("kd", 8.0);
+      azimuthGains2.registerGain("kv", 2.5);
+      azimuthGains2.registerGain("ka", 2.13);
+      azimuthGains2.registerGain("ks", 14);
+    }
 
     public static final Angle trenchHoodAngle = Degrees.of(12.0);
 

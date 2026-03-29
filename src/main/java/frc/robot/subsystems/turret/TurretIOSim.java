@@ -57,6 +57,7 @@ public class TurretIOSim implements TurretIO {
             0.0,
             hoodSim.getAngularPositionRotations(),
             hoodSim.getAngularVelocity().in(RotationsPerSecond),
+            hoodSim.getAngularAcceleration().in(RotationsPerSecondPerSecond),
             0.0);
 
     inputs.azimuthState =
@@ -66,10 +67,11 @@ public class TurretIOSim implements TurretIO {
             0.0,
             azimuthSim.getAngularPositionRotations(),
             azimuthSim.getAngularVelocity().in(RotationsPerSecond),
+            azimuthSim.getAngularAcceleration().in(RotationsPerSecondPerSecond),
             0.0);
 
     inputs.shooterState =
-        new MotorState(true, 0.0, 0.0, 0.0, shooterVelocity.in(RotationsPerSecond), 0.0);
+        new MotorState(true, 0.0, 0.0, 0.0, shooterVelocity.in(RotationsPerSecond), 0.0, 0.0);
   }
 
   @Override

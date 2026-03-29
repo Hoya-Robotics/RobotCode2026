@@ -23,8 +23,10 @@ public class TurretIOHardware implements TurretIO {
   private final TalonFX azimuthMotor;
   private final CANcoder azimuthEncoder;
   private final TalonFXSignals azimuthSignals;
-  // private final PositionVoltage azimuthRequest = new PositionVoltage(0.0);
-  private final PositionTorqueCurrentFOC azimuthRequest = new PositionTorqueCurrentFOC(0.0);
+  // private final MotionMagicTorqueCurrentFOC azimuthRequest = new
+  // MotionMagicTorqueCurrentFOC(0.0);
+  private final PositionTorqueCurrentFOC azimuthRequest =
+      new PositionTorqueCurrentFOC(0.0).withUpdateFreqHz(250);
 
   private final TalonFX hoodMotor;
   private final TalonFXSignals hoodSignals;
@@ -44,11 +46,13 @@ public class TurretIOHardware implements TurretIO {
     configureHood();
     configureShooter();
 
-    hoodMotor.setPosition(0.0);
+    TurretConstants.azimuthGains2.registerMotor(azimuthMotor);
 
     azimuthSignals = PhoenixSync.registerTalonFX(azimuthMotor, 150);
     hoodSignals = PhoenixSync.registerTalonFX(hoodMotor, 150);
     shooterSignals = PhoenixSync.registerTalonFX(shooterMotor, 150);
+
+    hoodMotor.setPosition(0.0);
   }
 
   @Override
@@ -60,6 +64,7 @@ public class TurretIOHardware implements TurretIO {
 
   @Override
   public void applyOutputs(TurretIOOutputs outputs) {
+    // azimuthMotor.setControl(azimuthRequest.withPosition(outputs.azimuthSetpoint));
     azimuthMotor.setControl(
         azimuthRequest
             .withPosition(outputs.azimuthSetpoint)
@@ -77,15 +82,18 @@ public class TurretIOHardware implements TurretIO {
     var config = new TalonFXConfiguration();
 
     config.withSlot0(
+        new Slot0Configs().withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign));
+    /*
+    config.withSlot0(
         new Slot0Configs()
-            .withKS(12.0)
-            .withKP(90)
-            .withKI(6.0)
+            .withKS(14.0)
+            .withKV(2.5)
             .withKA(2.13)
-            .withKD(7.5)
-            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign));
-    // config.withSlot0(TurretConstants.azimuthGains.toSlot0Configs());
-    config.CurrentLimits.withStatorCurrentLimit(20);
+            .withKP(125)
+            .withKD(8.0)
+            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign));*/
+
+    config.CurrentLimits.withStatorCurrentLimit(32);
     config.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive)
         .withNeutralMode(NeutralModeValue.Coast);
     config.Feedback.withFusedCANcoder(azimuthEncoder)
