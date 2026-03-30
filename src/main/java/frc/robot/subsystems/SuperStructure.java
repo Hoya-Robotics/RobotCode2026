@@ -42,6 +42,10 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     return Commands.runOnce(() -> setState(state), this);
   }
 
+  public void setTarget(TurretTarget target) {
+    this.target = target;
+  }
+
   public Command setTargetCommand(TurretTarget target) {
     return Commands.runOnce(() -> this.target = target);
   }

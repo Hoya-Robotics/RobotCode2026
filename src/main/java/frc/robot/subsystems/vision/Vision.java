@@ -47,8 +47,8 @@ public class Vision extends SubsystemBase {
 
     double scale = 1.0 / inputs.mt1.quality();
 
-    double xStd = inputs.stddevs[0] * scale;
-    double yStd = inputs.stddevs[1] * scale;
+    double xStd = inputs.stddevs[0] * scale * 0.7;
+    double yStd = inputs.stddevs[1] * scale * 0.7;
 
     return Optional.of(
         new VisionObservation(

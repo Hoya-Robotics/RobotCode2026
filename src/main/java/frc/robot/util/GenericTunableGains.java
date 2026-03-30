@@ -99,12 +99,22 @@ public class GenericTunableGains {
     private Optional<SparkFlex> motor = Optional.empty();
     private static final Map<String, BiConsumer<ClosedLoopConfig, Double>> gainSetters =
         Map.of(
-            "kp", (c, v) -> c.p(v),
-            "ki", (c, v) -> c.i(v),
-            "kd", (c, v) -> c.d(v),
-            "kv", (c, v) -> c.feedForward.kV(v),
-            "ka", (c, v) -> c.feedForward.kA(v),
-            "ks", (c, v) -> c.feedForward.kS(v));
+            "kp",
+            (c, v) -> c.p(v),
+            "ki",
+            (c, v) -> c.i(v),
+            "kd",
+            (c, v) -> c.d(v),
+            "kv",
+            (c, v) -> c.feedForward.kV(v),
+            "ka",
+            (c, v) -> c.feedForward.kA(v),
+            "ks",
+            (c, v) -> c.feedForward.kS(v),
+            "cruiseVelocity",
+            (c, v) -> c.maxMotion.cruiseVelocity(v),
+            "maxAcceleration",
+            (c, v) -> c.maxMotion.maxAcceleration(v));
 
     public SparkTunableGains(String tableKey) {
       super(tableKey);

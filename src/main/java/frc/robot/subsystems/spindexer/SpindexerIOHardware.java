@@ -41,7 +41,7 @@ public class SpindexerIOHardware implements SpindexerIO {
     SparkFlexConfig feedConfig = new SparkFlexConfig();
     // feedConfig.closedLoop.pid(0.00002, 0.0, 0.0);
     // feedConfig.closedLoop.feedForward.kV(0.0018); // 0.05
-    feedConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(60);
+    feedConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(80);
     feedConfig.encoder.positionConversionFactor(SpindexerConstants.feedGearRatio);
     feedConfig.encoder.velocityConversionFactor(SpindexerConstants.feedGearRatio);
 

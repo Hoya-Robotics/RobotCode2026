@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotConfig.SuperStructureState;
+import frc.robot.RobotConfig.TurretTarget;
 import frc.robot.subsystems.SuperStructure;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.AllianceFlip;
@@ -125,12 +126,16 @@ public class AutoBuilder {
                 () ->
                     autoshootNeutral
                         ? Commands.run(
-                            () ->
-                                superStructure.setState(
-                                    FieldConstants.inAllianceZone(
-                                            RobotState.getInstance().getEstimatedPose())
-                                        ? SuperStructureState.SHOOT
-                                        : SuperStructureState.INTAKE))
+                            () -> {
+                              if (FieldConstants.inAllianceZone(
+                                  RobotState.getInstance().getEstimatedPose())) {
+                                superStructure.setState(SuperStructureState.SHOOT);
+                                superStructure.setTarget(TurretTarget.DEFAULT);
+                              } else {
+                                superStructure.setState(SuperStructureState.INTAKE);
+                                superStructure.setTarget(TurretTarget.HUB);
+                              }
+                            })
                         : Commands.none(),
                 autoshootNeutral ? Set.of(superStructure) : Set.of()));
   }
@@ -202,7 +207,12 @@ public class AutoBuilder {
   }
 
   public static Command OP(Drive drive, SuperStructure superStructure, boolean flipY) {
-    return new AutoBuilder(flipY, true).withChoreoTraj("OP").generate(drive, superStructure);
+    return new AutoBuilder(flipY, true)
+        .withChoreoTraj("OPStart")
+        .withChoreoTraj("OPEnd")
+        .withChoreoTraj("OPEscape")
+        .generate(drive, superStructure);
+    // return new AutoBuilder(flipY, true).withChoreoTraj("OP").generate(drive, superStructure);
   }
 
   public static Command Orbit(Drive drive, SuperStructure superStructure, boolean flipY) {

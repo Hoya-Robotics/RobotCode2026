@@ -168,7 +168,7 @@ public class Turret extends StateSubsystem<TurretState> {
       wrapTriggered = false;
     }
 
-    boolean nearWrap = approachingWrapLimit(0.25);
+    boolean nearWrap = approachingWrapLimit(0.4);
 
     Logger.recordOutput("Turret/wrapTriggered", wrapTriggered);
     Logger.recordOutput("Turret/approachingWrapLimit", nearWrap);
@@ -176,7 +176,13 @@ public class Turret extends StateSubsystem<TurretState> {
     Logger.recordOutput("Turret/hoodReady", hoodReady);
     Logger.recordOutput("Turret/upToSpeed", upToSpeed);
 
-    return hoodReady && azimuthReady && upToSpeed && simHasFuel && !wrapTriggered && !nearWrap;
+    return hoodReady
+        && azimuthReady
+        && upToSpeed
+        && simHasFuel
+        && !wrapTriggered
+        && !nearWrap
+        && (getCurrentState() != TurretState.NEAR_TRENCH);
   }
 
   @Override

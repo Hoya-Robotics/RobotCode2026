@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Robot;
 import frc.robot.RobotConfig.IntakeConstants;
 import frc.robot.subsystems.intake.IntakeIO.IntakeIOOutputs;
+import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.StateSubsystem;
 import org.littletonrobotics.junction.Logger;
 
@@ -27,6 +28,8 @@ public class Intake extends StateSubsystem<IntakeState> {
   private IntakeIOOutputs outputs = new IntakeIOOutputs();
   private boolean agitatingForward = false;
   private boolean hasExtended = false;
+
+  private LoggedTunableNumber intakeSpeed = new LoggedTunableNumber("Intake/intakeSpeedRPM", 3200);
 
   private Timer stateChangeTimer = new Timer();
   private Timer agitateTimer = new Timer();
@@ -85,6 +88,7 @@ public class Intake extends StateSubsystem<IntakeState> {
   }
 
   private boolean isStalled() {
+    // return false;
     return stateChangeTimer.get() > 0.5 && inputs.intakeVelocity.abs(RotationsPerSecond) < 2.0;
   }
 
@@ -128,14 +132,14 @@ public class Intake extends StateSubsystem<IntakeState> {
         break;
       case INTAKE:
         outputs.extensionDistance = IntakeConstants.maxExtension;
-        outputs.intakeVelocity = RPM.of(2700);
+        outputs.intakeVelocity = RPM.of(intakeSpeed.getAsDouble());
         break;
       case AGITATE:
-        if (agitateTimer.get() >= 0.3) {
+        if (agitateTimer.get() >= 0.4) {
           agitatingForward = !agitatingForward;
           agitateTimer.restart();
         }
-        outputs.extensionDistance = agitatingForward ? Inches.of(9.75) : Inches.of(7.15);
+        outputs.extensionDistance = agitatingForward ? Inches.of(9.0) : Inches.of(5.1);
         outputs.intakeVelocity = RPM.of(750);
         break;
     }

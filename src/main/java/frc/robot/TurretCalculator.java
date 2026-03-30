@@ -144,6 +144,18 @@ public class TurretCalculator {
             Radians.of(0.0),
             RadiansPerSecond.of(0.0),
             false);
+      case HUB:
+        var stationary =
+            getStationarySetpoint(
+                FieldConstants.aprilLayout.getTagPose(4).get().getTranslation().toTranslation2d(),
+                false,
+                currentAzimuthAngle);
+        return new TurretParameters(
+            stationary.azimuthAngle(),
+            RPM.of(0.0),
+            Rotations.of(0.0),
+            RPM.of(0.0),
+            stationary.wrapTriggered());
       default:
         return new TurretParameters(
             Radians.of(0),

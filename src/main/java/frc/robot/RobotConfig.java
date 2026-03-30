@@ -22,7 +22,8 @@ public class RobotConfig {
   public enum TurretTarget {
     DEFAULT,
     TUNING,
-    CONSTANT_FORWARD
+    CONSTANT_FORWARD,
+    HUB
   }
 
   public enum SuperStructureState {
@@ -88,6 +89,8 @@ public class RobotConfig {
     public static final double SOTMSpeedFactor = 0.25;
     public static final double SOTMOmegaFactor = 0.125;
     public static final double SOTMAccelLimit = 0.2;
+
+    public static final Angle odometryMaxPitch = Degrees.of(6.0);
   }
 
   public static final class SpindexerConstants {
@@ -106,6 +109,8 @@ public class RobotConfig {
 
       feederGains.registerGain("kp", 0.0002);
       feederGains.registerGain("kv", 0.0018);
+      feederGains.registerGain("cruiseVelocity", 1200);
+      feederGains.registerGain("maxAcceleration", 1200);
     }
   }
 
@@ -120,9 +125,7 @@ public class RobotConfig {
     public static final double extensionRadius = Units.inchesToMeters(0.7);
     public static final double intakeGearRatio = 1.0 / 1.8667;
     public static final double extendGearRatio = 1.8364;
-    // public static final PIDGains extendGains = new PIDGains(3.0, 0.0, 0.05);
     public static final double intakeKv = 1.1 * (1.0 / 576.8) / intakeGearRatio; // 0.032408;
-    // public static final PIDGains intakeGains = new PIDGains(0.0002, 0.0, 0.0);
 
     public static final SparkTunableGains intakeGains = new SparkTunableGains("Intake/spin");
     public static final TalonTunableGains extendGains = new TalonTunableGains("Intake/extend", 0);
@@ -135,7 +138,7 @@ public class RobotConfig {
     }
 
     public static final Distance maxExtension = Inches.of(11.0);
-    public static final Distance maxRetraction = Inches.of(7.0); // 7.5
+    public static final Distance maxRetraction = Inches.of(5.1); // 7.5
   }
 
   public static final class TurretConstants {

@@ -98,9 +98,11 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
   }
 
   private boolean isStalled() {
+    return false;
+    /*
     return stateChangeTimer.get() > 0.25
         && (inputs.feedMotorVelocity_velocityRotationsPerSecond.abs(RPM) < 2.0
-            || inputs.indexMotorVelocity_velocityRotationsPerSecond.abs(RPM) < 2.0);
+            || inputs.indexMotorVelocity_velocityRotationsPerSecond.abs(RPM) < 2.0);*/
   }
 
   @Override
