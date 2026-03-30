@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Robot;
 import frc.robot.subsystems.spindexer.SpindexerIO.SpindexerIOOutputs;
+import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.StateSubsystem;
 import org.littletonrobotics.junction.Logger;
 
@@ -19,6 +20,9 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
   private final SpindexerIO io;
   private final SpindexerIOInputsAutoLogged inputs = new SpindexerIOInputsAutoLogged();
   private SpindexerIOOutputs outputs = new SpindexerIOOutputs();
+
+  private LoggedTunableNumber indexSpeed = new LoggedTunableNumber("Spindexer/indexSpeed", 14.0);
+  private LoggedTunableNumber feedSpeed = new LoggedTunableNumber("Spindexer/feedSpeed", 22.0);
 
   private boolean unjamming = false;
   private Timer unjamTimer = new Timer();
@@ -64,11 +68,11 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
         break;
       case COOLDOWN:
         outputs.indexMotorVelocity = RevolutionsPerSecond.of(0.0);
-        outputs.feedVelocity = RotationsPerSecond.of(20.0);
+        outputs.feedVelocity = RotationsPerSecond.of(feedSpeed.getAsDouble());
         break;
       case FEED:
-        outputs.indexMotorVelocity = RevolutionsPerSecond.of(10.0);
-        outputs.feedVelocity = RotationsPerSecond.of(20.0);
+        outputs.indexMotorVelocity = RevolutionsPerSecond.of(indexSpeed.getAsDouble());
+        outputs.feedVelocity = RotationsPerSecond.of(feedSpeed.getAsDouble());
         break;
       case REVERSE:
         outputs.indexMotorVelocity = RevolutionsPerSecond.of(-10.0);

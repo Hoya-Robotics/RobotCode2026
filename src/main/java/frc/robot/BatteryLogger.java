@@ -30,13 +30,13 @@ public class BatteryLogger {
   public void periodic() {
     Logger.recordOutput("BatteryLogger/totalCurrent", robotState.current(), "amps");
     Logger.recordOutput("BatteryLogger/totalPower", robotState.power(), "watts");
-    Logger.recordOutput("BatteryLogger/totalEnergy", robotState.energy(), "watt hours");
+    Logger.recordOutput("BatteryLogger/totalEnergy", robotState.energy(), "watt seconds");
 
     for (var entry : subsystemStates.entrySet()) {
       var state = entry.getValue();
-      Logger.recordOutput("BatterLogger/Current/" + entry.getKey(), state.current(), "amps");
-      Logger.recordOutput("BatterLogger/Power/" + entry.getKey(), state.power(), "watts");
-      Logger.recordOutput("BatterLogger/Energy/" + entry.getKey(), state.energy(), "watt hours");
+      Logger.recordOutput("BatteryLogger/Current/" + entry.getKey(), state.current(), "amps");
+      Logger.recordOutput("BatteryLogger/Power/" + entry.getKey(), state.power(), "watts");
+      Logger.recordOutput("BatteryLogger/Energy/" + entry.getKey(), state.energy(), "watt hours");
       subsystemStates.put(entry.getKey(), new EnergyState(0.0, 0.0, 0.0));
     }
 

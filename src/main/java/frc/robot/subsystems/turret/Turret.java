@@ -141,6 +141,19 @@ public class Turret extends StateSubsystem<TurretState> {
     return new Transform3d(totalOffset, totalRotation);
   }
 
+  public boolean approachingWrapLimit(double decelSeconds) {
+    double pos = inputs.azimuthState.nativePosition();
+    double vel = inputs.azimuthState.nativeVelocity();
+    if (vel > 1e-3) {
+      double timeToMax = (TurretConstants.maxAzimuthAngle.in(Rotations) - pos) / vel;
+      if (timeToMax < decelSeconds) return true;
+    } else if (vel < -1e-3) {
+      double timeToMin = (pos - TurretConstants.minAzimuthAngle.in(Rotations)) / (-vel);
+      if (timeToMin < decelSeconds) return true;
+    }
+    return false;
+  }
+
   public boolean readyForFeed() {
     boolean hoodReady =
         getHoodAngle().isNear(parameters.hoodAngle(), TurretConstants.hoodTolerance);
@@ -151,16 +164,19 @@ public class Turret extends StateSubsystem<TurretState> {
     boolean azimuthReady =
         getAzimuthAngle().isNear(parameters.azimuthAngle(), TurretConstants.azimuthTolerance);
 
-    if (wrapTriggered && wrapTimer.get() > 0.5) {
+    if (wrapTriggered && wrapTimer.get() > 0.75) {
       wrapTriggered = false;
     }
 
+    boolean nearWrap = approachingWrapLimit(0.25);
+
     Logger.recordOutput("Turret/wrapTriggered", wrapTriggered);
+    Logger.recordOutput("Turret/approachingWrapLimit", nearWrap);
     Logger.recordOutput("Turret/azimuthGood", azimuthReady);
     Logger.recordOutput("Turret/hoodReady", hoodReady);
     Logger.recordOutput("Turret/upToSpeed", upToSpeed);
 
-    return hoodReady && azimuthReady && upToSpeed && simHasFuel && (!wrapTriggered);
+    return hoodReady && azimuthReady && upToSpeed && simHasFuel && !wrapTriggered && !nearWrap;
   }
 
   @Override
@@ -190,11 +206,11 @@ public class Turret extends StateSubsystem<TurretState> {
 
     applyState();
 
-    Logger.recordOutput("Turret/hoodSetpoint", outputs.hoodSetpoint.in(Degrees));
+    Logger.recordOutput("Turret/hoodSetpoint", outputs.hoodSetpoint.in(Rotations));
     Logger.recordOutput("Turret/azimuthSetpoint", outputs.azimuthSetpoint);
     Logger.recordOutput(
         "Turret/azimuthVelocitySetpoint", outputs.azimuthVelocitySetpoint.in(RotationsPerSecond));
-    Logger.recordOutput("Turret/shooterSetpoint", outputs.shooterSetpoint);
+    Logger.recordOutput("Turret/shooterSetpoint", outputs.shooterSetpoint.in(RotationsPerSecond));
 
     io.applyOutputs(outputs);
   }
@@ -220,8 +236,8 @@ public class Turret extends StateSubsystem<TurretState> {
                     TurretConstants.trenchHoodAngle.in(Degrees)));
         break;
       case SHOOT:
-        outputs.shooterSetpoint = parameters.launcherSpeed();
         outputs.hoodSetpoint = parameters.hoodAngle();
+        outputs.shooterSetpoint = parameters.launcherSpeed();
         break;
     }
   }

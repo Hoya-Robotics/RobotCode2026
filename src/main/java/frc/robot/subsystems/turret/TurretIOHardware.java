@@ -32,7 +32,8 @@ public class TurretIOHardware implements TurretIO {
 
   private final TalonFX shooterMotor;
   private final TalonFXSignals shooterSignals;
-  private final VelocityTorqueCurrentFOC shooterRequest = new VelocityTorqueCurrentFOC(0.0);
+  private final VelocityTorqueCurrentFOC shooterRequest =
+      new VelocityTorqueCurrentFOC(0.0).withUpdateFreqHz(250);
 
   public TurretIOHardware(int azimuthId, int azimuthEncoderId, int hoodId, int shooterId) {
     azimuthMotor = new TalonFX(azimuthId);

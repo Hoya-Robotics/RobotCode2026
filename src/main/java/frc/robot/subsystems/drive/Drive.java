@@ -282,7 +282,8 @@ public class Drive extends StateSubsystem<DriveState> {
 
     Logger.recordOutput("Drive/rawInputMagnitude", magnitude);
     if (SOTM) {
-      magnitude = sotmAccelLimiter.calculate(magnitude * DriveConstants.SOTMSpeedFactor);
+      // magnitude = sotmAccelLimiter.calculate(magnitude * DriveConstants.SOTMSpeedFactor);
+      magnitude *= DriveConstants.SOTMSpeedFactor;
       omega *= DriveConstants.SOTMOmegaFactor;
     }
     Logger.recordOutput("Drive/processedInputMagnitude", magnitude);

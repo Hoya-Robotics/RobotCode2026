@@ -156,10 +156,10 @@ public class RobotConfig {
     public static final TalonTunableGains hoodGains = new TalonTunableGains("Turret/hood", 0);
 
     static {
-      hoodGains.registerGain("kp", 150);
+      hoodGains.registerGain("kp", 170);
       hoodGains.registerGain("ki", 0);
       hoodGains.registerGain("kd", 0);
-      hoodGains.registerGain("ks", 1.75);
+      hoodGains.registerGain("ks", 4.0);
       hoodGains.registerGain("ka", 0);
 
       azimuthGains.registerGain("kp", 125);
@@ -170,7 +170,6 @@ public class RobotConfig {
 
       flywheelGains.registerGain("kv", 0.36);
       flywheelGains.registerGain("ks", 12.3);
-
       flywheelGains.registerGain("kp", 30.0);
     }
 
