@@ -8,10 +8,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.FieldConstants;
 import frc.robot.RobotConfig;
+import frc.robot.RobotConfig.IntakeConstants.IntakeState;
 import frc.robot.RobotConfig.OperationMode;
+import frc.robot.RobotConfig.SpindexerConstants.SpindexerState;
 import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.RobotConfig.TurretConstants;
-import frc.robot.RobotConfig.TurretTarget;
+import frc.robot.RobotConfig.TurretConstants.TurretState;
+import frc.robot.RobotConfig.TurretConstants.TurretTarget;
 import frc.robot.RobotState;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.spindexer.Spindexer;
@@ -26,7 +29,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
   private final Spindexer spindexer;
   private final Turret turret;
   private final Intake intake;
-  private TurretTarget target;
+  private frc.robot.RobotConfig.TurretConstants.TurretTarget target;
 
   public SuperStructure(Spindexer spindexer, Turret turret, Intake intake) {
     this.target = TurretTarget.DEFAULT;
@@ -77,7 +80,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     applyState();
 
     if (FieldConstants.underTrench(RobotState.getInstance().getEstimatedPose())) {
-      turret.duck();
+      turret.setState(TurretState.NEAR_TRENCH);
     }
   }
 
@@ -85,43 +88,37 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
   public void applyState() {
     SuperStructureState state = getCurrentState();
 
-    turret.track();
+    turret.setState(TurretState.IDLE_TRACK);
     RobotState.getInstance().setDriveSOTM(false);
 
     // State guards
-    /*
-    if (DriverStation.isAutonomousEnabled()
-        && FieldConstants.inAllianceZone(RobotState.getInstance().getEstimatedPose())) {
-      state = SuperStructureState.SHOOT;
-    }*/
-
     if (coolingDown) {
       state = SuperStructureState.SHOOT;
     }
     switch (state) {
       case REVERSE_INTAKE:
-        intake.reverse();
-        spindexer.hold();
+        intake.setState(IntakeState.REVERSE);
+        spindexer.setState(SpindexerState.HOLD);
         break;
       case IDLE:
-        intake.retract();
-        spindexer.hold();
+        intake.setState(IntakeState.RETRACT);
+        spindexer.setState(SpindexerState.HOLD);
         break;
       case INTAKE:
-        intake.run();
-        spindexer.hold();
+        intake.setState(IntakeState.INTAKE);
+        spindexer.setState(SpindexerState.HOLD);
         break;
       case SHOOT_INTAKE:
       case SHOOT:
         if (DriverStation.isTeleopEnabled()) RobotState.getInstance().setDriveSOTM(true);
-        turret.shoot();
+        turret.setState(TurretState.SHOOT);
 
         if (shouldShoot()) {
-          intake.agitate();
+          intake.setState(IntakeState.AGITATE);
           if (coolingDown) {
-            spindexer.cooldown();
+            spindexer.setState(SpindexerState.COOLDOWN);
           } else {
-            spindexer.feed();
+            spindexer.setState(SpindexerState.FEED);
           }
 
           if (RobotConfig.getMode() == OperationMode.SIM) {
@@ -133,7 +130,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         }
 
         if (state == SuperStructureState.SHOOT_INTAKE) {
-          intake.run();
+          intake.setState(IntakeState.INTAKE);
         }
         break;
     }

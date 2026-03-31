@@ -19,13 +19,6 @@ import frc.robot.util.GenericTunableGains.SparkTunableGains;
 import frc.robot.util.GenericTunableGains.TalonTunableGains;
 
 public class RobotConfig {
-  public enum TurretTarget {
-    DEFAULT,
-    TUNING,
-    CONSTANT_FORWARD,
-    HUB
-  }
-
   public enum SuperStructureState {
     IDLE,
     SHOOT_INTAKE,
@@ -70,6 +63,13 @@ public class RobotConfig {
   public static final Distance drivetrainRadius = Inches.of(15.38);
 
   public static final class DriveConstants {
+    public enum DriveState {
+      IDLE,
+      TO_POSE,
+      TELEOP,
+      CHOREO
+    }
+
     public static final double maxDriveSpeedMps =
         TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
     public static final double maxDriveAccelMps = 10.0;
@@ -94,6 +94,13 @@ public class RobotConfig {
   }
 
   public static final class SpindexerConstants {
+    public enum SpindexerState {
+      HOLD,
+      FEED,
+      COOLDOWN,
+      REVERSE
+    }
+
     public static final int indexMotorId = 20;
     public static final int feedMotorId = 21;
 
@@ -115,6 +122,14 @@ public class RobotConfig {
   }
 
   public static final class IntakeConstants {
+    public enum IntakeState {
+      IDLE,
+      RETRACT,
+      INTAKE,
+      AGITATE,
+      REVERSE
+    }
+
     public static final int extendMotorId = 30;
     public static final int intakeMotorId = 31;
     public static final int intakeEncoderId = 32;
@@ -142,6 +157,19 @@ public class RobotConfig {
   }
 
   public static final class TurretConstants {
+    public enum TurretState {
+      IDLE_TRACK,
+      NEAR_TRENCH,
+      SHOOT
+    }
+
+    public enum TurretTarget {
+      DEFAULT,
+      TUNING,
+      CONSTANT_FORWARD,
+      HUB
+    }
+
     public static final int hoodMotorId = 40;
     public static final int azimuthMotorId = 41;
     public static final int azimuthEncoderId = 42;
@@ -150,8 +178,6 @@ public class RobotConfig {
     public static final double hoodGearRatio = 171.600;
     public static final double azimuthGearRatio = 42.0;
     public static final double launcherGearRatio = 2.25;
-
-    public static final Distance launcherWheelRadius = Inches.of(2.0);
 
     public static final TalonTunableGains azimuthGains = new TalonTunableGains("Turret/azimuth", 0);
     public static final TalonTunableGains flywheelGains =
@@ -177,31 +203,27 @@ public class RobotConfig {
     }
 
     public static final Angle trenchHoodAngle = Degrees.of(12.0);
+    public static final Angle hoodTolerance = Degrees.of(1.5);
 
     public static final Angle maxAzimuthAngle = Rotations.of(0.73);
     public static final Angle minAzimuthAngle = Rotations.of(-0.35);
-
     public static final Angle azimuthTolerance = Degrees.of(2.0);
-    public static final Angle hoodTolerance = Degrees.of(1.5);
-    public static final AngularVelocity shotSpeedTolerance = RotationsPerSecond.of(2.5);
+    public static final double azimuthLatencyCompensation = 0.050;
+    public static final double azimuthRadiusMeters = Units.inchesToMeters(7.0733);
 
+    public static final AngularVelocity shotSpeedTolerance = RotationsPerSecond.of(2.5);
     public static final AngularVelocity shotIdleSpeed = RotationsPerSecond.of(17.5);
+    public static final Distance launcherWheelRadius = Inches.of(2.0);
 
     public static final double cooldownSeconds = 0.5;
-
-    public static final double azimuthLatencyCompensation = 0.050;
-    public static final double maxShootingRobotSpeed = 1.0;
     public static final Transform3d robotToTurret =
         new Transform3d(
             Units.inchesToMeters(-6.0),
             Units.inchesToMeters(-6.0),
             Units.inchesToMeters(18.667),
             new Rotation3d(0.0, 0.0, 0.0));
-
     public static final Rotation3d cameraRotation =
         new Rotation3d(0.0, Units.degreesToRadians(30), 0.0);
-
-    public static final double azimuthRadiusMeters = Units.inchesToMeters(7.0733);
   }
 
   public static final class VisionConstants {

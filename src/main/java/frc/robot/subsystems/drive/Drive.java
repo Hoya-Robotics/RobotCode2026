@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.FieldConstants;
 import frc.robot.RobotConfig.*;
+import frc.robot.RobotConfig.DriveConstants.DriveState;
 import frc.robot.RobotState;
 import frc.robot.RobotState.*;
 import frc.robot.util.StateSubsystem;
@@ -32,13 +33,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
-
-enum DriveState {
-  IDLE,
-  TO_POSE,
-  TELEOP,
-  CHOREO
-}
 
 public class Drive extends StateSubsystem<DriveState> {
   private final DriveIO io;

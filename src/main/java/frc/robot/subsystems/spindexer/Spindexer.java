@@ -4,17 +4,11 @@ import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Robot;
+import frc.robot.RobotConfig.SpindexerConstants.SpindexerState;
 import frc.robot.subsystems.spindexer.SpindexerIO.SpindexerIOOutputs;
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.StateSubsystem;
 import org.littletonrobotics.junction.Logger;
-
-enum SpindexerState {
-  HOLD,
-  FEED,
-  COOLDOWN,
-  REVERSE
-}
 
 public class Spindexer extends StateSubsystem<SpindexerState> {
   private final SpindexerIO io;
@@ -71,30 +65,14 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
         outputs.feedVelocity = RotationsPerSecond.of(feedSpeed.getAsDouble());
         break;
       case FEED:
-        outputs.indexMotorVelocity = RevolutionsPerSecond.of(indexSpeed.getAsDouble());
         outputs.feedVelocity = RotationsPerSecond.of(feedSpeed.getAsDouble());
+        outputs.indexMotorVelocity = RevolutionsPerSecond.of(indexSpeed.getAsDouble());
         break;
       case REVERSE:
         outputs.indexMotorVelocity = RevolutionsPerSecond.of(-10.0);
         outputs.feedVelocity = RotationsPerSecond.of(20.0);
         break;
     }
-  }
-
-  public void hold() {
-    setState(SpindexerState.HOLD);
-  }
-
-  public void feed() {
-    setState(SpindexerState.FEED);
-  }
-
-  public void cooldown() {
-    setState(SpindexerState.COOLDOWN);
-  }
-
-  public void reverse() {
-    setState(SpindexerState.REVERSE);
   }
 
   private boolean isStalled() {

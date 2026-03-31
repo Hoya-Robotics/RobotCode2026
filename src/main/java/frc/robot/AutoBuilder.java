@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotConfig.SuperStructureState;
-import frc.robot.RobotConfig.TurretTarget;
+import frc.robot.RobotConfig.TurretConstants.TurretTarget;
 import frc.robot.subsystems.SuperStructure;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.AllianceFlip;

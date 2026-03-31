@@ -18,6 +18,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import frc.robot.RobotConfig.TurretConstants;
+import frc.robot.RobotConfig.TurretConstants.TurretTarget;
 import frc.robot.util.AllianceFlip;
 import frc.robot.util.LoggedTunableNumber;
 import org.littletonrobotics.junction.Logger;
@@ -117,7 +118,7 @@ public class TurretCalculator {
   }
 
   public static TurretParameters calculateSetpoints(
-      RobotConfig.TurretTarget trackingTarget, Angle currentAzimuthAngle) {
+      TurretTarget trackingTarget, Angle currentAzimuthAngle) {
     Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
     boolean passing = inPassingZone(robotPose);
     // boolean passing = FieldConstants.inNeutralZone(robotPose);

@@ -17,7 +17,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.RobotConfig.IntakeConstants;
 import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.RobotConfig.TurretConstants;
-import frc.robot.RobotConfig.TurretTarget;
+import frc.robot.RobotConfig.TurretConstants.TurretTarget;
 import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.subsystems.SuperStructure;
 import frc.robot.subsystems.drive.*;

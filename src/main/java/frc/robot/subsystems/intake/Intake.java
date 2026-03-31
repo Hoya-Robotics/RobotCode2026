@@ -9,18 +9,11 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Robot;
 import frc.robot.RobotConfig.IntakeConstants;
+import frc.robot.RobotConfig.IntakeConstants.IntakeState;
 import frc.robot.subsystems.intake.IntakeIO.IntakeIOOutputs;
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.StateSubsystem;
 import org.littletonrobotics.junction.Logger;
-
-enum IntakeState {
-  IDLE,
-  RETRACT,
-  INTAKE,
-  AGITATE,
-  REVERSE
-}
 
 public class Intake extends StateSubsystem<IntakeState> {
   private final IntakeIO io;
@@ -61,26 +54,6 @@ public class Intake extends StateSubsystem<IntakeState> {
 
     applyState();
     io.applyOutputs(outputs);
-  }
-
-  public void reverse() {
-    setState(IntakeState.REVERSE);
-  }
-
-  public void run() {
-    setState(IntakeState.INTAKE);
-  }
-
-  public void retract() {
-    setState(IntakeState.RETRACT);
-  }
-
-  public void stay() {
-    setState(IntakeState.IDLE);
-  }
-
-  public void agitate() {
-    setState(IntakeState.AGITATE);
   }
 
   public boolean detectCurrentSpike() {

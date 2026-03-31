@@ -16,7 +16,8 @@ import frc.robot.Robot;
 import frc.robot.RobotConfig;
 import frc.robot.RobotConfig.OperationMode;
 import frc.robot.RobotConfig.TurretConstants;
-import frc.robot.RobotConfig.TurretTarget;
+import frc.robot.RobotConfig.TurretConstants.TurretState;
+import frc.robot.RobotConfig.TurretConstants.TurretTarget;
 import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.RobotState;
 import frc.robot.TurretCalculator;
@@ -24,12 +25,6 @@ import frc.robot.TurretCalculator.TurretParameters;
 import frc.robot.subsystems.turret.TurretIO.TurretIOOutputs;
 import frc.robot.util.StateSubsystem;
 import org.littletonrobotics.junction.Logger;
-
-enum TurretState {
-  IDLE_TRACK,
-  NEAR_TRENCH,
-  SHOOT
-}
 
 public class Turret extends StateSubsystem<TurretState> {
   private final TurretIO io;
@@ -54,18 +49,6 @@ public class Turret extends StateSubsystem<TurretState> {
     this.io = io;
     setState(TurretState.IDLE_TRACK);
     simShotTimer.start();
-  }
-
-  public void track() {
-    setState(TurretState.IDLE_TRACK);
-  }
-
-  public void shoot() {
-    setState(TurretState.SHOOT);
-  }
-
-  public void duck() {
-    setState(TurretState.NEAR_TRENCH);
   }
 
   public Angle getAzimuthAngle() {
