@@ -97,8 +97,7 @@ public class RobotConfig {
     public enum SpindexerState {
       HOLD,
       FEED,
-      COOLDOWN,
-      REVERSE
+      COOLDOWN
     }
 
     public static final int indexMotorId = 20;
@@ -124,7 +123,6 @@ public class RobotConfig {
   public static final class IntakeConstants {
     public enum IntakeState {
       IDLE,
-      RETRACT,
       INTAKE,
       AGITATE,
       REVERSE

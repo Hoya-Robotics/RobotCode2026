@@ -13,7 +13,6 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import frc.robot.RobotConfig.SpindexerConstants;
-import org.littletonrobotics.junction.Logger;
 
 public class SpindexerIOHardware implements SpindexerIO {
   private final SparkFlex indexMotor;
@@ -67,9 +66,6 @@ public class SpindexerIOHardware implements SpindexerIO {
 
   @Override
   public void applyOutputs(SpindexerIOOutputs outputs) {
-    Logger.recordOutput("Spindexer/indexSetpointRPS", outputs.indexSetpointRPS);
-    Logger.recordOutput("Spindexer/feedSetpointRPS", outputs.feedSetpointRPS);
-
     indexController.setSetpoint(outputs.indexSetpointRPS * 60, ControlType.kVelocity);
     feedController.setSetpoint(outputs.feedSetpointRPS * 60, ControlType.kVelocity);
   }

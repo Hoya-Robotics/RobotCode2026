@@ -95,7 +95,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         spindexer.setState(SpindexerState.HOLD);
         break;
       case IDLE:
-        intake.setState(IntakeState.RETRACT);
+        intake.setState(IntakeState.IDLE);
         spindexer.setState(SpindexerState.HOLD);
         break;
       case INTAKE:
@@ -120,7 +120,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
             turret.simulateShot();
           }
         } else {
-          intake.setState(IntakeState.RETRACT);
+          intake.setState(IntakeState.IDLE);
           spindexer.setState(SpindexerState.HOLD);
         }
 

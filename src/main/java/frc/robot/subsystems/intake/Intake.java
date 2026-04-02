@@ -22,7 +22,9 @@ public class Intake extends StateSubsystem<IntakeState> {
   private boolean agitatingForward = false;
   private boolean hasExtended = false;
 
-  private LoggedTunableNumber intakeSpeed = new LoggedTunableNumber("Intake/intakeSpeedRPM", 3200);
+  private LoggedTunableNumber intakeSpeed = new LoggedTunableNumber("Intake/Spin/speedRPM", 3200);
+  private LoggedTunableNumber agitateOut = new LoggedTunableNumber("Intake/Rack/agitoutOutIn", 9.0);
+  private LoggedTunableNumber agitateIn = new LoggedTunableNumber("Intake/Rack/agitoutInIn", 5.1);
 
   private Timer stateChangeTimer = new Timer();
   private Timer agitateTimer = new Timer();
@@ -56,12 +58,7 @@ public class Intake extends StateSubsystem<IntakeState> {
     io.applyOutputs(outputs);
   }
 
-  public boolean detectCurrentSpike() {
-    return inputs.extendCurrent.gt(Amps.of(40.0));
-  }
-
   private boolean isStalled() {
-    // return false;
     return stateChangeTimer.get() > 0.5 && inputs.intakeVelocity.abs(RotationsPerSecond) < 2.0;
   }
 
@@ -70,7 +67,6 @@ public class Intake extends StateSubsystem<IntakeState> {
     if (getRequestedState() != getCurrentState() && getCurrentState() != IntakeState.REVERSE) {
       stateChangeTimer.restart();
     }
-
     if (getRequestedState() == IntakeState.AGITATE) {
       agitateTimer.start();
     }
@@ -88,20 +84,9 @@ public class Intake extends StateSubsystem<IntakeState> {
         outputs.extensionDistance = Inches.of(7.25);
         outputs.intakeVelocity = RPM.of(750);
         break;
-      case RETRACT:
-        if (!hasExtended && DriverStation.isEnabled()) {
-          if (inputs.extendPosition.gt(Inches.of(10.75))) {
-            hasExtended = true;
-          }
-          outputs.extensionDistance = IntakeConstants.maxExtension;
-        } else {
-          outputs.extensionDistance = Inches.of(7.25);
-        }
-        outputs.intakeVelocity = RPM.of(750);
-        break;
       case REVERSE:
         outputs.extensionDistance = IntakeConstants.maxExtension;
-        outputs.intakeVelocity = RPM.of(-2700);
+        outputs.intakeVelocity = RPM.of(-intakeSpeed.getAsDouble());
         break;
       case INTAKE:
         outputs.extensionDistance = IntakeConstants.maxExtension;
@@ -112,9 +97,17 @@ public class Intake extends StateSubsystem<IntakeState> {
           agitatingForward = !agitatingForward;
           agitateTimer.restart();
         }
-        outputs.extensionDistance = agitatingForward ? Inches.of(9.0) : Inches.of(5.1);
+
+        outputs.extensionDistance =
+            Inches.of(agitatingForward ? agitateOut.getAsDouble() : agitateIn.getAsDouble());
         outputs.intakeVelocity = RPM.of(750);
         break;
+    }
+
+    // First extension override
+    if (!hasExtended && DriverStation.isEnabled()) {
+      outputs.extensionDistance = IntakeConstants.maxExtension;
+      hasExtended = inputs.extendPosition.gt(Inches.of(10.75));
     }
   }
 }

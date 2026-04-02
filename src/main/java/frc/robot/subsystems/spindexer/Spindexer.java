@@ -26,13 +26,16 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Spindexer", inputs);
+    Logger.recordOutput("Spindexer/state", getCurrentState());
 
     Robot.batteryLogger.reportCurrentUsage("Spindexer/Indexer", inputs.indexMotorCurrent.in(Amps));
     Robot.batteryLogger.reportCurrentUsage("Spindexer/Feeder", inputs.feedMotorCurrent.in(Amps));
 
     applyState();
 
-    Logger.recordOutput("Spindexer/state", getCurrentState());
+    Logger.recordOutput("Spindexer/Setpoints/indexRPS", outputs.indexSetpointRPS);
+    Logger.recordOutput("Spindexer/Setpoints/feedRPS", outputs.feedSetpointRPS);
+
     io.applyOutputs(outputs);
   }
 
