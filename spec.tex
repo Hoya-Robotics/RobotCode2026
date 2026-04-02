@@ -56,5 +56,16 @@
 			\item Cooldown automatically ran for tunable duration after leaving \textsc{Shoot} superstructure state to preserve speed for remaining balls in pipeline.
 		\end{itemize}
 
+		\section{Limiting Factors}
+		How to optimize BPS and accuracy of the overall robot through software control and coordination of these subsystems?\\
+
+		Heuristics:
+		\begin{itemize}
+			\item Every step of the pipeline must be running at a greater or equal speed then the last for deterministic behaviour
+			\item Every step of the pipeline must be able to regain full speed after processing a gamepiece within ~5\% of setpoint by the time the next gamepiece arrives
+			\item Predictable factors that influence accuracy such as control error and turret wrapping should be handled ahead of time, systems reacting and decelerating so that game pieces will not be launched with large margins of error
+			\item Blind spots in vision should be limited and global pose estimate reliability/smoothness is paramount for SOTM
+		\end{itemize}
+
 
 \end{document}
