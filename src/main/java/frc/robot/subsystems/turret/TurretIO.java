@@ -2,8 +2,6 @@ package frc.robot.subsystems.turret;
 
 import static edu.wpi.first.units.Units.*;
 
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.util.MotorState;
 import org.littletonrobotics.junction.AutoLog;
 
@@ -16,10 +14,10 @@ public interface TurretIO {
   }
 
   public class TurretIOOutputs {
-    public Angle azimuthSetpoint = Rotations.of(0.0);
-    public AngularVelocity azimuthVelocitySetpoint = RotationsPerSecond.of(0.0);
-    public Angle hoodSetpoint = Rotations.of(0.0);
-    public AngularVelocity shooterSetpoint = RotationsPerSecond.of(0.0);
+    public double azimuthSetpointRots = 0.0;
+    public double azimuthFFRotsPerSec = 0.0;
+    public double hoodSetpointRots = 0.0;
+    public double flywheelRPS = 0.0;
   }
 
   public default void updateInputs(TurretIOInputs inputs) {}

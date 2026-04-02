@@ -76,8 +76,8 @@ public class TurretIOSim implements TurretIO {
 
   @Override
   public void applyOutputs(TurretIOOutputs outputs) {
-    hoodController.setSetpoint(outputs.hoodSetpoint.in(Rotations));
-    azimuthController.setSetpoint(outputs.azimuthSetpoint.in(Rotations));
-    shooterVelocity = outputs.shooterSetpoint;
+    hoodController.setSetpoint(outputs.hoodSetpointRots);
+    azimuthController.setSetpoint(outputs.azimuthSetpointRots);
+    shooterVelocity = RotationsPerSecond.of(outputs.flywheelRPS);
   }
 }

@@ -115,6 +115,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
 
         if (shouldShoot()) {
           intake.setState(IntakeState.AGITATE);
+
           if (coolingDown) {
             spindexer.setState(SpindexerState.COOLDOWN);
           } else {
@@ -125,8 +126,8 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
             turret.simulateShot();
           }
         } else {
-          intake.idle();
-          spindexer.idle();
+          intake.setState(IntakeState.RETRACT);
+          spindexer.setState(SpindexerState.HOLD);
         }
 
         if (state == SuperStructureState.SHOOT_INTAKE) {

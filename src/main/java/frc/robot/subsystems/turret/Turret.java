@@ -2,6 +2,9 @@ package frc.robot.subsystems.turret;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -23,6 +26,7 @@ import frc.robot.RobotState;
 import frc.robot.TurretCalculator;
 import frc.robot.TurretCalculator.TurretParameters;
 import frc.robot.subsystems.turret.TurretIO.TurretIOOutputs;
+import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.StateSubsystem;
 import org.littletonrobotics.junction.Logger;
 
@@ -40,10 +44,13 @@ public class Turret extends StateSubsystem<TurretState> {
   private TurretIOOutputs outputs = new TurretIOOutputs();
   private Timer simShotTimer = new Timer();
 
-  // private Debouncer azimuthErrorDebouncer = new Debouncer(0.25);
-  private Timer wrapTimer = new Timer();
-  private boolean wrapTriggered = false;
-  private boolean azimuthReady = false;
+  private final LoggedTunableNumber flywheelIdleSpeed =
+      new LoggedTunableNumber("Turret/Flywheel/idleSpeedRPS", 10);
+  private final LoggedTunableNumber wrapLooheadSeconds =
+      new LoggedTunableNumber("Turret/Azimuth/wrapLooheadSeconds", 0.5);
+
+  private final LinearFilter azimuthFFFilter = LinearFilter.movingAverage(5);
+  private final Debouncer azimuthSettledDebouncer = new Debouncer(0.1, DebounceType.kRising);
 
   public Turret(TurretIO io) {
     this.io = io;
@@ -59,8 +66,8 @@ public class Turret extends StateSubsystem<TurretState> {
     return Rotations.of(inputs.hoodState.nativePosition());
   }
 
-  public AngularVelocity getShooterSpeed() {
-    return RotationsPerSecond.of(inputs.shooterState.nativeVelocity());
+	public AngularVelocity getShooterSpeed() {
+		return RotationsPerSecond.of(inputs.shooterState.nativeVelocity());
   }
 
   public TurretParameters getParameters() {
@@ -69,6 +76,95 @@ public class Turret extends StateSubsystem<TurretState> {
 
   public void setTarget(TurretTarget target) {
     this.target = target;
+  }
+
+  private boolean willAzimuthWrapWithin(double dt) {
+    double posRots = inputs.azimuthState.nativePosition();
+    double futurePos = posRots + dt * inputs.azimuthState.nativeVelocity();
+    return futurePos > TurretConstants.maxAzimuthAngle.in(Rotations)
+        || futurePos < TurretConstants.minAzimuthAngle.in(Rotations);
+  }
+
+  private boolean isAzimuthTracking() {
+    double posError = Math.abs(inputs.azimuthState.nativePosition() - outputs.azimuthSetpointRots);
+    double velError = Math.abs(inputs.azimuthState.nativeVelocity() - outputs.azimuthFFRotsPerSec);
+
+    boolean withinTolerance = posError < 0.02 && velError < 0.05;
+    return azimuthSettledDebouncer.calculate(withinTolerance);
+  }
+
+  public boolean readyForFeed() {
+    boolean hoodReady =
+        getHoodAngle().isNear(parameters.hoodAngle(), TurretConstants.hoodTolerance);
+    boolean upToSpeed =
+        getShooterSpeed().isNear(parameters.launcherSpeed(), TurretConstants.shotSpeedTolerance);
+    boolean simHasFuel =
+        RobotConfig.getMode() == OperationMode.SIM ? RobotState.getInstance().consumeFuel() : true;
+    boolean azimuthReady = isAzimuthTracking();
+    boolean willWrap = willAzimuthWrapWithin(wrapLooheadSeconds.getAsDouble());
+
+    Logger.recordOutput("Turret/Ready/azimuthSettled", azimuthReady);
+    Logger.recordOutput("Turret/Ready/hoodPosition", hoodReady);
+    Logger.recordOutput("Turret/Ready/flywheelSpeed", upToSpeed);
+    Logger.recordOutput("Turret/Ready/azimuthWillWrap", willWrap);
+
+    return hoodReady
+        && azimuthReady
+        && upToSpeed
+        && simHasFuel
+        && (!willWrap)
+        && (getCurrentState() != TurretState.NEAR_TRENCH);
+  }
+
+  @Override
+  public void periodic() {
+    RobotState.getInstance()
+        .getVision()
+        .setRobotToCamera(VisionConstants.turretConfig.name(), getRobotToCamera());
+    parameters = TurretCalculator.calculateSetpoints(target, getAzimuthAngle());
+
+    io.updateInputs(inputs);
+
+    // Logging
+    Logger.processInputs("Turret", inputs);
+    Logger.recordOutput("Turret/state", getCurrentState());
+    logMechanisms();
+
+    Robot.batteryLogger.reportCurrentUsage("Turret/Azimuth", inputs.azimuthState.currentAmps());
+    Robot.batteryLogger.reportCurrentUsage("Turret/Hood", inputs.hoodState.currentAmps());
+    Robot.batteryLogger.reportCurrentUsage("Turret/Flywheel", inputs.shooterState.currentAmps());
+
+    // Logic
+    applyState();
+    io.applyOutputs(outputs);
+
+    Logger.recordOutput("Turret/Setpoints/hoodRots", outputs.hoodSetpointRots);
+    Logger.recordOutput("Turret/Setpoints/azimuthRots", outputs.azimuthSetpointRots);
+    Logger.recordOutput("Turret/Setpoints/azimuthFFRPS", outputs.azimuthFFRotsPerSec);
+    Logger.recordOutput("Turret/Setpoints/flywheelRPS", outputs.flywheelRPS);
+  }
+
+  @Override
+  public void applyState() {
+    outputs.azimuthSetpointRots = parameters.azimuthAngle().in(Rotations);
+    outputs.azimuthFFRotsPerSec =
+        azimuthFFFilter.calculate(parameters.azimuthVelocity().in(RotationsPerSecond));
+    outputs.flywheelRPS = flywheelIdleSpeed.getAsDouble();
+    outputs.hoodSetpointRots = parameters.hoodAngle().in(Rotations);
+
+    switch (getCurrentState()) {
+      case NEAR_TRENCH:
+        outputs.hoodSetpointRots =
+            Math.min(
+                parameters.hoodAngle().in(Rotations),
+                TurretConstants.trenchHoodAngle.in(Rotations));
+        break;
+      case SHOOT:
+        outputs.flywheelRPS = parameters.launcherSpeed().in(RotationsPerSecond);
+        break;
+      default:
+        break;
+    }
   }
 
   private void logMechanisms() {
@@ -122,112 +218,5 @@ public class Turret extends StateSubsystem<TurretState> {
         TurretConstants.cameraRotation.plus(
             new Rotation3d(0.0, 0.0, getAzimuthAngle().in(Radians)));
     return new Transform3d(totalOffset, totalRotation);
-  }
-
-  public boolean approachingWrapLimit(double decelSeconds) {
-    double pos = inputs.azimuthState.nativePosition();
-    double vel = inputs.azimuthState.nativeVelocity();
-    if (vel > 1e-3) {
-      double timeToMax = (TurretConstants.maxAzimuthAngle.in(Rotations) - pos) / vel;
-      if (timeToMax < decelSeconds) return true;
-    } else if (vel < -1e-3) {
-      double timeToMin = (pos - TurretConstants.minAzimuthAngle.in(Rotations)) / (-vel);
-      if (timeToMin < decelSeconds) return true;
-    }
-    return false;
-  }
-
-  public boolean readyForFeed() {
-    boolean hoodReady =
-        getHoodAngle().isNear(parameters.hoodAngle(), TurretConstants.hoodTolerance);
-    boolean upToSpeed =
-        getShooterSpeed().isNear(parameters.launcherSpeed(), TurretConstants.shotSpeedTolerance);
-    boolean simHasFuel =
-        RobotConfig.getMode() == OperationMode.SIM ? RobotState.getInstance().consumeFuel() : true;
-    boolean azimuthReady =
-        getAzimuthAngle().isNear(parameters.azimuthAngle(), TurretConstants.azimuthTolerance);
-
-    if (wrapTriggered && wrapTimer.get() > 0.75) {
-      wrapTriggered = false;
-    }
-
-    boolean nearWrap = approachingWrapLimit(0.4);
-
-    Logger.recordOutput("Turret/wrapTriggered", wrapTriggered);
-    Logger.recordOutput("Turret/approachingWrapLimit", nearWrap);
-    Logger.recordOutput("Turret/azimuthGood", azimuthReady);
-    Logger.recordOutput("Turret/hoodReady", hoodReady);
-    Logger.recordOutput("Turret/upToSpeed", upToSpeed);
-
-    return hoodReady
-        && azimuthReady
-        && upToSpeed
-        && simHasFuel
-        && !wrapTriggered
-        && !nearWrap
-        && (getCurrentState() != TurretState.NEAR_TRENCH);
-  }
-
-  @Override
-  public void periodic() {
-    RobotState.getInstance()
-        .getVision()
-        .setRobotToCamera(VisionConstants.turretConfig.name(), getRobotToCamera());
-    parameters = TurretCalculator.calculateSetpoints(target, getAzimuthAngle());
-
-    if (parameters.wrapTriggered()) {
-      wrapTriggered = true;
-      wrapTimer.restart();
-    }
-    /*
-    azimuthReady =
-        azimuthErrorDebouncer.calculate(
-            getAzimuthAngle().isNear(parameters.azimuthAngle(), TurretConstants.azimuthTolerance));*/
-
-    io.updateInputs(inputs);
-    Logger.processInputs("Turret", inputs);
-    Logger.recordOutput("Turret/state", getCurrentState());
-    logMechanisms();
-
-    Robot.batteryLogger.reportCurrentUsage("Turret/Azimuth", inputs.azimuthState.currentAmps());
-    Robot.batteryLogger.reportCurrentUsage("Turret/Hood", inputs.hoodState.currentAmps());
-    Robot.batteryLogger.reportCurrentUsage("Turret/Flywheel", inputs.shooterState.currentAmps());
-
-    applyState();
-
-    Logger.recordOutput("Turret/hoodSetpoint", outputs.hoodSetpoint.in(Rotations));
-    Logger.recordOutput("Turret/azimuthSetpoint", outputs.azimuthSetpoint);
-    Logger.recordOutput(
-        "Turret/azimuthVelocitySetpoint", outputs.azimuthVelocitySetpoint.in(RotationsPerSecond));
-    Logger.recordOutput("Turret/shooterSetpoint", outputs.shooterSetpoint.in(RotationsPerSecond));
-
-    io.applyOutputs(outputs);
-  }
-
-  @Override
-  public void applyState() {
-    outputs.azimuthSetpoint = parameters.azimuthAngle();
-    outputs.azimuthVelocitySetpoint = parameters.azimuthVelocity();
-
-    Logger.recordOutput("Turret/azimuthReady", azimuthReady);
-
-    switch (getCurrentState()) {
-      case IDLE_TRACK:
-        outputs.shooterSetpoint = TurretConstants.shotIdleSpeed;
-        outputs.hoodSetpoint = parameters.hoodAngle();
-        break;
-      case NEAR_TRENCH:
-        outputs.shooterSetpoint = TurretConstants.shotIdleSpeed;
-        outputs.hoodSetpoint =
-            Degrees.of(
-                Math.min(
-                    parameters.hoodAngle().in(Degrees),
-                    TurretConstants.trenchHoodAngle.in(Degrees)));
-        break;
-      case SHOOT:
-        outputs.hoodSetpoint = parameters.hoodAngle();
-        outputs.shooterSetpoint = parameters.launcherSpeed();
-        break;
-    }
   }
 }

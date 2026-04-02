@@ -23,7 +23,7 @@ public class TurretIOHardware implements TurretIO {
   private final CANcoder azimuthEncoder;
   private final TalonFXSignals azimuthSignals;
   private final PositionTorqueCurrentFOC azimuthTrackRequest =
-      new PositionTorqueCurrentFOC(0.0).withUpdateFreqHz(250);
+      new PositionTorqueCurrentFOC(0.0).withSlot(0);
 
   private final TalonFX hoodMotor;
   private final TalonFXSignals hoodSignals;
@@ -67,10 +67,10 @@ public class TurretIOHardware implements TurretIO {
   public void applyOutputs(TurretIOOutputs outputs) {
     azimuthMotor.setControl(
         azimuthTrackRequest
-            .withPosition(outputs.azimuthSetpoint)
-            .withVelocity(outputs.azimuthVelocitySetpoint));
-    hoodMotor.setControl(hoodRequest.withPosition(outputs.hoodSetpoint));
-    shooterMotor.setControl(shooterRequest.withVelocity(outputs.shooterSetpoint));
+            .withPosition(outputs.azimuthSetpointRots)
+            .withVelocity(outputs.azimuthFFRotsPerSec));
+    hoodMotor.setControl(hoodRequest.withPosition(outputs.hoodSetpointRots));
+    shooterMotor.setControl(shooterRequest.withVelocity(outputs.flywheelRPS));
   }
 
   private void configureAzimuth() {
@@ -92,12 +92,14 @@ public class TurretIOHardware implements TurretIO {
         .withForwardSoftLimitThreshold(TurretConstants.maxAzimuthAngle.in(Rotations))
         .withReverseSoftLimitEnable(true)
         .withReverseSoftLimitThreshold(TurretConstants.minAzimuthAngle.in(Rotations));
-    azimuthMotor.getConfigurator().apply(config);
+
+    for (int i = 0; i < 5; ++i) {
+      if (azimuthMotor.getConfigurator().apply(config).isOK()) break;
+    }
   }
 
   private void configureHood() {
     var config = new TalonFXConfiguration();
-    // config.withSlot0(TurretConstants.hoodGains.toSlot0Configs());
     config.withSlot0(
         new Slot0Configs().withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign));
     config.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive)
@@ -108,16 +110,19 @@ public class TurretIOHardware implements TurretIO {
         .withForwardSoftLimitThreshold(0.107)
         .withReverseSoftLimitEnable(true)
         .withReverseSoftLimitThreshold(0.0);
-    hoodMotor.getConfigurator().apply(config);
+    for (int i = 0; i < 5; ++i) {
+      if (hoodMotor.getConfigurator().apply(config).isOK()) break;
+    }
   }
 
   private void configureShooter() {
     var config = new TalonFXConfiguration();
-    // config.withSlot0(new Slot0Configs().withKS(12.3).withKV(0.36).withKP(30));
     config.Feedback.withSensorToMechanismRatio(TurretConstants.launcherGearRatio);
     config.CurrentLimits.withStatorCurrentLimit(100);
     config.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive)
         .withNeutralMode(NeutralModeValue.Brake);
-    shooterMotor.getConfigurator().apply(config);
+    for (int i = 0; i < 5; ++i) {
+      if (shooterMotor.getConfigurator().apply(config).isOK()) break;
+    }
   }
 }
