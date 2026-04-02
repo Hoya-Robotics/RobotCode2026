@@ -163,13 +163,6 @@ public class RobotConfig {
       SHOOT
     }
 
-    public enum TurretTarget {
-      DEFAULT,
-      TUNING,
-      CONSTANT_FORWARD,
-      HUB
-    }
-
     public static final int hoodMotorId = 40;
     public static final int azimuthMotorId = 41;
     public static final int azimuthEncoderId = 42;

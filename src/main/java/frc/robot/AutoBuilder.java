@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.RobotConfig.SuperStructureState;
-import frc.robot.RobotConfig.TurretConstants.TurretTarget;
 import frc.robot.subsystems.SuperStructure;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.AllianceFlip;
@@ -130,10 +129,8 @@ public class AutoBuilder {
                               if (FieldConstants.inAllianceZone(
                                   RobotState.getInstance().getEstimatedPose())) {
                                 superStructure.setState(SuperStructureState.SHOOT);
-                                superStructure.setTarget(TurretTarget.DEFAULT);
                               } else {
                                 superStructure.setState(SuperStructureState.INTAKE);
-                                superStructure.setTarget(TurretTarget.HUB);
                               }
                             })
                         : Commands.none(),

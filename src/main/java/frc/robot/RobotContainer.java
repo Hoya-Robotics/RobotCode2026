@@ -15,9 +15,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.RobotConfig.IntakeConstants;
+import frc.robot.RobotConfig.IntakeConstants.IntakeState;
 import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.RobotConfig.TurretConstants;
-import frc.robot.RobotConfig.TurretConstants.TurretTarget;
 import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.subsystems.SuperStructure;
 import frc.robot.subsystems.drive.*;
@@ -138,14 +138,16 @@ public class RobotContainer {
         .rightBumper()
         .whileTrue(superStructure.setStateCommand(SuperStructureState.REVERSE_INTAKE).repeatedly());
 
-    driveController
-        .b()
-        .whileTrue(superStructure.setTargetCommand(TurretTarget.CONSTANT_FORWARD))
-        .onFalse(superStructure.setTargetCommand(TurretTarget.DEFAULT));
-    driveController
-        .x()
-        .whileTrue(superStructure.setTargetCommand(TurretTarget.TUNING))
-        .onFalse(superStructure.setTargetCommand(TurretTarget.DEFAULT));
+    /*
+     driveController
+         .b()
+         .whileTrue(superStructure.setTargetCommand(TurretTarget.CONSTANT_FORWARD))
+         .onFalse(superStructure.setTargetCommand(TurretTarget.DEFAULT));
+     driveController
+         .x()
+         .whileTrue(superStructure.setTargetCommand(TurretTarget.TUNING))
+         .onFalse(superStructure.setTargetCommand(TurretTarget.DEFAULT));
+    */
 
     driveController
         .start()
@@ -178,7 +180,7 @@ public class RobotContainer {
         Inches.of(16.875 + 9.375).in(Meters),
         Inches.of(13.75).unaryMinus().in(Meters),
         Inches.of(13.75).in(Meters),
-        () -> superStructure.isIntaking(),
+        () -> intake.getCurrentState() == IntakeState.INTAKE,
         RobotState.getInstance()::addFuel);
     fuelSim.enableAirResistance();
     fuelSim.start();

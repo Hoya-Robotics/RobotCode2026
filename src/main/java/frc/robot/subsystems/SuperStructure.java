@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -14,11 +15,12 @@ import frc.robot.RobotConfig.SpindexerConstants.SpindexerState;
 import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.TurretConstants.TurretState;
-import frc.robot.RobotConfig.TurretConstants.TurretTarget;
 import frc.robot.RobotState;
+import frc.robot.TurretCalculator;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.spindexer.Spindexer;
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.util.AllianceFlip;
 import frc.robot.util.StateSubsystem;
 import org.littletonrobotics.junction.Logger;
 
@@ -29,28 +31,17 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
   private final Spindexer spindexer;
   private final Turret turret;
   private final Intake intake;
-  private frc.robot.RobotConfig.TurretConstants.TurretTarget target;
 
   public SuperStructure(Spindexer spindexer, Turret turret, Intake intake) {
-    this.target = TurretTarget.DEFAULT;
     this.spindexer = spindexer;
     this.turret = turret;
     this.intake = intake;
-    this.target = TurretTarget.DEFAULT;
 
     setState(SuperStructureState.IDLE);
   }
 
   public Command setStateCommand(SuperStructureState state) {
     return Commands.runOnce(() -> setState(state), this);
-  }
-
-  public void setTarget(TurretTarget target) {
-    this.target = target;
-  }
-
-  public Command setTargetCommand(TurretTarget target) {
-    return Commands.runOnce(() -> this.target = target);
   }
 
   @Override
@@ -67,7 +58,6 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
   @Override
   public void periodic() {
     Logger.recordOutput("SuperStructure/state", getCurrentState());
-    Logger.recordOutput("SuperStructure/trackingTarget", target);
     Logger.recordOutput("SuperStructure/coolingDown", coolingDown);
 
     if (coolingDown
@@ -76,17 +66,20 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
       coolingDown = false;
     }
 
-    turret.setTarget(target);
     applyState();
-
-    if (FieldConstants.underTrench(RobotState.getInstance().getEstimatedPose())) {
-      turret.setState(TurretState.NEAR_TRENCH);
-    }
   }
 
   @Override
   public void applyState() {
     SuperStructureState state = getCurrentState();
+
+    // Turret targeting
+    Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
+    if (FieldConstants.inAllianceZone(robotPose)) {
+      turret.setTarget(AllianceFlip.apply(FieldConstants.hubCenter.toTranslation2d()), false);
+    } else {
+      turret.setTarget(AllianceFlip.apply(TurretCalculator.getPassingTarget()), true);
+    }
 
     turret.setState(TurretState.IDLE_TRACK);
     RobotState.getInstance().setDriveSOTM(false);
@@ -95,6 +88,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     if (coolingDown) {
       state = SuperStructureState.SHOOT;
     }
+
     switch (state) {
       case REVERSE_INTAKE:
         intake.setState(IntakeState.REVERSE);
@@ -113,7 +107,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         if (DriverStation.isTeleopEnabled()) RobotState.getInstance().setDriveSOTM(true);
         turret.setState(TurretState.SHOOT);
 
-        if (shouldShoot()) {
+        if (turret.readyForFeed()) {
           intake.setState(IntakeState.AGITATE);
 
           if (coolingDown) {
@@ -135,17 +129,10 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         }
         break;
     }
-  }
 
-  private boolean shouldShoot() {
-    boolean underTrench = FieldConstants.underTrench(RobotState.getInstance().getEstimatedPose());
-    Logger.recordOutput("SuperStructure/underTrench", underTrench);
-
-    return turret.readyForFeed() && (!underTrench);
-  }
-
-  public boolean isIntaking() {
-    return getCurrentState() == SuperStructureState.INTAKE
-        || getCurrentState() == SuperStructureState.SHOOT_INTAKE;
+    // Trench override
+    if (FieldConstants.underTrench(RobotState.getInstance().getEstimatedPose())) {
+      turret.setState(TurretState.NEAR_TRENCH);
+    }
   }
 }

@@ -20,7 +20,6 @@ import frc.robot.RobotConfig;
 import frc.robot.RobotConfig.OperationMode;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.TurretConstants.TurretState;
-import frc.robot.RobotConfig.TurretConstants.TurretTarget;
 import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.RobotState;
 import frc.robot.TurretCalculator;
@@ -32,17 +31,17 @@ import org.littletonrobotics.junction.Logger;
 
 public class Turret extends StateSubsystem<TurretState> {
   private final TurretIO io;
-  private TurretTarget target = TurretTarget.DEFAULT;
+  private Translation2d target = Translation2d.kZero;
   private TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
   private TurretParameters parameters =
       new TurretParameters(
           Rotations.of(0.0),
           RotationsPerSecond.of(0.0),
           Rotations.of(0.0),
-          RotationsPerSecond.of(0.0),
-          false);
+          RotationsPerSecond.of(0.0));
   private TurretIOOutputs outputs = new TurretIOOutputs();
   private Timer simShotTimer = new Timer();
+  private boolean passing = false;
 
   private final LoggedTunableNumber flywheelIdleSpeed =
       new LoggedTunableNumber("Turret/Flywheel/idleSpeedRPS", 10);
@@ -66,16 +65,17 @@ public class Turret extends StateSubsystem<TurretState> {
     return Rotations.of(inputs.hoodState.nativePosition());
   }
 
-	public AngularVelocity getShooterSpeed() {
-		return RotationsPerSecond.of(inputs.shooterState.nativeVelocity());
+  public AngularVelocity getShooterSpeed() {
+    return RotationsPerSecond.of(inputs.shooterState.nativeVelocity());
   }
 
   public TurretParameters getParameters() {
     return parameters;
   }
 
-  public void setTarget(TurretTarget target) {
+  public void setTarget(Translation2d target, boolean passing) {
     this.target = target;
+    this.passing = passing;
   }
 
   private boolean willAzimuthWrapWithin(double dt) {
@@ -89,7 +89,10 @@ public class Turret extends StateSubsystem<TurretState> {
     double posError = Math.abs(inputs.azimuthState.nativePosition() - outputs.azimuthSetpointRots);
     double velError = Math.abs(inputs.azimuthState.nativeVelocity() - outputs.azimuthFFRotsPerSec);
 
-    boolean withinTolerance = posError < 0.02 && velError < 0.05;
+    boolean withinTolerance = posError < 0.05;
+    if (RobotConfig.getMode() != OperationMode.SIM) {
+      withinTolerance = withinTolerance && velError < 0.1;
+    }
     return azimuthSettledDebouncer.calculate(withinTolerance);
   }
 
@@ -97,7 +100,7 @@ public class Turret extends StateSubsystem<TurretState> {
     boolean hoodReady =
         getHoodAngle().isNear(parameters.hoodAngle(), TurretConstants.hoodTolerance);
     boolean upToSpeed =
-        getShooterSpeed().isNear(parameters.launcherSpeed(), TurretConstants.shotSpeedTolerance);
+        getShooterSpeed().isNear(parameters.flywheelSpeed(), TurretConstants.shotSpeedTolerance);
     boolean simHasFuel =
         RobotConfig.getMode() == OperationMode.SIM ? RobotState.getInstance().consumeFuel() : true;
     boolean azimuthReady = isAzimuthTracking();
@@ -121,13 +124,14 @@ public class Turret extends StateSubsystem<TurretState> {
     RobotState.getInstance()
         .getVision()
         .setRobotToCamera(VisionConstants.turretConfig.name(), getRobotToCamera());
-    parameters = TurretCalculator.calculateSetpoints(target, getAzimuthAngle());
+    parameters = TurretCalculator.turretIterativeMovingSetpoint(target, passing, getAzimuthAngle());
 
     io.updateInputs(inputs);
 
     // Logging
     Logger.processInputs("Turret", inputs);
     Logger.recordOutput("Turret/state", getCurrentState());
+    Logger.recordOutput("Turret/target", target);
     logMechanisms();
 
     Robot.batteryLogger.reportCurrentUsage("Turret/Azimuth", inputs.azimuthState.currentAmps());
@@ -160,7 +164,7 @@ public class Turret extends StateSubsystem<TurretState> {
                 TurretConstants.trenchHoodAngle.in(Rotations));
         break;
       case SHOOT:
-        outputs.flywheelRPS = parameters.launcherSpeed().in(RotationsPerSecond);
+        outputs.flywheelRPS = parameters.flywheelSpeed().in(RotationsPerSecond);
         break;
       default:
         break;
@@ -193,7 +197,7 @@ public class Turret extends StateSubsystem<TurretState> {
         MetersPerSecond.of(
             TurretConstants.launcherWheelRadius.times(2.0 * Math.PI).in(Meters)
                 * parameters
-                    .launcherSpeed()
+                    .flywheelSpeed()
                     .minus(RotationsPerSecond.of(4.0))
                     .in(RotationsPerSecond));
     RobotState.getInstance()

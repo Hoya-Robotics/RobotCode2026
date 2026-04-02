@@ -32,15 +32,11 @@ public class SpindexerIOHardware implements SpindexerIO {
     feedController = feedMotor.getClosedLoopController();
 
     SparkFlexConfig indexConfig = new SparkFlexConfig();
-    // indexConfig.closedLoop.pid(0.0002, 0.0, 0.0);
-    // indexConfig.closedLoop.feedForward.kV(0.0054);
     indexConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(80); // 29
     indexConfig.encoder.positionConversionFactor(SpindexerConstants.indexGearRatio);
     indexConfig.encoder.velocityConversionFactor(SpindexerConstants.indexGearRatio);
 
     SparkFlexConfig feedConfig = new SparkFlexConfig();
-    // feedConfig.closedLoop.pid(0.00002, 0.0, 0.0);
-    // feedConfig.closedLoop.feedForward.kV(0.0018); // 0.05
     feedConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(80);
     feedConfig.encoder.positionConversionFactor(SpindexerConstants.feedGearRatio);
     feedConfig.encoder.velocityConversionFactor(SpindexerConstants.feedGearRatio);
@@ -71,10 +67,10 @@ public class SpindexerIOHardware implements SpindexerIO {
 
   @Override
   public void applyOutputs(SpindexerIOOutputs outputs) {
-    Logger.recordOutput("Spindexer/indexSetpointRPS", outputs.indexMotorVelocity);
-    Logger.recordOutput("Spindexer/feedSetpointRPS", outputs.feedVelocity);
+    Logger.recordOutput("Spindexer/indexSetpointRPS", outputs.indexSetpointRPS);
+    Logger.recordOutput("Spindexer/feedSetpointRPS", outputs.feedSetpointRPS);
 
-    indexController.setSetpoint(outputs.indexMotorVelocity.in(RPM), ControlType.kVelocity);
-    feedController.setSetpoint(outputs.feedVelocity.in(RPM), ControlType.kVelocity);
+    indexController.setSetpoint(outputs.indexSetpointRPS * 60, ControlType.kVelocity);
+    feedController.setSetpoint(outputs.feedSetpointRPS * 60, ControlType.kVelocity);
   }
 }

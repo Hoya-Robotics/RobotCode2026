@@ -31,7 +31,7 @@ public abstract class StateSubsystem<E extends Enum<E>> extends SubsystemBase {
     return requestedState;
   }
 
-  protected final E getCurrentState() {
+  public final E getCurrentState() {
     return currentState;
   }
 }
