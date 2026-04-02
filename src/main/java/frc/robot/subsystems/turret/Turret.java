@@ -101,8 +101,6 @@ public class Turret extends StateSubsystem<TurretState> {
         getHoodAngle().isNear(parameters.hoodAngle(), TurretConstants.hoodTolerance);
     boolean upToSpeed =
         getShooterSpeed().isNear(parameters.flywheelSpeed(), TurretConstants.shotSpeedTolerance);
-    boolean simHasFuel =
-        RobotConfig.getMode() == OperationMode.SIM ? RobotState.getInstance().consumeFuel() : true;
     boolean azimuthReady = isAzimuthTracking();
     boolean willWrap = willAzimuthWrapWithin(wrapLooheadSeconds.getAsDouble());
 
@@ -111,12 +109,14 @@ public class Turret extends StateSubsystem<TurretState> {
     Logger.recordOutput("Turret/Ready/flywheelSpeed", upToSpeed);
     Logger.recordOutput("Turret/Ready/azimuthWillWrap", willWrap);
 
-    return hoodReady
-        && azimuthReady
-        && upToSpeed
-        && simHasFuel
-        && (!willWrap)
-        && (getCurrentState() != TurretState.NEAR_TRENCH);
+    boolean ready =
+        hoodReady
+            && azimuthReady
+            && upToSpeed
+            && (!willWrap)
+            && (getCurrentState() != TurretState.NEAR_TRENCH);
+    Logger.recordOutput("Turret/Ready/fullyReady", ready);
+    return ready;
   }
 
   @Override
@@ -193,6 +193,7 @@ public class Turret extends StateSubsystem<TurretState> {
 
   public void simulateShot() {
     if (simShotTimer.get() < 0.25) return;
+    if (!RobotState.getInstance().consumeFuel()) return;
     LinearVelocity launchSpeed =
         MetersPerSecond.of(
             TurretConstants.launcherWheelRadius.times(2.0 * Math.PI).in(Meters)

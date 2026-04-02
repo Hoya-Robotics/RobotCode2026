@@ -106,8 +106,8 @@ public class RobotConfig {
     public static final double feedGearRatio = 1.0;
     public static final double indexGearRatio = 1.0 / 3.0;
 
-    public static final SparkTunableGains indexGains = new SparkTunableGains("Spindexer/indexer");
-    public static final SparkTunableGains feederGains = new SparkTunableGains("Spindexer/feeder");
+    public static final SparkTunableGains indexGains = new SparkTunableGains("Spindexer/Index");
+    public static final SparkTunableGains feederGains = new SparkTunableGains("Spindexer/Feed");
 
     static {
       indexGains.registerGain("kp", 0.0002);
@@ -115,8 +115,6 @@ public class RobotConfig {
 
       feederGains.registerGain("kp", 0.0002);
       feederGains.registerGain("kv", 0.0018);
-      feederGains.registerGain("cruiseVelocity", 1200);
-      feederGains.registerGain("maxAcceleration", 1200);
     }
   }
 
@@ -140,8 +138,8 @@ public class RobotConfig {
     public static final double extendGearRatio = 1.8364;
     public static final double intakeKv = 1.1 * (1.0 / 576.8) / intakeGearRatio; // 0.032408;
 
-    public static final SparkTunableGains intakeGains = new SparkTunableGains("Intake/spin");
-    public static final TalonTunableGains extendGains = new TalonTunableGains("Intake/extend", 0);
+    public static final SparkTunableGains intakeGains = new SparkTunableGains("Intake/Spin");
+    public static final TalonTunableGains extendGains = new TalonTunableGains("Intake/Rack", 0);
 
     static {
       intakeGains.registerGain("kp", 0.0002);
@@ -170,10 +168,10 @@ public class RobotConfig {
     public static final double azimuthGearRatio = 42.0;
     public static final double launcherGearRatio = 2.25;
 
-    public static final TalonTunableGains azimuthGains = new TalonTunableGains("Turret/azimuth", 0);
+    public static final TalonTunableGains azimuthGains = new TalonTunableGains("Turret/Szimuth", 0);
     public static final TalonTunableGains flywheelGains =
-        new TalonTunableGains("Turret/flywheel", 0);
-    public static final TalonTunableGains hoodGains = new TalonTunableGains("Turret/hood", 0);
+        new TalonTunableGains("Turret/Flywheel", 0);
+    public static final TalonTunableGains hoodGains = new TalonTunableGains("Turret/Hood", 0);
 
     static {
       hoodGains.registerGain("kp", 170);
