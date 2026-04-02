@@ -1,0 +1,60 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+
+\usepackage{amsmath}
+
+\title{Rebuilt: Subsystem State Spec for 4152}
+\author{Gabriel Nakamoto}
+\date{\today}
+
+\begin{document}
+    \maketitle
+    
+    \section{Architecture}
+		SuperStructure acts as high level state logic wrapper for commanding all subsystem except drivetrain. \\
+
+		\begin{tabular}{@{} l l l @ {}}
+		\toprule
+		\textbf{Subsystem} &  \textbf{Motors} & \textbf{Control Methods} \\
+		\midrule
+		\textsc{Intake} & Kraken x44, Neo Vortex & Position, Velocity \\
+		\textsc{Turret} & 2xKraken x44, Kraken x60 & Velocity (TF\footnotemark), Position (TF), Position (TF) \\
+		\textsc{Spindexer} & 2xNeo Vortex & Velocity, Velocity \\
+		\bottomrule
+		\end{tabular}
+		\footnotetext{Torque FOC}
+
+		\section{States}
+		Enumeration of corresponding subsystem states commanded by higher level superstructure state.\\
+
+		\begin{tabular}{@{} l l l l @ {}}
+		\toprule
+		\textbf{SuperStructure} &  \textbf{Turret} & \textbf{Intake} & \textbf{Spindexer} \\
+		\midrule
+		\textsc{Idle} & \textsc{Idle Track} & \textsc{Retract} & \textsc{Hold} \\
+		\textsc{Intake} & \textsc{Idle Track} & \textsc{Intake} & \textsc{Hold} \\
+		\textsc{Shoot} & \textsc{Shoot} & \textsc{Agitate} & \textsc{Feed}\\
+		\textsc{Shoot Intake} & \textsc{Shoot} & \textsc{Intake} & \textsc{Feed} \\
+		\textsc{Reverse Intake} & \textsc{Idle Track} & \textsc{Reverse} & \textsc{Hold} \\
+		\textsc{Cooldown} & \textsc{Shoot} & \textsc{Agitate} & \textsc{Cooldown} \\
+		\bottomrule
+		\end{tabular}
+
+		\subsection{Exceptions}
+		\begin{itemize}
+			\item Hood clamped below max trench angle when near trench (Trench State = \textsc{Near Trench})
+			\item Spindexer will only enter feed state when the following conditions are met:
+				\begin{itemize}
+					\item Hood position within tunable threshold of setpoint
+					\item Azimuth position within tunable threshold of setpoint
+					\item Flywheel within tunable threshold of setpoint speed
+					\item Current turret state != \textsc{Near Trench}
+					\item Azimuth will not wrap within next $n$ seconds
+				\end{itemize}
+			\item Spindexer will run in reverse when stall detected ($<0.5$ rps)
+			\item Cooldown automatically ran for tunable duration after leaving \textsc{Shoot} superstructure state to preserve speed for remaining balls in pipeline.
+		\end{itemize}
+
+
+\end{document}

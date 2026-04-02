@@ -2,6 +2,7 @@
 > Contact software lead at gabriel@nakamoto.ca for any questions
 
 - Won Innovation in Control Award at Durham ON Regional Competition for simulation and logging
+- See subsystem overview spec [here](./spec.pdf)
 
 ### Highlights
 - 2xLimelight 4 global pose estimation
