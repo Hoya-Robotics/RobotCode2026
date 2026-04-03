@@ -31,12 +31,12 @@ public class SpindexerIOHardware implements SpindexerIO {
     feedController = feedMotor.getClosedLoopController();
 
     SparkFlexConfig indexConfig = new SparkFlexConfig();
-    indexConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(80); // 29
+    indexConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(50); // 29
     indexConfig.encoder.positionConversionFactor(SpindexerConstants.indexGearRatio);
     indexConfig.encoder.velocityConversionFactor(SpindexerConstants.indexGearRatio);
 
     SparkFlexConfig feedConfig = new SparkFlexConfig();
-    feedConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(80);
+    feedConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(50);
     feedConfig.encoder.positionConversionFactor(SpindexerConstants.feedGearRatio);
     feedConfig.encoder.velocityConversionFactor(SpindexerConstants.feedGearRatio);
 
@@ -54,13 +54,13 @@ public class SpindexerIOHardware implements SpindexerIO {
     inputs.indexMotorVoltageApplied =
         Volts.of(indexMotor.getAppliedOutput() * indexMotor.getBusVoltage());
     inputs.indexMotorCurrent = Amps.of(indexMotor.getOutputCurrent());
-    inputs.indexMotorVelocity = RPM.of(indexEncoder.getVelocity());
+    inputs.indexMotorVelocity = RotationsPerSecond.of(indexEncoder.getVelocity() / 60.0);
     inputs.indexConnected = indexMotor.getLastError() == REVLibError.kOk;
 
     inputs.feedMotorVoltageApplied =
         Volts.of(feedMotor.getAppliedOutput() * feedMotor.getBusVoltage());
     inputs.feedMotorCurrent = Amps.of(feedMotor.getOutputCurrent());
-    inputs.feedMotorVelocity = RPM.of(feedEncoder.getVelocity());
+    inputs.feedMotorVelocity = RotationsPerSecond.of(feedEncoder.getVelocity() / 60.0);
     inputs.feedConnected = feedMotor.getLastError() == REVLibError.kOk;
   }
 

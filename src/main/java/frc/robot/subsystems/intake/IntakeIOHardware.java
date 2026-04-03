@@ -36,6 +36,7 @@ public class IntakeIOHardware implements IntakeIO {
   private final SparkFlex intakeMotor;
   private final SparkClosedLoopController intakeController;
   private final RelativeEncoder intakeEncoder;
+  private NeutralModeValue lastNeutralMode = null;
 
   public IntakeIOHardware(int extendId, int extendEncoderId, int intakeId) {
     this.extendMotor = new TalonFX(extendId);
@@ -45,11 +46,10 @@ public class IntakeIOHardware implements IntakeIO {
     intakeEncoder = intakeMotor.getEncoder();
 
     var intakeConfig = new SparkFlexConfig();
-    intakeConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(80);
+    intakeConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(60);
     intakeConfig.encoder.positionConversionFactor(IntakeConstants.intakeGearRatio);
     intakeConfig.encoder.velocityConversionFactor(IntakeConstants.intakeGearRatio);
     intakeConfig.closedLoopRampRate(0.075);
-    // intakeConfig.closedLoop.pid(IntakeConstants.intakeGains.kp(), 0.0, 0.0);
     intakeConfig.closedLoop.feedForward.kV(IntakeConstants.intakeKv);
     intakeMotor.configure(
         intakeConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
@@ -60,21 +60,20 @@ public class IntakeIOHardware implements IntakeIO {
     extendEncoder.getConfigurator().apply(extendEncoderConfig);
 
     var extendConfig = new TalonFXConfiguration();
-    extendConfig.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(0.125);
+    extendConfig.ClosedLoopRamps.withVoltageClosedLoopRampPeriod(0.075);
     extendConfig.Feedback.withRemoteCANcoder(extendEncoder);
     extendConfig.Feedback.withRotorToSensorRatio(10.3846);
     extendConfig.Feedback.withSensorToMechanismRatio(0.1768);
     extendConfig.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive);
-    // extendConfig.Feedback.withSensorToMechanismRatio(IntakeConstants.extendGearRatio);
     extendConfig.MotorOutput.withNeutralMode(NeutralModeValue.Brake);
-    // extendConfig.withSlot0(IntakeConstants.extendGains.toSlot0Configs());
     extendConfig.CurrentLimits.withStatorCurrentLimit(24);
     extendConfig
         .SoftwareLimitSwitch
         .withForwardSoftLimitEnable(true)
         .withForwardSoftLimitThreshold(IntakeConstants.maxExtension.in(Inches))
         .withReverseSoftLimitEnable(true)
-        .withReverseSoftLimitThreshold(IntakeConstants.maxRetraction.in(Inches));
+        .withReverseSoftLimitThreshold(3.5);
+    // .withReverseSoftLimitThreshold(IntakeConstants.maxRetraction.in(Inches));
     extendMotor.getConfigurator().apply(extendConfig);
     extendMotor.setPosition(0.0);
     extendEncoder.setPosition(0.0);
@@ -103,14 +102,11 @@ public class IntakeIOHardware implements IntakeIO {
 
   @Override
   public void applyOutputs(IntakeIOOutputs outputs) {
-    if (RobotState.isDisabled()) {
-      extendMotor
-          .getConfigurator()
-          .apply(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Coast));
-    } else {
-      extendMotor
-          .getConfigurator()
-          .apply(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake));
+    NeutralModeValue desiredMode =
+        RobotState.isDisabled() ? NeutralModeValue.Coast : NeutralModeValue.Brake;
+    if (desiredMode != lastNeutralMode) {
+      extendMotor.getConfigurator().apply(new MotorOutputConfigs().withNeutralMode(desiredMode));
+      lastNeutralMode = desiredMode;
     }
     Logger.recordOutput("Intake/extensionSetpoint", outputs.extensionDistance.in(Meters));
     Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVelocity);

@@ -19,12 +19,16 @@ public class Intake extends StateSubsystem<IntakeState> {
   private final IntakeIO io;
   private IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
   private IntakeIOOutputs outputs = new IntakeIOOutputs();
-  private boolean agitatingForward = false;
+  // private boolean agitatingForward = false;
   private boolean hasExtended = false;
 
   private LoggedTunableNumber intakeSpeed = new LoggedTunableNumber("Intake/Spin/speedRPM", 3200);
-  private LoggedTunableNumber agitateOut = new LoggedTunableNumber("Intake/Rack/agitoutOutIn", 9.0);
-  private LoggedTunableNumber agitateIn = new LoggedTunableNumber("Intake/Rack/agitoutInIn", 5.1);
+  // private LoggedTunableNumber agitateOut = new LoggedTunableNumber("Intake/Rack/agitoutOutIn",
+  // 9.0);
+  // private LoggedTunableNumber agitateIn = new LoggedTunableNumber("Intake/Rack/agitoutInIn",
+  // 5.1);
+
+  private double latestIntakeSpeed = 3200;
 
   private Timer stateChangeTimer = new Timer();
   private Timer agitateTimer = new Timer();
@@ -53,6 +57,10 @@ public class Intake extends StateSubsystem<IntakeState> {
 
     Robot.batteryLogger.reportCurrentUsage("Intake/spin", inputs.intakeCurrent.in(Amps));
     Robot.batteryLogger.reportCurrentUsage("Intake/extend", inputs.extendCurrent.in(Amps));
+
+    if (intakeSpeed.hasChanged(intakeSpeed.hashCode())) {
+      latestIntakeSpeed = intakeSpeed.getAsDouble();
+    }
 
     applyState();
     io.applyOutputs(outputs);
@@ -86,13 +94,16 @@ public class Intake extends StateSubsystem<IntakeState> {
         break;
       case REVERSE:
         outputs.extensionDistance = IntakeConstants.maxExtension;
-        outputs.intakeVelocity = RPM.of(-intakeSpeed.getAsDouble());
+        outputs.intakeVelocity = RPM.of(-latestIntakeSpeed);
         break;
       case INTAKE:
         outputs.extensionDistance = IntakeConstants.maxExtension;
-        outputs.intakeVelocity = RPM.of(intakeSpeed.getAsDouble());
+        outputs.intakeVelocity = RPM.of(latestIntakeSpeed);
         break;
       case AGITATE:
+        outputs.extensionDistance = Inches.of(3.5);
+        outputs.intakeVelocity = RPM.of(0.0);
+        /*
         if (agitateTimer.get() >= 0.4) {
           agitatingForward = !agitatingForward;
           agitateTimer.restart();
@@ -100,7 +111,7 @@ public class Intake extends StateSubsystem<IntakeState> {
 
         outputs.extensionDistance =
             Inches.of(agitatingForward ? agitateOut.getAsDouble() : agitateIn.getAsDouble());
-        outputs.intakeVelocity = RPM.of(750);
+        outputs.intakeVelocity = RPM.of(750);*/
         break;
     }
 

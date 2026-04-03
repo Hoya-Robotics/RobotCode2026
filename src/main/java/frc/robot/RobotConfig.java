@@ -130,7 +130,6 @@ public class RobotConfig {
     public static final int intakeMotorId = 31;
     public static final int intakeEncoderId = 32;
 
-    public static final double extensionRampRate = 0.125;
     public static final double extensionAgitatePeriod = 0.3;
 
     public static final double extensionRadius = Units.inchesToMeters(0.7);
@@ -168,7 +167,7 @@ public class RobotConfig {
     public static final double azimuthGearRatio = 42.0;
     public static final double launcherGearRatio = 2.25;
 
-    public static final TalonTunableGains azimuthGains = new TalonTunableGains("Turret/Szimuth", 0);
+    public static final TalonTunableGains azimuthGains = new TalonTunableGains("Turret/Azimuth", 0);
     public static final TalonTunableGains flywheelGains =
         new TalonTunableGains("Turret/Flywheel", 0);
     public static final TalonTunableGains hoodGains = new TalonTunableGains("Turret/Hood", 0);
@@ -182,8 +181,8 @@ public class RobotConfig {
 
       azimuthGains.registerGain("kp", 125);
       azimuthGains.registerGain("kd", 8.0);
-      azimuthGains.registerGain("kv", 2.5);
       azimuthGains.registerGain("ka", 2.13);
+      azimuthGains.registerGain("kv", 2.5);
       azimuthGains.registerGain("ks", 14);
 
       flywheelGains.registerGain("kv", 0.36);

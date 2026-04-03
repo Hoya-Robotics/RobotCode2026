@@ -9,14 +9,11 @@ import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
@@ -173,12 +170,7 @@ public class Drive extends StateSubsystem<DriveState> {
     Pose2d robotPose = inputs.Pose;
     switch (getCurrentState()) {
       case TELEOP:
-        var speeds = getInputVector();
-        applyRequest(
-            fieldRequest
-                .withVelocityX(speeds.get(0))
-                .withVelocityY(speeds.get(1))
-                .withRotationalRate(speeds.get(2)));
+        applyRequest(getInputRequest());
         break;
       case CHOREO:
         if (choreoTrajectory.isPresent()) {
@@ -261,7 +253,7 @@ public class Drive extends StateSubsystem<DriveState> {
     return robotRelativeRequest.withSpeeds(speeds);
   }
 
-  private Vector<N3> getInputVector() {
+  private SwerveRequest getInputRequest() {
     double sx = -driveController.getLeftY() + 1e-8;
     double sy = -driveController.getLeftX() + 1e-8;
     double omega = -driveController.getRightX();
@@ -269,7 +261,7 @@ public class Drive extends StateSubsystem<DriveState> {
     omega = Math.copySign(omega * omega, omega);
     omega *= DriveConstants.maxRotationSpeedRadPerSec;
 
-    var heading = new Rotation2d(sx, sy);
+    double heading = Math.atan2(sy, sx);
     var magnitude = Math.hypot(sx, sy);
     magnitude = magnitude * magnitude; // heuristic
     magnitude *= DriveConstants.maxDriveSpeedMps;
@@ -282,9 +274,9 @@ public class Drive extends StateSubsystem<DriveState> {
     }
     Logger.recordOutput("Drive/processedInputMagnitude", magnitude);
 
-    double xVelocity = magnitude * heading.getCos() * (FieldConstants.isBlueAlliance() ? 1 : -1);
-    double yVelocity = magnitude * heading.getSin() * (FieldConstants.isBlueAlliance() ? 1 : -1);
-    return VecBuilder.fill(xVelocity, yVelocity, omega);
+    double xVelocity = magnitude * Math.cos(heading) * (FieldConstants.isBlueAlliance() ? 1 : -1);
+    double yVelocity = magnitude * Math.sin(heading) * (FieldConstants.isBlueAlliance() ? 1 : -1);
+    return fieldRequest.withVelocityX(xVelocity).withVelocityY(yVelocity).withRotationalRate(omega);
   }
 
   public ChassisSpeeds getChassisSpeeds() {

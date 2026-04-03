@@ -14,8 +14,11 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
   private final SpindexerIOInputsAutoLogged inputs = new SpindexerIOInputsAutoLogged();
   private SpindexerIOOutputs outputs = new SpindexerIOOutputs();
 
-  private LoggedTunableNumber indexSpeed = new LoggedTunableNumber("Spindexer/indexSpeed", 14.0);
-  private LoggedTunableNumber feedSpeed = new LoggedTunableNumber("Spindexer/feedSpeed", 22.0);
+  private LoggedTunableNumber indexSpeed = new LoggedTunableNumber("Spindexer/indexSpeed", 8.0);
+  private LoggedTunableNumber feedSpeed = new LoggedTunableNumber("Spindexer/feedSpeed", 18.0);
+
+  private double latestFeedSpeed = 18.0;
+  private double latestIndexSpeed = 8.0;
 
   public Spindexer(SpindexerIO io) {
     this.io = io;
@@ -30,6 +33,14 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
 
     Robot.batteryLogger.reportCurrentUsage("Spindexer/Indexer", inputs.indexMotorCurrent.in(Amps));
     Robot.batteryLogger.reportCurrentUsage("Spindexer/Feeder", inputs.feedMotorCurrent.in(Amps));
+
+    if (feedSpeed.hasChanged(feedSpeed.hashCode())) {
+      latestFeedSpeed = feedSpeed.getAsDouble();
+    }
+
+    if (indexSpeed.hasChanged(indexSpeed.hashCode())) {
+      latestIndexSpeed = indexSpeed.getAsDouble();
+    }
 
     applyState();
 
@@ -47,12 +58,12 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
         outputs.feedSetpointRPS = 0.0;
         break;
       case COOLDOWN:
+        outputs.feedSetpointRPS = latestFeedSpeed;
         outputs.indexSetpointRPS = 0.0;
-        outputs.feedSetpointRPS = feedSpeed.getAsDouble();
         break;
       case FEED:
-        outputs.feedSetpointRPS = feedSpeed.getAsDouble();
-        outputs.indexSetpointRPS = indexSpeed.getAsDouble();
+        outputs.feedSetpointRPS = latestFeedSpeed;
+        outputs.indexSetpointRPS = latestIndexSpeed;
         break;
     }
   }

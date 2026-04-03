@@ -27,6 +27,7 @@ public interface VisionIO {
   public record MultitagEstimate(
       Pose2d pose,
       double avgTagArea,
+      double avgTagDist,
       double latency,
       double timestamp,
       double quality,
@@ -35,6 +36,7 @@ public interface VisionIO {
       return new MultitagEstimate(
           estimate.pose,
           estimate.avgTagArea,
+          estimate.avgTagDist,
           estimate.latency,
           estimate.timestampSeconds,
           estimate.tagCount > 1 ? 1.0 : 1.0 - estimate.rawFiducials[0].ambiguity,

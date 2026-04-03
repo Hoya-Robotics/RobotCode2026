@@ -11,13 +11,12 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Robot;
-import frc.robot.RobotConfig;
-import frc.robot.RobotConfig.OperationMode;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.TurretConstants.TurretState;
 import frc.robot.RobotConfig.VisionConstants;
@@ -49,7 +48,7 @@ public class Turret extends StateSubsystem<TurretState> {
       new LoggedTunableNumber("Turret/Azimuth/wrapLooheadSeconds", 0.5);
 
   private final LinearFilter azimuthFFFilter = LinearFilter.movingAverage(5);
-  private final Debouncer azimuthSettledDebouncer = new Debouncer(0.1, DebounceType.kRising);
+  private final Debouncer azimuthSettledDebouncer = new Debouncer(0.1, DebounceType.kBoth);
 
   public Turret(TurretIO io) {
     this.io = io;
@@ -87,12 +86,14 @@ public class Turret extends StateSubsystem<TurretState> {
 
   private boolean isAzimuthTracking() {
     double posError = Math.abs(inputs.azimuthState.nativePosition() - outputs.azimuthSetpointRots);
-    double velError = Math.abs(inputs.azimuthState.nativeVelocity() - outputs.azimuthFFRotsPerSec);
+    // double velError = Math.abs(inputs.azimuthState.nativeVelocity() -
+    // outputs.azimuthFFRotsPerSec);
 
-    boolean withinTolerance = posError < 0.05;
+    boolean withinTolerance = posError < Units.degreesToRotations(3.0);
+    /*
     if (RobotConfig.getMode() != OperationMode.SIM) {
       withinTolerance = withinTolerance && velError < 0.1;
-    }
+    }*/
     return azimuthSettledDebouncer.calculate(withinTolerance);
   }
 
@@ -110,9 +111,9 @@ public class Turret extends StateSubsystem<TurretState> {
     Logger.recordOutput("Turret/Ready/azimuthWillWrap", willWrap);
 
     boolean ready =
-        hoodReady
-            && azimuthReady
-            && upToSpeed
+        //  hoodReady &&
+        azimuthReady
+            // && upToSpeed
             && (!willWrap)
             && (getCurrentState() != TurretState.NEAR_TRENCH);
     Logger.recordOutput("Turret/Ready/fullyReady", ready);

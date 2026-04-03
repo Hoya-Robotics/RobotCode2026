@@ -43,7 +43,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void robotPeriodic() {
-    PhoenixSync.refreshAll(0.020);
+    PhoenixSync.refreshAll(0.010);
     GenericTunableGains.periodicAll();
     batteryLogger.periodic();
     CommandScheduler.getInstance().run();

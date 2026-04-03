@@ -52,8 +52,9 @@ public class PhoenixSync {
     }
   }
 
-  private static final List<StatusSignalCollection> signalGroups = new ArrayList<>();
+  private static final List<BaseStatusSignal> allSignals = new ArrayList<>();
   private static final List<ParentDevice> devices = new ArrayList<>();
+  private static BaseStatusSignal[] allSignalsArray = null;
 
   public static TalonFXSignals registerTalonFX(TalonFX motor, double updateFreqHz) {
     var signals =
@@ -64,17 +65,22 @@ public class PhoenixSync {
             motor.getMotorVoltage(),
             motor.getDeviceTemp(),
             motor.getSupplyCurrent());
-    StatusSignalCollection group =
-        new StatusSignalCollection(
+    new StatusSignalCollection(
             signals.position(),
             signals.velocity(),
             signals.acceleration(),
             signals.voltage(),
             signals.temp(),
-            signals.current());
-    group.setUpdateFrequencyForAll(updateFreqHz);
-    signalGroups.add(group);
+            signals.current())
+        .setUpdateFrequencyForAll(updateFreqHz);
+    allSignals.add(signals.position());
+    allSignals.add(signals.velocity());
+    allSignals.add(signals.acceleration());
+    allSignals.add(signals.voltage());
+    allSignals.add(signals.temp());
+    allSignals.add(signals.current());
     devices.add(motor);
+    allSignalsArray = null; // invalidate cache
 
     return signals;
   }
@@ -84,8 +90,9 @@ public class PhoenixSync {
   }
 
   public static void refreshAll(double timeoutSec) {
-    for (var group : signalGroups) {
-      group.waitForAll(timeoutSec);
+    if (allSignalsArray == null) {
+      allSignalsArray = allSignals.toArray(new BaseStatusSignal[0]);
     }
+    BaseStatusSignal.waitForAll(timeoutSec, allSignalsArray);
   }
 }

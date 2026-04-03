@@ -23,7 +23,7 @@ public class TurretIOHardware implements TurretIO {
   private final CANcoder azimuthEncoder;
   private final TalonFXSignals azimuthSignals;
   private final PositionTorqueCurrentFOC azimuthTrackRequest =
-      new PositionTorqueCurrentFOC(0.0).withSlot(0);
+      new PositionTorqueCurrentFOC(0.0).withUpdateFreqHz(250);
 
   private final TalonFX hoodMotor;
   private final TalonFXSignals hoodSignals;
@@ -65,10 +65,8 @@ public class TurretIOHardware implements TurretIO {
 
   @Override
   public void applyOutputs(TurretIOOutputs outputs) {
-    azimuthMotor.setControl(
-        azimuthTrackRequest
-            .withPosition(outputs.azimuthSetpointRots)
-            .withVelocity(outputs.azimuthFFRotsPerSec));
+    azimuthMotor.setControl(azimuthTrackRequest.withPosition(outputs.azimuthSetpointRots));
+    // .withVelocity(outputs.azimuthFFRotsPerSec));
     hoodMotor.setControl(hoodRequest.withPosition(outputs.hoodSetpointRots));
     shooterMotor.setControl(shooterRequest.withVelocity(outputs.flywheelRPS));
   }

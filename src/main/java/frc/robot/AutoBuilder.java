@@ -224,7 +224,7 @@ public class AutoBuilder {
   public static Command OP(Drive drive, SuperStructure superStructure, boolean flipY) {
     return new AutoBuilder(flipY)
         .withChoreoTraj("OPStart")
-        .withChoreoTraj("OPEnd")
+        .withChoreoTraj("OPEnd2")
         .withChoreoTraj("OPEscape")
         .parallelAllWith(
             Commands.run(
@@ -245,8 +245,8 @@ public class AutoBuilder {
   }
 
   public static void registerAutoChoices(Drive drive, SuperStructure superStructure) {
-    //autoChooser.addOption("2Swipe|R", doubleSwipe(drive, superStructure, false));
-    //autoChooser.addOption("2Swipe|L", doubleSwipe(drive, superStructure, true));
+    // autoChooser.addOption("2Swipe|R", doubleSwipe(drive, superStructure, false));
+    // autoChooser.addOption("2Swipe|L", doubleSwipe(drive, superStructure, true));
     autoChooser.addOption("Mogged|R", experimentalSwipe(drive, superStructure, false));
     autoChooser.addOption("Mogged|L", experimentalSwipe(drive, superStructure, true));
     autoChooser.addOption("OP|R", OP(drive, superStructure, false));

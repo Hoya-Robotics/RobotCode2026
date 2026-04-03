@@ -14,6 +14,7 @@ public class VisionIOLimelight implements VisionIO {
   private final CameraConfig config;
   private final NetworkTable NT;
   private static final double[] kDefaultStddevs = new double[12];
+  private boolean lastDisabled = true;
 
   public VisionIOLimelight(CameraConfig config) {
     this.config = config;
@@ -30,12 +31,16 @@ public class VisionIOLimelight implements VisionIO {
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
-    if (DriverStation.isDisabled()) {
-      LimelightHelpers.SetIMUMode(config.name(), 1);
-      LimelightHelpers.SetThrottle(config.name(), 1000);
-    } else {
-      LimelightHelpers.SetIMUMode(config.name(), 3);
-      LimelightHelpers.SetThrottle(config.name(), 0);
+    boolean disabled = DriverStation.isDisabled();
+    if (disabled != lastDisabled) {
+      if (disabled) {
+        LimelightHelpers.SetIMUMode(config.name(), 1);
+        LimelightHelpers.SetThrottle(config.name(), 1000);
+      } else {
+        LimelightHelpers.SetIMUMode(config.name(), 3);
+        LimelightHelpers.SetThrottle(config.name(), 0);
+      }
+      lastDisabled = disabled;
     }
 
     inputs.seesTarget = NT.getEntry("tv").getDouble(0.0) == 1.0;

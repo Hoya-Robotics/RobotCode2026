@@ -31,7 +31,7 @@ public class Vision extends SubsystemBase {
   @Override
   public void periodic() {
     for (int i = 0; i < cameras.length; ++i) {
-      cameras[i].setRobotOrientation(RobotState.getInstance().getEstimatedPose().getRotation());
+      // cameras[i].setRobotOrientation(RobotState.getInstance().getEstimatedPose().getRotation());
       cameras[i].updateInputs(cameraInputs[i]);
 
       Logger.processInputs("Vision/" + cameras[i].getConfig().name(), cameraInputs[i]);
@@ -45,16 +45,22 @@ public class Vision extends SubsystemBase {
       CameraConfig config, VisionIOInputs inputs) {
     if (!isTrustableMeasurement(inputs)) return Optional.empty();
 
-    double scale = 1.0 / inputs.mt1.quality();
+    /*
+      double scale = 1.0 / inputs.mt1.quality();
 
-    double xStd = inputs.stddevs[0] * scale * 0.7;
-    double yStd = inputs.stddevs[1] * scale * 0.7;
+      double xStd = inputs.stddevs[0] * scale * 0.7;
+      double yStd = inputs.stddevs[1] * scale * 0.7;
+    */
+    double tagCount = inputs.mt1.tagCount();
+    double avgDist = inputs.mt1.avgTagDist();
+    double scale = (avgDist * avgDist) / tagCount;
+    double linearStdDev = 0.03 * scale / tagCount;
 
     return Optional.of(
         new VisionObservation(
             config,
             inputs.mt1.pose(),
-            VecBuilder.fill(Math.max(xStd, yStd), Math.max(xStd, yStd), Float.POSITIVE_INFINITY),
+            VecBuilder.fill(linearStdDev, linearStdDev, Float.POSITIVE_INFINITY),
             Seconds.of(inputs.mt1.timestamp())));
   }
 
