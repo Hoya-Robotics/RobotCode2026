@@ -25,6 +25,7 @@ import frc.robot.RobotConfig.*;
 import frc.robot.RobotConfig.DriveConstants.DriveState;
 import frc.robot.RobotState;
 import frc.robot.RobotState.*;
+import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.StateSubsystem;
 import java.util.Optional;
 import java.util.Set;
@@ -68,6 +69,11 @@ public class Drive extends StateSubsystem<DriveState> {
           .withDeadband(0.1 * DriveConstants.maxDriveSpeedMps)
           .withRotationalDeadband(0.1 * DriveConstants.maxRotationSpeedRadPerSec);
   private SwerveRequest.SwerveDriveBrake brakeRequest = new SwerveRequest.SwerveDriveBrake();
+
+  private LoggedTunableNumber sotmSpeedFactor =
+      new LoggedTunableNumber("Drive/sotmSpeedFactor", 0.25);
+  private LoggedTunableNumber neutralSotmSpeedFactor =
+      new LoggedTunableNumber("Drive/neutralSotmSpeedFactor", 0.325);
 
   public Drive(CommandXboxController controller, DriveIO io) {
     this.driveController = controller;
@@ -269,7 +275,9 @@ public class Drive extends StateSubsystem<DriveState> {
     Logger.recordOutput("Drive/rawInputMagnitude", magnitude);
     if (SOTM) {
       // magnitude = sotmAccelLimiter.calculate(magnitude * DriveConstants.SOTMSpeedFactor);
-      magnitude *= DriveConstants.SOTMSpeedFactor;
+      boolean neutral = !FieldConstants.inAllianceZone(inputs.Pose);
+      magnitude *= neutral ? neutralSotmSpeedFactor.getAsDouble() : sotmSpeedFactor.getAsDouble();
+      // magnitude *= DriveConstants.SOTMSpeedFactor;
       omega *= DriveConstants.SOTMOmegaFactor;
     }
     Logger.recordOutput("Drive/processedInputMagnitude", magnitude);

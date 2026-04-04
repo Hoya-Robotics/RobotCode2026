@@ -15,9 +15,9 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
   private SpindexerIOOutputs outputs = new SpindexerIOOutputs();
 
   private LoggedTunableNumber indexSpeed = new LoggedTunableNumber("Spindexer/indexSpeed", 8.0);
-  private LoggedTunableNumber feedSpeed = new LoggedTunableNumber("Spindexer/feedSpeed", 18.0);
+  private LoggedTunableNumber feedSpeed = new LoggedTunableNumber("Spindexer/feedSpeed", 24.0);
 
-  private double latestFeedSpeed = 18.0;
+  private double latestFeedSpeed = 24.0;
   private double latestIndexSpeed = 8.0;
 
   public Spindexer(SpindexerIO io) {

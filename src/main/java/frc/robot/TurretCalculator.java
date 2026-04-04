@@ -129,6 +129,7 @@ public class TurretCalculator {
         az, RotationsPerSecond.of(0.0), hoodShot.getFirst(), hoodShot.getSecond());
   }
 
+  // TODO: reduce object allocs for cycle time (Turret.periodic() bad)
   // https://frc-docs--3242.org.readthedocs.build/en/3242/docs/software/advanced-controls/fire-control/dynamic-shooting.html
   public static TurretParameters turretIterativeMovingSetpoint(
       Translation2d target, boolean passing, Angle currentAzimuthAngle) {
@@ -145,7 +146,6 @@ public class TurretCalculator {
       return getStationarySetpoint(target, passing, currentAzimuthAngle);
 
     double distance = turretPose.getTranslation().getDistance(target);
-    Logger.recordOutput("TurretCalculator/targetDistance", distance);
     double tof = getTOF(distance, passing);
     for (int i = 0; i < kMaxIterations; ++i) {
       Translation2d futureTurretPos = turretPose.getTranslation().plus(fieldVelocity.times(tof));
@@ -164,6 +164,7 @@ public class TurretCalculator {
         (cross2d / aimVector.getSquaredNorm())
             - RobotState.getInstance().getFieldVelocity().omegaRadiansPerSecond;
 
+    Logger.recordOutput("TurretCalculator/targetDistance", distance);
     var az = calculateAzimuthAngle(azimuthAngle.getMeasure(), currentAzimuthAngle);
     var hoodShot = getShotParameters(distance, passing);
     return new TurretParameters(
