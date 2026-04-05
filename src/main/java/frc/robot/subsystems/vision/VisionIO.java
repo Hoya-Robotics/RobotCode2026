@@ -34,7 +34,7 @@ public interface VisionIO {
 
   @AutoLog
   public class VisionIOInputs {
-    public boolean seesTarget;
+    public boolean seesTarget = false;
     public PoseObservation[] observations;
     public double[] stddevs = new double[12];
   }

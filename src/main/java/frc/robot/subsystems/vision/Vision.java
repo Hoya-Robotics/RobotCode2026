@@ -28,6 +28,7 @@ public class Vision extends SubsystemBase {
 
       Logger.processInputs("Vision/" + cameras[i].getConfig().name(), cameraInputs[i]);
 
+      if (cameraInputs[i].observations == null) continue;
       for (int j = 0; j < cameraInputs[i].observations.length; ++j) {
         var obsv = cameraInputs[i].observations[j];
         if (obsv.isInvalid()) continue;
