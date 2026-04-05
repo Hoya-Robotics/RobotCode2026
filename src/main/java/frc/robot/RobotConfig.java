@@ -243,8 +243,8 @@ public class RobotConfig {
                 new Rotation3d(0.0, Units.degreesToRadians(-20.0), 0.0)));
 
     public static final double zThreshold = 0.2;
-    public static final double minSingleTagArea = 1.0;
-    public static final double maxSingleTagAmbiguity = 0.19;
+    public static final double maxAmbiguity = 0.19;
+    public static final double maxAvgDist = 3.5; // meters
   }
 
   public static final class SimConstants {

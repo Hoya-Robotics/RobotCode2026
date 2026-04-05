@@ -2,23 +2,33 @@ package frc.robot.subsystems.vision;
 
 import static edu.wpi.first.units.Units.*;
 
-import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.networktables.DoubleArraySubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.util.LimelightHelpers;
+import java.util.ArrayList;
+import java.util.List;
 
 public class VisionIOLimelight implements VisionIO {
   private final CameraConfig config;
   private final NetworkTable NT;
-  private static final double[] kDefaultStddevs = new double[12];
   private boolean lastDisabled = true;
+
+  private final DoubleArraySubscriber mt1Subscriber;
+  private final DoubleArraySubscriber rawFiducialsSubscriber;
+  private final DoubleArraySubscriber stddevSubscriber;
 
   public VisionIOLimelight(CameraConfig config) {
     this.config = config;
     this.NT = NetworkTableInstance.getDefault().getTable(config.name());
+    mt1Subscriber = NT.getDoubleArrayTopic("botpose_wpiblue").subscribe(new double[] {});
+    rawFiducialsSubscriber = NT.getDoubleArrayTopic("rawfiducials").subscribe(new double[] {});
+    stddevSubscriber = NT.getDoubleArrayTopic("stddevs").subscribe(new double[] {});
 
     LimelightHelpers.setRewindEnabled(config.name(), true);
     setRobotToCamera(config.robotToCamera());
@@ -28,6 +38,9 @@ public class VisionIOLimelight implements VisionIO {
   public CameraConfig getConfig() {
     return config;
   }
+
+  @Override
+  public void setRobotToCamera(Transform3d robotToCamera) {}
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
@@ -46,41 +59,27 @@ public class VisionIOLimelight implements VisionIO {
     inputs.seesTarget = NT.getEntry("tv").getDouble(0.0) == 1.0;
     if (!inputs.seesTarget) return;
 
-    try {
-      inputs.pose3d = LimelightHelpers.getBotPose3d_wpiBlue(config.name());
-      var ll_mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(config.name());
-      var ll_mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(config.name());
+    inputs.stddevs = stddevSubscriber.get();
 
-      if (ll_mt1 != null) {
-        inputs.mt1 = MultitagEstimate.fromLL(ll_mt1);
-        inputs.fiducials = FiducialObservation.arrayFromLL(ll_mt1.rawFiducials);
-      }
-      if (ll_mt2 != null) {
-        inputs.mt2 = MultitagEstimate.fromLL(ll_mt2);
-      }
+    var mt1Stream = mt1Subscriber.readQueue();
+    var fiducialsStream = rawFiducialsSubscriber.readQueueValues();
+    List<PoseObservation> observations = new ArrayList<>();
+    for (int i = 0; i < mt1Stream.length; ++i) {
+      double[] sample = mt1Stream[i].value;
+      Pose3d pose =
+          new Pose3d(
+              sample[0], sample[1], sample[2], new Rotation3d(sample[3], sample[4], sample[5]));
 
-      inputs.stddevs = NT.getEntry("stddevs").getDoubleArray(kDefaultStddevs);
-    } catch (Exception e) {
-      DriverStation.reportWarning("Vision update failed: " + e.getMessage(), false);
+      observations.add(
+          new PoseObservation(
+              mt1Stream[i].timestamp * 1.0e-6 - sample[6] * 1.0e-3,
+              pose,
+              fiducialsStream.length > i ? fiducialsStream[i][0] : 0.0,
+              (int) sample[7],
+              sample[9],
+              sample[10]));
     }
-  }
-
-  @Override
-  public void setRobotToCamera(Transform3d robotToCamera) {
-    LimelightHelpers.setCameraPose_RobotSpace(
-        config.name(),
-        robotToCamera.getX(),
-        robotToCamera.getY(),
-        robotToCamera.getZ(),
-        robotToCamera.getRotation().getMeasureX().in(Degrees),
-        robotToCamera.getRotation().getMeasureY().in(Degrees),
-        robotToCamera.getRotation().getMeasureZ().in(Degrees));
-  }
-
-  @Override
-  public void setRobotOrientation(Rotation2d gyroYaw) {
-    LimelightHelpers.SetRobotOrientation(
-        config.name(), gyroYaw.getDegrees(), 0.0, 0.0, 0.0, 0.0, 0.0);
+    inputs.observations = observations.toArray(PoseObservation[]::new);
   }
 
   @Override

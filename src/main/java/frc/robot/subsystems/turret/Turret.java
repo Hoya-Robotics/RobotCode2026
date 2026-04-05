@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Robot;
 import frc.robot.RobotConfig.TurretConstants;
 import frc.robot.RobotConfig.TurretConstants.TurretState;
-import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.RobotState;
 import frc.robot.TurretCalculator;
 import frc.robot.TurretCalculator.TurretParameters;
@@ -122,9 +121,10 @@ public class Turret extends StateSubsystem<TurretState> {
 
   @Override
   public void periodic() {
+    /*
     RobotState.getInstance()
         .getVision()
-        .setRobotToCamera(VisionConstants.turretConfig.name(), getRobotToCamera());
+        .setRobotToCamera(VisionConstants.turretConfig.name(), getRobotToCamera());*/
     parameters = TurretCalculator.turretIterativeMovingSetpoint(target, passing, getAzimuthAngle());
 
     io.updateInputs(inputs);
