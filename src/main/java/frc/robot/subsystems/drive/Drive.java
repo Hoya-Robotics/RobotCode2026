@@ -3,20 +3,17 @@ package frc.robot.subsystems.drive;
 import static edu.wpi.first.units.Units.*;
 
 import choreo.trajectory.SwerveSample;
-import choreo.trajectory.Trajectory;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -46,12 +43,10 @@ public class Drive extends StateSubsystem<DriveState> {
   private final PIDController choreoOmegaController =
       DriveConstants.choreoOmegaGains.toController();
 
-  private Timer choreoTimer = new Timer();
-  private Optional<Trajectory<SwerveSample>> choreoTrajectory = Optional.empty();
-
-  private SlewRateLimiter sotmAccelLimiter =
-      new SlewRateLimiter(DriveConstants.SOTMAccelLimit); // (m/s2) / s
   private boolean SOTM = false;
+
+  private SwerveSample choreoSample;
+  private boolean firstSample = true;
 
   private Pose2d targetDrivePose = null;
   private SwerveRequest.ApplyRobotSpeeds robotRelativeRequest =
@@ -132,13 +127,8 @@ public class Drive extends StateSubsystem<DriveState> {
     setState(DriveState.TO_POSE);
   }
 
-  public Command followChoreoTrajectoryCommand(Trajectory<SwerveSample> trajectory) {
-    return Commands.runOnce(() -> this.followChoreoTrajectory(trajectory))
-        .andThen(Commands.waitUntil(() -> choreoTrajectoryDone()));
-  }
-
-  public void followChoreoTrajectory(Trajectory<SwerveSample> trajectory) {
-    this.choreoTrajectory = Optional.of(trajectory);
+  public void followChoreoTrajectory(SwerveSample sample) {
+    this.choreoSample = sample;
     setState(DriveState.CHOREO);
   }
 
@@ -162,7 +152,6 @@ public class Drive extends StateSubsystem<DriveState> {
         omegaController.reset();
         break;
       case CHOREO:
-        choreoTimer.restart();
         break;
       default:
         break;
@@ -179,15 +168,12 @@ public class Drive extends StateSubsystem<DriveState> {
         applyRequest(getInputRequest());
         break;
       case CHOREO:
-        if (choreoTrajectory.isPresent()) {
-          Logger.recordOutput("Drive/Choreo/trajectoryName", choreoTrajectory.get().name());
-          Logger.recordOutput("Drive/Choreo/timer", choreoTimer.get());
-          Logger.recordOutput("Drive/Choreo/trajectoryTime", choreoTrajectory.get().getTotalTime());
-          Optional<SwerveSample> sample =
-              choreoTrajectory.get().sampleAt(choreoTimer.get(), !FieldConstants.isBlueAlliance());
-          if (sample.isPresent()) {
-            applyRequest(choreoSampleRequest(robotPose, sample.get()));
+        if (choreoSample != null) {
+          if (firstSample) {
+            firstSample = false;
+            RobotState.getInstance().resetOdometry(choreoSample.getPose());
           }
+          applyRequest(choreoSampleRequest(robotPose, choreoSample));
         }
         break;
       case TO_POSE:
@@ -197,17 +183,6 @@ public class Drive extends StateSubsystem<DriveState> {
         applyRequest(brakeRequest);
         break;
     }
-  }
-
-  public boolean choreoTrajectoryDone() {
-    Pose2d robotPose = RobotState.getInstance().getEstimatedPose();
-    Pose2d finalPose =
-        choreoTrajectory.get().getFinalSample(!FieldConstants.isBlueAlliance()).get().getPose();
-    double linearErr = finalPose.getTranslation().getDistance(robotPose.getTranslation());
-    double headingErr = robotPose.getRotation().minus(finalPose.getRotation()).getDegrees();
-    Logger.recordOutput("Drive/Choreo/linearError", linearErr);
-    Logger.recordOutput("Drive/Choreo/headingErr", headingErr);
-    return choreoTimer.get() - choreoTrajectory.get().getTotalTime() > 0.0;
   }
 
   public boolean atDriveToPoseSetpoint() {

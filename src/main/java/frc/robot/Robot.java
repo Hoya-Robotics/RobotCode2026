@@ -39,6 +39,8 @@ public class Robot extends LoggedRobot {
     Logger.start();
 
     m_robotContainer = new RobotContainer();
+
+    Autos.warmup(m_robotContainer.drive, m_robotContainer.superStructure);
   }
 
   @Override

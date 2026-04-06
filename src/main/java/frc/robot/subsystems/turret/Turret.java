@@ -6,11 +6,9 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -121,10 +119,6 @@ public class Turret extends StateSubsystem<TurretState> {
 
   @Override
   public void periodic() {
-    /*
-    RobotState.getInstance()
-        .getVision()
-        .setRobotToCamera(VisionConstants.turretConfig.name(), getRobotToCamera());*/
     parameters = TurretCalculator.turretIterativeMovingSetpoint(target, passing, getAzimuthAngle());
 
     io.updateInputs(inputs);
@@ -210,19 +204,5 @@ public class Turret extends StateSubsystem<TurretState> {
             parameters.azimuthAngle(),
             Inches.of(18.66694637));
     simShotTimer.restart();
-  }
-
-  public Transform3d getRobotToCamera() {
-    Translation3d cameraOffset =
-        new Translation3d(
-            new Translation2d(
-                TurretConstants.azimuthRadiusMeters, new Rotation2d(getAzimuthAngle())));
-    Translation3d totalOffset = TurretConstants.robotToTurret.getTranslation().plus(cameraOffset);
-    totalOffset = new Translation3d(totalOffset.getX(), -totalOffset.getY(), totalOffset.getZ());
-
-    Rotation3d totalRotation =
-        TurretConstants.cameraRotation.plus(
-            new Rotation3d(0.0, 0.0, getAzimuthAngle().in(Radians)));
-    return new Transform3d(totalOffset, totalRotation);
   }
 }

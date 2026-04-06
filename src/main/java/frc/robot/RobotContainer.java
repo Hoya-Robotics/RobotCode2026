@@ -110,7 +110,7 @@ public class RobotContainer {
     }
     superStructure = new SuperStructure(spindexer, turret, intake);
     PhoenixSync.optimizeAll();
-    AutoBuilder.registerAutoChoices(drive, superStructure);
+    // AutoBuilder.registerAutoChoices(drive, superStructure);
 
     configureBindings();
   }
@@ -189,6 +189,7 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return AutoBuilder.autoChooser.get();
+    return Autos.getAuto();
+    // return AutoBuilder.autoChooser.get();
   }
 }
