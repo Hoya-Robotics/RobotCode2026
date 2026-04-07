@@ -19,11 +19,12 @@ public interface VisionIO {
       /*
       1. Not too high
       2. Estimate in field
-      3. Not single tag ambiguous
+      3. > 1 tag in frame
       4. Not far avg dist
       */
       return pose.getZ() > VisionConstants.zThreshold
-          || (tagCount == 1 && ambiguity > VisionConstants.maxAmbiguity)
+          // || (tagCount == 1 && ambiguity > VisionConstants.maxAmbiguity)
+          || tagCount == 1
           || pose.getX() < 0.0
           || pose.getY() < 0.0
           || pose.getMeasureX().gt(FieldConstants.fieldLength)
@@ -36,7 +37,7 @@ public interface VisionIO {
   public class VisionIOInputs {
     public boolean seesTarget = false;
     public PoseObservation[] observations;
-    public double[] stddevs = new double[12];
+    public double[] stddevs = new double[2];
   }
 
   public default CameraConfig getConfig() {

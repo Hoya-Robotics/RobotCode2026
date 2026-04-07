@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.VisionObservation;
 import org.littletonrobotics.junction.Logger;
@@ -36,14 +37,19 @@ public class Vision extends SubsystemBase {
         double avgDist = obsv.avgTagDist();
         double tagCount = obsv.tagCount();
         double scale = (avgDist * avgDist) / tagCount;
-        double linearStdDev = 0.03 * scale / tagCount;
+        double xDev =
+            (cameraInputs[i].stddevs[0] * scale / tagCount)
+                * (1.0 / VisionConstants.linearTrustFactor);
+        double yDev =
+            (cameraInputs[i].stddevs[1] * scale / tagCount)
+                * (1.0 / VisionConstants.linearTrustFactor);
 
         RobotState.getInstance()
             .addVisionMeasurement(
                 new VisionObservation(
                     cameras[i].getConfig(),
                     obsv.pose().toPose2d(),
-                    VecBuilder.fill(linearStdDev, linearStdDev, Float.POSITIVE_INFINITY),
+                    VecBuilder.fill(xDev, yDev, Float.POSITIVE_INFINITY),
                     Seconds.of(obsv.timestamp())));
       }
     }

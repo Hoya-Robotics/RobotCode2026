@@ -242,6 +242,7 @@ public class RobotConfig {
                     Units.inchesToMeters(19.828)),
                 new Rotation3d(0.0, Units.degreesToRadians(-20.0), 0.0)));
 
+    public static final double linearTrustFactor = 1.2;
     public static final double zThreshold = 0.2;
     public static final double maxAmbiguity = 0.19;
     public static final double maxAvgDist = 3.5; // meters

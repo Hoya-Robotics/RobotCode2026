@@ -59,7 +59,12 @@ public class VisionIOLimelight implements VisionIO {
     inputs.seesTarget = NT.getEntry("tv").getDouble(0.0) == 1.0;
     if (!inputs.seesTarget) return;
 
-    inputs.stddevs = stddevSubscriber.get();
+    double[] rawStddevs = stddevSubscriber.get();
+    inputs.stddevs =
+        new double[] {
+          rawStddevs[0], // MT1_x
+          rawStddevs[1] // MT1_y
+        };
 
     var mt1Stream = mt1Subscriber.readQueue();
     var fiducialsStream = rawFiducialsSubscriber.readQueueValues();

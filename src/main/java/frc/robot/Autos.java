@@ -5,6 +5,7 @@ import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -12,12 +13,14 @@ import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.subsystems.SuperStructure;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.AllianceFlip;
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class Autos {
   private static LoggedDashboardChooser<Command> dashboardChooser =
       new LoggedDashboardChooser<>("Auto Routine");
   private static AutoFactory choreoFactory;
+  private static Timer autoTimer = new Timer();
 
   public static void warmup(Drive drive, SuperStructure superStructure) {
     choreoFactory =
@@ -42,23 +45,24 @@ public class Autos {
   }
 
   private static Command flippableTrajectory(String trajName, boolean mirrorYAxis) {
-    return Commands.either(
-        choreoFactory.trajectoryCmd(trajName, AutoTrajectory::mirrorY),
-        choreoFactory.trajectoryCmd(trajName),
-        () -> mirrorYAxis);
+    return mirrorYAxis
+        ? choreoFactory.trajectoryCmd(trajName, AutoTrajectory::mirrorY)
+        : choreoFactory.trajectoryCmd(trajName);
   }
 
-  private static Pose2d rightTrenchShootPose = new Pose2d(3.4, 0.665, Rotation2d.kZero);
+  private static Translation2d rightTrenchShoootTranslation = new Translation2d(3.4, 0.665);
 
-  private static Command alignToTrench(Drive drive, boolean mirrorY) {
+  private static Command alignToTrench(Drive drive, Rotation2d heading, boolean mirrorY) {
     Pose2d mirrored =
         new Pose2d(
             new Translation2d(
-                rightTrenchShootPose.getMeasureX(),
-                FieldConstants.fieldWidth.minus(rightTrenchShootPose.getMeasureY())),
-            rightTrenchShootPose.getRotation().unaryMinus());
+                rightTrenchShoootTranslation.getMeasureX(),
+                FieldConstants.fieldWidth.minus(rightTrenchShoootTranslation.getMeasureY())),
+            heading.unaryMinus());
     return drive.driveToPoseCommandDeferred(
-        () -> AllianceFlip.apply(mirrorY ? mirrored : rightTrenchShootPose));
+        () ->
+            AllianceFlip.apply(
+                mirrorY ? mirrored : new Pose2d(rightTrenchShoootTranslation, heading)));
   }
 
   private static Command wrapShootAllianceIntakeNeutral(
@@ -77,11 +81,14 @@ public class Autos {
       Drive drive, SuperStructure superStructure, boolean mirrorYAxis) {
     return wrapShootAllianceIntakeNeutral(
         Commands.sequence(
+            Commands.runOnce(() -> autoTimer.start()),
             flippableTrajectory("MogSwipe", mirrorYAxis),
-            alignToTrench(drive, mirrorYAxis),
+            alignToTrench(drive, Rotation2d.kZero, mirrorYAxis),
+            Commands.runOnce(() -> Logger.recordOutput("Auto/firstCycleEnd", autoTimer.get())),
             Commands.waitSeconds(4.2),
             flippableTrajectory("CleanSwipe", mirrorYAxis),
-            alignToTrench(drive, mirrorYAxis)),
+            alignToTrench(drive, Rotation2d.k180deg, mirrorYAxis),
+            Commands.runOnce(() -> Logger.recordOutput("Auto/secondCycleEnd", autoTimer.get()))),
         superStructure);
   }
 
