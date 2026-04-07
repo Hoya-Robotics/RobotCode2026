@@ -30,7 +30,7 @@ import frc.robot.subsystems.turret.TurretIOSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
-import frc.robot.subsystems.vision.VisionIOSim;
+import frc.robot.subsystems.vision.VisionIOLimelightSim;
 import frc.robot.util.FuelSim;
 import frc.robot.util.PhoenixSync;
 
@@ -62,8 +62,8 @@ public class RobotContainer {
         turret = new Turret(new TurretIOSim());
         vision =
             new Vision(
-                new VisionIOSim(VisionConstants.turretConfig),
-                new VisionIOSim(VisionConstants.hopperConfigSim));
+                new VisionIOLimelightSim(VisionConstants.turretConfig),
+                new VisionIOLimelightSim(VisionConstants.hopperConfigSim));
         configureFuelSim();
         break;
       case REAL:
@@ -110,7 +110,6 @@ public class RobotContainer {
     }
     superStructure = new SuperStructure(spindexer, turret, intake);
     PhoenixSync.optimizeAll();
-    // AutoBuilder.registerAutoChoices(drive, superStructure);
 
     configureBindings();
   }
@@ -190,6 +189,5 @@ public class RobotContainer {
 
   public Command getAutonomousCommand() {
     return Autos.getAuto();
-    // return AutoBuilder.autoChooser.get();
   }
 }

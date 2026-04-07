@@ -123,7 +123,6 @@ public class Drive extends StateSubsystem<DriveState> {
 
   public void driveToPose(Pose2d target) {
     this.targetDrivePose = target;
-
     setState(DriveState.TO_POSE);
   }
 
@@ -226,11 +225,10 @@ public class Drive extends StateSubsystem<DriveState> {
             DriveConstants.maxRotationSpeedRadPerSec);
 
     var speeds = ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, omega, inputs.gyroYaw);
+
     Logger.recordOutput("Drive/ToPose/TargetPose", target);
     Logger.recordOutput("Drive/ToPose/linearError", distance);
-    Logger.recordOutput("Drive/ToPose/vx", vx);
-    Logger.recordOutput("Drive/ToPose/vy", vy);
-    Logger.recordOutput("Drive/ToPose/omega", omega);
+
     return robotRelativeRequest.withSpeeds(speeds);
   }
 
@@ -247,15 +245,11 @@ public class Drive extends StateSubsystem<DriveState> {
     magnitude = magnitude * magnitude; // heuristic
     magnitude *= DriveConstants.maxDriveSpeedMps;
 
-    Logger.recordOutput("Drive/rawInputMagnitude", magnitude);
     if (SOTM) {
-      // magnitude = sotmAccelLimiter.calculate(magnitude * DriveConstants.SOTMSpeedFactor);
       boolean neutral = !FieldConstants.inAllianceZone(inputs.Pose);
       magnitude *= neutral ? neutralSotmSpeedFactor.getAsDouble() : sotmSpeedFactor.getAsDouble();
-      // magnitude *= DriveConstants.SOTMSpeedFactor;
       omega *= DriveConstants.SOTMOmegaFactor;
     }
-    Logger.recordOutput("Drive/processedInputMagnitude", magnitude);
 
     double xVelocity = magnitude * Math.cos(heading) * (FieldConstants.isBlueAlliance() ? 1 : -1);
     double yVelocity = magnitude * Math.sin(heading) * (FieldConstants.isBlueAlliance() ? 1 : -1);

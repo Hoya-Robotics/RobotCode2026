@@ -6,15 +6,11 @@ import frc.robot.FieldConstants;
 import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.RobotConfig.VisionConstants;
 import org.littletonrobotics.junction.AutoLog;
+import org.photonvision.simulation.SimCameraProperties;
 
 public interface VisionIO {
   public record PoseObservation(
-      double timestamp,
-      Pose3d pose,
-      double ambiguity,
-      int tagCount,
-      double avgTagDist,
-      double avgTagArea) {
+      double timestamp, Pose3d pose, int tagCount, double avgTagDist, double avgTagArea) {
     public boolean isInvalid() {
       /*
       1. Not too high
@@ -41,12 +37,10 @@ public interface VisionIO {
   }
 
   public default CameraConfig getConfig() {
-    return new CameraConfig("null", Transform3d.kZero);
+    return new CameraConfig("null", Transform3d.kZero, new SimCameraProperties());
   }
 
   public default void updateInputs(VisionIOInputs inputs) {}
-
-  public default void setRobotToCamera(Transform3d robotToCamera) {}
 
   public default void captureRewind(double duration) {}
 }

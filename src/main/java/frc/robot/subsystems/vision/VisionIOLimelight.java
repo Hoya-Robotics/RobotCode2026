@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.networktables.DoubleArraySubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -20,27 +19,29 @@ public class VisionIOLimelight implements VisionIO {
   private boolean lastDisabled = true;
 
   private final DoubleArraySubscriber mt1Subscriber;
-  private final DoubleArraySubscriber rawFiducialsSubscriber;
   private final DoubleArraySubscriber stddevSubscriber;
 
   public VisionIOLimelight(CameraConfig config) {
     this.config = config;
     this.NT = NetworkTableInstance.getDefault().getTable(config.name());
     mt1Subscriber = NT.getDoubleArrayTopic("botpose_wpiblue").subscribe(new double[] {});
-    rawFiducialsSubscriber = NT.getDoubleArrayTopic("rawfiducials").subscribe(new double[] {});
     stddevSubscriber = NT.getDoubleArrayTopic("stddevs").subscribe(new double[] {});
 
     LimelightHelpers.setRewindEnabled(config.name(), true);
-    setRobotToCamera(config.robotToCamera());
+    LimelightHelpers.setCameraPose_RobotSpace(
+        config.name(),
+        config.robotToCamera().getX(),
+        config.robotToCamera().getY(),
+        config.robotToCamera().getZ(),
+        config.robotToCamera().getRotation().getX(),
+        config.robotToCamera().getRotation().getY(),
+        config.robotToCamera().getRotation().getZ());
   }
 
   @Override
   public CameraConfig getConfig() {
     return config;
   }
-
-  @Override
-  public void setRobotToCamera(Transform3d robotToCamera) {}
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
@@ -67,7 +68,6 @@ public class VisionIOLimelight implements VisionIO {
         };
 
     var mt1Stream = mt1Subscriber.readQueue();
-    var fiducialsStream = rawFiducialsSubscriber.readQueueValues();
     List<PoseObservation> observations = new ArrayList<>();
     for (int i = 0; i < mt1Stream.length; ++i) {
       double[] sample = mt1Stream[i].value;
@@ -79,7 +79,6 @@ public class VisionIOLimelight implements VisionIO {
           new PoseObservation(
               mt1Stream[i].timestamp * 1.0e-6 - sample[6] * 1.0e-3,
               pose,
-              fiducialsStream.length > i ? fiducialsStream[i][0] : 0.0,
               (int) sample[7],
               sample[9],
               sample[10]));

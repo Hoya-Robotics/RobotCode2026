@@ -1,7 +1,6 @@
 package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
 import frc.robot.FieldConstants;
@@ -13,17 +12,16 @@ import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.simulation.PhotonCameraSim;
-import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
 
-public class VisionIOSim extends VisionIOLimelight {
+public class VisionIOLimelightSim extends VisionIOLimelight {
   private static VisionSystemSim visionSim;
   private final PhotonCamera camera;
   private final PhotonCameraSim cameraSim;
   private final PhotonPoseEstimator estimator;
 
-  public VisionIOSim(CameraConfig config) {
+  public VisionIOLimelightSim(CameraConfig config) {
     super(config);
 
     estimator = new PhotonPoseEstimator(FieldConstants.aprilLayout, config.robotToCamera());
@@ -32,17 +30,8 @@ public class VisionIOSim extends VisionIOLimelight {
       visionSim.addAprilTags(FieldConstants.aprilLayout);
     }
     camera = new PhotonCamera(config.name());
-    // TODO: LL4 camera props
-    cameraSim = new PhotonCameraSim(camera, new SimCameraProperties());
+    cameraSim = new PhotonCameraSim(camera, config.simProps());
     visionSim.addCamera(cameraSim, config.robotToCamera());
-  }
-
-  @Override
-  public void setRobotToCamera(Transform3d robotToCamera) {
-    if (estimator != null & visionSim != null) {
-      estimator.setRobotToCameraTransform(robotToCamera);
-      visionSim.adjustCamera(cameraSim, robotToCamera);
-    }
   }
 
   @Override

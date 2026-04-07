@@ -64,7 +64,7 @@ public class PhoenixSync {
             motor.getAcceleration(),
             motor.getMotorVoltage(),
             motor.getDeviceTemp(),
-            motor.getSupplyCurrent());
+            motor.getTorqueCurrent());
     new StatusSignalCollection(
             signals.position(),
             signals.velocity(),

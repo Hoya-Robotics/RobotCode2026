@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.subsystems.drive.TunerConstants;
 import frc.robot.util.GenericTunableGains.SparkTunableGains;
 import frc.robot.util.GenericTunableGains.TalonTunableGains;
+import org.photonvision.simulation.SimCameraProperties;
 
 public class RobotConfig {
   public enum SuperStructureState {
@@ -46,7 +47,8 @@ public class RobotConfig {
     }
   }
 
-  public record CameraConfig(String name, Transform3d robotToCamera) {}
+  public record CameraConfig(
+      String name, Transform3d robotToCamera, SimCameraProperties simProps) {}
 
   public static OperationMode getMode() {
     return RobotBase.isReal() ? OperationMode.REAL : OperationMode.SIM;
@@ -220,7 +222,8 @@ public class RobotConfig {
         new CameraConfig(
             "limelight-turret",
             TurretConstants.robotToTurret.plus(
-                new Transform3d(Translation3d.kZero, TurretConstants.cameraRotation)));
+                new Transform3d(Translation3d.kZero, TurretConstants.cameraRotation)),
+            new SimCameraProperties());
 
     public static final CameraConfig hopperConfig =
         new CameraConfig(
@@ -230,7 +233,8 @@ public class RobotConfig {
                     -Units.inchesToMeters(9.125),
                     -Units.inchesToMeters(11.396),
                     Units.inchesToMeters(19.828)),
-                new Rotation3d(0.0, Units.degreesToRadians(20.0), 0.0)));
+                new Rotation3d(0.0, Units.degreesToRadians(20.0), 0.0)),
+            new SimCameraProperties());
 
     public static final CameraConfig hopperConfigSim =
         new CameraConfig(
@@ -240,7 +244,8 @@ public class RobotConfig {
                     -Units.inchesToMeters(9.125),
                     -Units.inchesToMeters(11.396),
                     Units.inchesToMeters(19.828)),
-                new Rotation3d(0.0, Units.degreesToRadians(-20.0), 0.0)));
+                new Rotation3d(0.0, Units.degreesToRadians(-20.0), 0.0)),
+            new SimCameraProperties());
 
     public static final double linearTrustFactor = 1.2;
     public static final double zThreshold = 0.2;
