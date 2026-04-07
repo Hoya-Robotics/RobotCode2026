@@ -87,7 +87,7 @@ public class Autos {
             Commands.runOnce(() -> Logger.recordOutput("Auto/firstCycleEnd", autoTimer.get())),
             Commands.waitSeconds(4.2),
             flippableTrajectory("CleanSwipe", mirrorYAxis),
-            alignToTrench(drive, Rotation2d.k180deg, mirrorYAxis),
+            alignToTrench(drive, Rotation2d.kZero, mirrorYAxis),
             Commands.runOnce(() -> Logger.recordOutput("Auto/secondCycleEnd", autoTimer.get()))),
         superStructure);
   }
@@ -97,7 +97,7 @@ public class Autos {
     return wrapShootAllianceIntakeNeutral(
         Commands.sequence(
             flippableTrajectory("OPStart", mirrorYAxis),
-            flippableTrajectory("OPEnd2", mirrorYAxis),
+            flippableTrajectory("OPEnd", mirrorYAxis),
             flippableTrajectory("OPEscape", mirrorYAxis)),
         superStructure);
   }

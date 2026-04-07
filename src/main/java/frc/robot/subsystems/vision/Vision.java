@@ -3,10 +3,13 @@ package frc.robot.subsystems.vision;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.VisionObservation;
+import java.util.LinkedList;
+import java.util.List;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
@@ -24,6 +27,8 @@ public class Vision extends SubsystemBase {
 
   @Override
   public void periodic() {
+    List<Pose3d> acceptedPoseEstimates = new LinkedList<>();
+    List<Pose3d> rejectedPoseEstimates = new LinkedList<>();
     for (int i = 0; i < cameras.length; ++i) {
       cameras[i].updateInputs(cameraInputs[i]);
 
@@ -32,7 +37,11 @@ public class Vision extends SubsystemBase {
       if (cameraInputs[i].observations == null) continue;
       for (int j = 0; j < cameraInputs[i].observations.length; ++j) {
         var obsv = cameraInputs[i].observations[j];
-        if (obsv.isInvalid()) continue;
+        if (obsv.isInvalid()) {
+          rejectedPoseEstimates.add(obsv.pose());
+          continue;
+        }
+        acceptedPoseEstimates.add(obsv.pose());
 
         double avgDist = obsv.avgTagDist();
         double tagCount = (double) obsv.tagCount();
@@ -53,6 +62,11 @@ public class Vision extends SubsystemBase {
                     Seconds.of(obsv.timestamp())));
       }
     }
+
+    Logger.recordOutput(
+        "Vision/Summary/acceptedPoses", acceptedPoseEstimates.toArray(Pose3d[]::new));
+    Logger.recordOutput(
+        "Vision/Summary/rejectedPoses", rejectedPoseEstimates.toArray(Pose3d[]::new));
   }
 
   public void captureRewind(double duration) {

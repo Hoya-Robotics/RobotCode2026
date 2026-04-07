@@ -42,26 +42,23 @@ public class VisionIOLimelightSim extends VisionIOLimelight {
         estimate = estimator.estimateLowestAmbiguityPose(result);
       }
       if (estimate.isEmpty()) continue;
-      List<Double> ntData = estimateToLLArray(estimate.get(), result);
       table
           .getEntry("botpose_wpiblue")
-          .setDoubleArray(ntData.stream().mapToDouble(Double::doubleValue).toArray());
+          .setDoubleArray(
+              estimateToBotposeArray(estimate.get(), result).stream()
+                  .mapToDouble(Double::doubleValue)
+                  .toArray());
+      table
+          .getEntry("rawfiducials")
+          .setDoubleArray(
+              estimateToRawFiducialArray(estimate.get(), result).stream()
+                  .mapToDouble(Double::doubleValue)
+                  .toArray());
       table
           .getEntry("stddevs")
           .setDoubleArray(
               new double[] {
-                VisionConstants.defaultLinearStddevPhoton,
-                VisionConstants.defaultLinearStddevPhoton,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0
+                VisionConstants.defaultLinearStddevPhoton, VisionConstants.defaultLinearStddevPhoton
               });
       table.getEntry("cl").setDouble(result.metadata.getLatencyMillis());
       seesTarget = true;
@@ -71,41 +68,39 @@ public class VisionIOLimelightSim extends VisionIOLimelight {
     super.updateInputs(inputs);
   }
 
-  /*
-   * Translates photonvision pose estimate and result data
-   * to limelight double array for network table injection
-   */
-  private static List<Double> estimateToLLArray(
+  private static List<Double> estimateToBotposeArray(
       EstimatedRobotPose poseEstimate, PhotonPipelineResult result) {
     Pose3d pose = poseEstimate.estimatedPose;
+    return List.of(
+        pose.getX(),
+        pose.getY(),
+        pose.getZ(),
+        0.0,
+        0.0,
+        pose.getRotation().getMeasureZ().in(Units.Degrees),
+        result.metadata.getLatencyMillis(),
+        (double) poseEstimate.targetsUsed.size(),
+        0.0,
+        poseEstimate.targetsUsed.stream()
+            .mapToDouble(t -> t.getBestCameraToTarget().getTranslation().getNorm())
+            .average()
+            .getAsDouble(),
+        result.getBestTarget().getArea());
+  }
 
-    List<Double> data =
-        new ArrayList<>(
-            List.of(
-                pose.getX(),
-                pose.getY(),
-                pose.getZ(),
-                0.0,
-                0.0,
-                pose.getRotation().getMeasureZ().in(Units.Degrees),
-                result.metadata.getLatencyMillis(),
-                (double) poseEstimate.targetsUsed.size(),
-                0.0,
-                poseEstimate.targetsUsed.stream()
-                    .mapToDouble(t -> t.getBestCameraToTarget().getTranslation().getNorm())
-                    .average()
-                    .getAsDouble(),
-                result.getBestTarget().getArea()));
-    for (var fiducial : result.getTargets()) {
+  private static List<Double> estimateToRawFiducialArray(
+      EstimatedRobotPose poseEstimate, PhotonPipelineResult result) {
+    List<Double> data = new ArrayList<>();
+    for (var target : poseEstimate.targetsUsed) {
       data.addAll(
           List.of(
-              (double) fiducial.getFiducialId(),
-              fiducial.getYaw(),
-              fiducial.getPitch(),
-              fiducial.area,
+              (double) target.fiducialId,
+              target.getYaw(),
+              target.getPitch(),
+              target.area,
               0.0,
               0.0,
-              fiducial.getPoseAmbiguity()));
+              target.getPoseAmbiguity()));
     }
     return data;
   }
