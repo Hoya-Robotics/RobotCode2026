@@ -17,6 +17,7 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.Logger;
+import org.photonvision.simulation.VisionSystemSim;
 
 public class RobotState {
   private FuelSim fuelSim;
@@ -26,6 +27,7 @@ public class RobotState {
   private Drive drive;
   private Vision vision;
   private DriveIOInputsAutoLogged driveInputs;
+  private VisionSystemSim visionSim;
 
   private static RobotState instance;
 
@@ -38,6 +40,14 @@ public class RobotState {
       instance = new RobotState();
     }
     return instance;
+  }
+
+  public VisionSystemSim getVisionSim() {
+    if (visionSim == null) {
+      visionSim = new VisionSystemSim("main");
+      visionSim.addAprilTags(FieldConstants.aprilLayout);
+    }
+    return visionSim;
   }
 
   public void registerDrivetrain(Drive drive) {

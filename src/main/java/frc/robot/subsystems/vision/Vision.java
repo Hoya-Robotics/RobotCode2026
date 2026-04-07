@@ -35,7 +35,7 @@ public class Vision extends SubsystemBase {
         if (obsv.isInvalid()) continue;
 
         double avgDist = obsv.avgTagDist();
-        double tagCount = obsv.tagCount();
+        double tagCount = (double) obsv.tagCount();
         double scale = (avgDist * avgDist) / tagCount;
         double xDev =
             (cameraInputs[i].stddevs[0] * scale / tagCount)
@@ -49,7 +49,7 @@ public class Vision extends SubsystemBase {
                 new VisionObservation(
                     cameras[i].getConfig(),
                     obsv.pose().toPose2d(),
-                    VecBuilder.fill(xDev, yDev, Float.POSITIVE_INFINITY),
+                    VecBuilder.fill(xDev, yDev, Double.MAX_VALUE),
                     Seconds.of(obsv.timestamp())));
       }
     }

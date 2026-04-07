@@ -20,12 +20,14 @@ public class VisionIOLimelight implements VisionIO {
 
   private final DoubleArraySubscriber mt1Subscriber;
   private final DoubleArraySubscriber stddevSubscriber;
+  private final DoubleArraySubscriber rawFiducialSubscriber;
 
   public VisionIOLimelight(CameraConfig config) {
     this.config = config;
     this.NT = NetworkTableInstance.getDefault().getTable(config.name());
     mt1Subscriber = NT.getDoubleArrayTopic("botpose_wpiblue").subscribe(new double[] {});
     stddevSubscriber = NT.getDoubleArrayTopic("stddevs").subscribe(new double[] {});
+    rawFiducialSubscriber = NT.getDoubleArrayTopic("rawfiducials").subscribe(new double[] {});
 
     LimelightHelpers.setRewindEnabled(config.name(), true);
     LimelightHelpers.setCameraPose_RobotSpace(
@@ -68,6 +70,7 @@ public class VisionIOLimelight implements VisionIO {
         };
 
     var mt1Stream = mt1Subscriber.readQueue();
+    var rawFiducialStream = rawFiducialSubscriber.readQueue();
     List<PoseObservation> observations = new ArrayList<>();
     for (int i = 0; i < mt1Stream.length; ++i) {
       double[] sample = mt1Stream[i].value;
@@ -79,6 +82,7 @@ public class VisionIOLimelight implements VisionIO {
           new PoseObservation(
               mt1Stream[i].timestamp * 1.0e-6 - sample[6] * 1.0e-3,
               pose,
+              rawFiducialStream[i].value[6],
               (int) sample[7],
               sample[9],
               sample[10]));

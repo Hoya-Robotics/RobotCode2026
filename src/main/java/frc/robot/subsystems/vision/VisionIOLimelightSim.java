@@ -5,6 +5,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.Units;
 import frc.robot.FieldConstants;
 import frc.robot.RobotConfig.CameraConfig;
+import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.RobotState;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,11 +13,9 @@ import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.simulation.PhotonCameraSim;
-import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
 
 public class VisionIOLimelightSim extends VisionIOLimelight {
-  private static VisionSystemSim visionSim;
   private final PhotonCamera camera;
   private final PhotonCameraSim cameraSim;
   private final PhotonPoseEstimator estimator;
@@ -25,18 +24,14 @@ public class VisionIOLimelightSim extends VisionIOLimelight {
     super(config);
 
     estimator = new PhotonPoseEstimator(FieldConstants.aprilLayout, config.robotToCamera());
-    if (visionSim == null) {
-      visionSim = new VisionSystemSim("main");
-      visionSim.addAprilTags(FieldConstants.aprilLayout);
-    }
     camera = new PhotonCamera(config.name());
     cameraSim = new PhotonCameraSim(camera, config.simProps());
-    visionSim.addCamera(cameraSim, config.robotToCamera());
+    RobotState.getInstance().getVisionSim().addCamera(cameraSim, config.robotToCamera());
   }
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
-    visionSim.update(RobotState.getInstance().getSimulatedPose());
+    RobotState.getInstance().getVisionSim().update(RobotState.getInstance().getSimulatedPose());
 
     var table = NetworkTableInstance.getDefault().getTable(getConfig().name());
     boolean seesTarget = false;
@@ -52,12 +47,22 @@ public class VisionIOLimelightSim extends VisionIOLimelight {
           .getEntry("botpose_wpiblue")
           .setDoubleArray(ntData.stream().mapToDouble(Double::doubleValue).toArray());
       table
-          .getEntry("botpose_orb_wpiblue")
-          .setDoubleArray(ntData.stream().mapToDouble(Double::doubleValue).toArray());
-      table
           .getEntry("stddevs")
           .setDoubleArray(
-              new double[] {0.3, 0.3, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+              new double[] {
+                VisionConstants.defaultLinearStddevPhoton,
+                VisionConstants.defaultLinearStddevPhoton,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              });
       table.getEntry("cl").setDouble(result.metadata.getLatencyMillis());
       seesTarget = true;
     }
@@ -86,7 +91,10 @@ public class VisionIOLimelightSim extends VisionIOLimelight {
                 result.metadata.getLatencyMillis(),
                 (double) poseEstimate.targetsUsed.size(),
                 0.0,
-                0.0,
+                poseEstimate.targetsUsed.stream()
+                    .mapToDouble(t -> t.getBestCameraToTarget().getTranslation().getNorm())
+                    .average()
+                    .getAsDouble(),
                 result.getBestTarget().getArea()));
     for (var fiducial : result.getTargets()) {
       data.addAll(

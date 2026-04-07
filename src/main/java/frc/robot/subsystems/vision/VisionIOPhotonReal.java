@@ -2,6 +2,7 @@ package frc.robot.subsystems.vision;
 
 import frc.robot.FieldConstants;
 import frc.robot.RobotConfig.CameraConfig;
+import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.RobotState;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +28,7 @@ public class VisionIOPhotonReal implements VisionIO {
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
-    inputs.seesTarget = camera.isConnected();
-    if (!inputs.seesTarget) return;
+    boolean seesTargets = false;
 
     List<PoseObservation> observations = new ArrayList<>();
     var results = camera.getAllUnreadResults();
@@ -41,6 +41,7 @@ public class VisionIOPhotonReal implements VisionIO {
 
     for (var result : results) {
       if (!result.hasTargets()) continue;
+      seesTargets = true;
 
       var estimatedPose = poseEstimator.estimateCoprocMultiTagPose(result);
       if (estimatedPose.isEmpty())
@@ -52,6 +53,7 @@ public class VisionIOPhotonReal implements VisionIO {
           new PoseObservation(
               pose.timestampSeconds,
               pose.estimatedPose,
+              pose.targetsUsed.get(0).getPoseAmbiguity(),
               pose.targetsUsed.size(),
               pose.targetsUsed.stream()
                   .mapToDouble(t -> t.getBestCameraToTarget().getTranslation().getNorm())
@@ -63,7 +65,11 @@ public class VisionIOPhotonReal implements VisionIO {
                   .getAsDouble()));
     }
 
+    inputs.seesTarget = seesTargets;
     inputs.observations = observations.toArray(PoseObservation[]::new);
-    inputs.stddevs = new double[] {0.05, 0.05};
+    inputs.stddevs =
+        new double[] {
+          VisionConstants.defaultLinearStddevPhoton, VisionConstants.defaultLinearStddevPhoton
+        };
   }
 }

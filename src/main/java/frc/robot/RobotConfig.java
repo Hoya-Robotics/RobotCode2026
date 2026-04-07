@@ -251,6 +251,7 @@ public class RobotConfig {
     public static final double zThreshold = 0.2;
     public static final double maxAmbiguity = 0.19;
     public static final double maxAvgDist = 3.5; // meters
+    public static final double defaultLinearStddevPhoton = 0.05; // meters
   }
 
   public static final class SimConstants {
