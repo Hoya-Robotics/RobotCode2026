@@ -15,6 +15,8 @@ import org.littletonrobotics.junction.Logger;
 public class Vision extends SubsystemBase {
   private final VisionIO[] cameras;
   private VisionIOInputsAutoLogged[] cameraInputs;
+  private List<Pose3d> acceptedPoseEstimates = new LinkedList<>();
+  private List<Pose3d> rejectedPoseEstimates = new LinkedList<>();
 
   public Vision(VisionIO... cameras) {
     this.cameras = cameras;
@@ -27,8 +29,6 @@ public class Vision extends SubsystemBase {
 
   @Override
   public void periodic() {
-    List<Pose3d> acceptedPoseEstimates = new LinkedList<>();
-    List<Pose3d> rejectedPoseEstimates = new LinkedList<>();
     for (int i = 0; i < cameras.length; ++i) {
       cameras[i].updateInputs(cameraInputs[i]);
 
@@ -67,6 +67,9 @@ public class Vision extends SubsystemBase {
         "Vision/Summary/acceptedPoses", acceptedPoseEstimates.toArray(Pose3d[]::new));
     Logger.recordOutput(
         "Vision/Summary/rejectedPoses", rejectedPoseEstimates.toArray(Pose3d[]::new));
+
+    acceptedPoseEstimates.clear();
+    rejectedPoseEstimates.clear();
   }
 
   public void captureRewind(double duration) {

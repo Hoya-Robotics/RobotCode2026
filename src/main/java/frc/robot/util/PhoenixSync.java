@@ -2,7 +2,6 @@ package frc.robot.util;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.StatusSignalCollection;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.units.measure.Angle;
@@ -52,9 +51,11 @@ public class PhoenixSync {
     }
   }
 
-  private static final List<BaseStatusSignal> allSignals = new ArrayList<>();
+  private static final List<BaseStatusSignal> telemetrySignals = new ArrayList<>();
+  private static final List<BaseStatusSignal> criticalSignals = new ArrayList<>();
   private static final List<ParentDevice> devices = new ArrayList<>();
-  private static BaseStatusSignal[] allSignalsArray = null;
+  private static BaseStatusSignal[] criticalArray = null;
+  private static BaseStatusSignal[] telemetryArray = null;
 
   public static TalonFXSignals registerTalonFX(TalonFX motor, double updateFreqHz) {
     var signals =
@@ -65,22 +66,25 @@ public class PhoenixSync {
             motor.getMotorVoltage(),
             motor.getDeviceTemp(),
             motor.getTorqueCurrent());
-    new StatusSignalCollection(
-            signals.position(),
-            signals.velocity(),
-            signals.acceleration(),
-            signals.voltage(),
-            signals.temp(),
-            signals.current())
-        .setUpdateFrequencyForAll(updateFreqHz);
-    allSignals.add(signals.position());
-    allSignals.add(signals.velocity());
-    allSignals.add(signals.acceleration());
-    allSignals.add(signals.voltage());
-    allSignals.add(signals.temp());
-    allSignals.add(signals.current());
+    signals.position().setUpdateFrequency(updateFreqHz);
+    signals.velocity().setUpdateFrequency(updateFreqHz);
+    signals.acceleration().setUpdateFrequency(updateFreqHz);
+
+    signals.voltage().setUpdateFrequency(10);
+    signals.current().setUpdateFrequency(10);
+    signals.temp().setUpdateFrequency(4);
+
+    criticalSignals.add(signals.position());
+    criticalSignals.add(signals.velocity());
+    criticalSignals.add(signals.acceleration());
+
+    telemetrySignals.add(signals.voltage());
+    telemetrySignals.add(signals.temp());
+    telemetrySignals.add(signals.current());
+
     devices.add(motor);
-    allSignalsArray = null; // invalidate cache
+    criticalArray = null;
+    telemetryArray = null;
 
     return signals;
   }
@@ -89,10 +93,17 @@ public class PhoenixSync {
     ParentDevice.optimizeBusUtilizationForAll(devices.toArray(ParentDevice[]::new));
   }
 
-  public static void refreshAll(double timeoutSec) {
-    if (allSignalsArray == null) {
-      allSignalsArray = allSignals.toArray(new BaseStatusSignal[0]);
+  public static void refreshCriticalBlocking(double timeoutSec) {
+    if (criticalArray == null) {
+      criticalArray = criticalSignals.toArray(new BaseStatusSignal[0]);
     }
-    BaseStatusSignal.waitForAll(timeoutSec, allSignalsArray);
+    BaseStatusSignal.waitForAll(timeoutSec, criticalArray);
+  }
+
+  public static void refreshTelemetryNonBlock() {
+    if (telemetryArray == null) {
+      telemetryArray = telemetrySignals.toArray(new BaseStatusSignal[0]);
+    }
+    BaseStatusSignal.refreshAll(telemetryArray);
   }
 }

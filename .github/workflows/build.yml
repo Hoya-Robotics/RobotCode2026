@@ -17,9 +17,6 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Generate flipped trajectories
-        run: python3 scripts/flip_trajectory.py
-
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:

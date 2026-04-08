@@ -9,6 +9,7 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.util.GenericTunableGains;
@@ -23,6 +24,7 @@ public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
   public static final BatteryLogger batteryLogger = new BatteryLogger();
   private final RobotContainer m_robotContainer;
+  private Notifier batteryLoggerThread = new Notifier(batteryLogger::periodic);
 
   public Robot() {
     Logger.recordMetadata("ProjectName", "Rebuilt4152");
@@ -35,8 +37,8 @@ public class Robot extends LoggedRobot {
         Logger.addDataReceiver(new NT4Publisher()); // Network Table Logging
         break;
     }
-
     Logger.start();
+    batteryLoggerThread.startPeriodic(0.25); // Log currents at lower frequency 4Hz
 
     m_robotContainer = new RobotContainer();
 
@@ -45,9 +47,9 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void robotPeriodic() {
-    PhoenixSync.refreshAll(0.010);
+    PhoenixSync.refreshCriticalBlocking(0.004);
+    PhoenixSync.refreshTelemetryNonBlock();
     GenericTunableGains.periodicAll();
-    batteryLogger.periodic();
     CommandScheduler.getInstance().run();
   }
 
