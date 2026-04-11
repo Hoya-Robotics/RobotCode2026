@@ -184,11 +184,17 @@ public class RobotConfig {
     public static final TalonTunableGains hoodGains = new TalonTunableGains("Turret/Hood", 0);
 
     static {
-      hoodGains.registerGain("kp", 170);
+      hoodGains.registerGain("kp", 0);
       hoodGains.registerGain("ki", 0);
       hoodGains.registerGain("kd", 0);
-      hoodGains.registerGain("ks", 4.0);
-      hoodGains.registerGain("ka", 0);
+      /*
+      Deprecated: PositionTorqueFOC
+         hoodGains.registerGain("kp", 170);
+         hoodGains.registerGain("ki", 0);
+         hoodGains.registerGain("kd", 0);
+         hoodGains.registerGain("ks", 4.0);
+         hoodGains.registerGain("ka", 0);
+      */
 
       azimuthGains.registerGain("kp", 125);
       azimuthGains.registerGain("kd", 8.0);
@@ -235,13 +241,6 @@ public class RobotConfig {
   }
 
   public static final class VisionConstants {
-    public static final CameraConfig turretConfig =
-        new CameraConfig(
-            "limelight-turret",
-            TurretConstants.robotToTurret.plus(
-                new Transform3d(Translation3d.kZero, TurretConstants.cameraRotation)),
-            new SimCameraProperties());
-
     public static final CameraConfig hopperConfig =
         new CameraConfig(
             "limelight-hopper",
@@ -267,7 +266,7 @@ public class RobotConfig {
     public static final double linearTrustFactor = 1.2;
     public static final double zThreshold = 0.2;
     public static final double maxAmbiguity = 0.19;
-    public static final double maxAvgDist = 3.5; // meters
+    public static final double maxAvgDist = 5.0; // meters
     public static final double defaultLinearStddevPhoton = 0.05; // meters
   }
 

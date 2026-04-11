@@ -26,6 +26,7 @@ public class VisionIOLimelightSim extends VisionIOLimelight {
     estimator = new PhotonPoseEstimator(FieldConstants.aprilLayout, config.robotToCamera());
     camera = new PhotonCamera(config.name());
     cameraSim = new PhotonCameraSim(camera, config.simProps());
+    cameraSim.setMaxSightRange(4.5);
     RobotState.getInstance().getVisionSim().addCamera(cameraSim, config.robotToCamera());
   }
 

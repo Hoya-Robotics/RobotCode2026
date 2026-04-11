@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -22,19 +23,17 @@ public class TurretIOHardware implements TurretIO {
   private final TalonFX azimuthMotor;
   private final CANcoder azimuthEncoder;
   private final TalonFXSignals azimuthSignals;
-  private final PositionTorqueCurrentFOC azimuthTrackRequest =
-      new PositionTorqueCurrentFOC(0.0).withUpdateFreqHz(250);
+  private final PositionTorqueCurrentFOC azimuthTrackRequest = new PositionTorqueCurrentFOC(0.0);
 
   private final TalonFX hoodMotor;
   private final TalonFXSignals hoodSignals;
-  private final PositionTorqueCurrentFOC hoodRequest =
-      new PositionTorqueCurrentFOC(0.0).withUpdateFreqHz(250);
+  private final PositionVoltage hoodRequest = new PositionVoltage(0.0);
 
   private final TalonFX leftFlywheelMotor;
   private final TalonFX rightFlywheelMotor;
   private final TalonFXSignals leftFlywheelSignals;
   private final TalonFXSignals rightFlywheelSignals;
-  private final VelocityVoltage flywheelRequest = new VelocityVoltage(0.0).withUpdateFreqHz(150);
+  private final VelocityVoltage flywheelRequest = new VelocityVoltage(0.0);
 
   public TurretIOHardware(
       int azimuthId, int azimuthEncoderId, int hoodId, int LFlywheelId, int RFlywheelId) {

@@ -60,10 +60,7 @@ public class RobotContainer {
         spindexer = new Spindexer(new SpindexerIO() {});
         intake = new Intake(new IntakeIOSimSimple());
         turret = new Turret(new TurretIOSim());
-        vision =
-            new Vision(
-                new VisionIOLimelightSim(VisionConstants.turretConfig),
-                new VisionIOLimelightSim(VisionConstants.hopperConfigSim));
+        vision = new Vision(new VisionIOLimelightSim(VisionConstants.hopperConfigSim));
         configureFuelSim();
         break;
       case REAL:
@@ -97,10 +94,7 @@ public class RobotContainer {
                     TurretConstants.hoodMotorId,
                     TurretConstants.leftFlywheelId,
                     TurretConstants.rightFlywheelId));
-        vision =
-            new Vision(
-                new VisionIOLimelight(VisionConstants.turretConfig),
-                new VisionIOLimelight(VisionConstants.hopperConfig));
+        vision = new Vision(new VisionIOLimelight(VisionConstants.hopperConfig));
         break;
       default:
         vision = new Vision(new VisionIO() {});
