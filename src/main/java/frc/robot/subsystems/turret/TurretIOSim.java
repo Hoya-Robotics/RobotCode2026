@@ -69,9 +69,9 @@ public class TurretIOSim implements TurretIO {
             azimuthSim.getAngularVelocity().in(RotationsPerSecond),
             azimuthSim.getAngularAcceleration().in(RotationsPerSecondPerSecond),
             0.0);
-
+    /*
     inputs.shooterState =
-        new MotorState(true, 0.0, 0.0, 0.0, shooterVelocity.in(RotationsPerSecond), 0.0, 0.0);
+        new MotorState(true, 0.0, 0.0, 0.0, shooterVelocity.in(RotationsPerSecond), 0.0, 0.0);*/
   }
 
   @Override

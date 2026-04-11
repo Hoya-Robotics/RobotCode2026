@@ -95,7 +95,8 @@ public class RobotContainer {
                     TurretConstants.azimuthMotorId,
                     TurretConstants.azimuthEncoderId,
                     TurretConstants.hoodMotorId,
-                    TurretConstants.launcherMotorId));
+                    TurretConstants.leftFlywheelId,
+                    TurretConstants.rightFlywheelId));
         vision =
             new Vision(
                 new VisionIOLimelight(VisionConstants.turretConfig),

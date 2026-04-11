@@ -10,7 +10,8 @@ public interface TurretIO {
   public class TurretIOInputs {
     public MotorState azimuthState = MotorState.kZero;
     public MotorState hoodState = MotorState.kZero;
-    public MotorState shooterState = MotorState.kZero;
+    public MotorState leftFlywheelState = MotorState.kZero;
+    public MotorState rightFlywheelState = MotorState.kZero;
   }
 
   public class TurretIOOutputs {

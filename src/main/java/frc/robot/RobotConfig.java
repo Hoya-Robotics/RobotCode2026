@@ -170,15 +170,17 @@ public class RobotConfig {
     public static final int hoodMotorId = 40;
     public static final int azimuthMotorId = 41;
     public static final int azimuthEncoderId = 42;
-    public static final int launcherMotorId = 43;
+    public static final int leftFlywheelId = 43;
+    public static final int rightFlywheelId = 44;
 
     public static final double hoodGearRatio = 171.600;
     public static final double azimuthGearRatio = 42.0;
-    public static final double launcherGearRatio = 2.25;
 
     public static final TalonTunableGains azimuthGains = new TalonTunableGains("Turret/Azimuth", 0);
-    public static final TalonTunableGains flywheelGains =
-        new TalonTunableGains("Turret/Flywheel", 0);
+    public static final TalonTunableGains leftFlywheelGains =
+        new TalonTunableGains("Turret/FlywheelL", 0);
+    public static final TalonTunableGains rightFlywheelGains =
+        new TalonTunableGains("Turret/FlywheelR", 0);
     public static final TalonTunableGains hoodGains = new TalonTunableGains("Turret/Hood", 0);
 
     static {
@@ -194,9 +196,18 @@ public class RobotConfig {
       azimuthGains.registerGain("kv", 2.5);
       azimuthGains.registerGain("ks", 14);
 
-      flywheelGains.registerGain("kv", 0.36);
-      flywheelGains.registerGain("ks", 12.3);
-      flywheelGains.registerGain("kp", 30.0);
+      leftFlywheelGains.registerGain("kp", 0.0);
+      leftFlywheelGains.registerGain("kd", 0.0);
+
+      rightFlywheelGains.registerGain("kp", 0.0);
+      rightFlywheelGains.registerGain("kd", 0.0);
+
+      /*
+      Deprecated: VelocityTorqueFOC
+         flywheelGains.registerGain("kv", 0.36);
+         flywheelGains.registerGain("ks", 12.3);
+         flywheelGains.registerGain("kp", 30.0);
+      */
     }
 
     public static final Angle trenchHoodAngle = Degrees.of(12.0);

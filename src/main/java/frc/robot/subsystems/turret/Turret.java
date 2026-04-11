@@ -62,7 +62,9 @@ public class Turret extends StateSubsystem<TurretState> {
   }
 
   public AngularVelocity getShooterSpeed() {
-    return RotationsPerSecond.of(inputs.shooterState.nativeVelocity());
+    return RotationsPerSecond.of(
+        Math.min(
+            inputs.leftFlywheelState.nativeVelocity(), inputs.rightFlywheelState.nativeVelocity()));
   }
 
   public TurretParameters getParameters() {
@@ -131,7 +133,10 @@ public class Turret extends StateSubsystem<TurretState> {
 
     Robot.batteryLogger.reportCurrentUsage("Turret/Azimuth", inputs.azimuthState.currentAmps());
     Robot.batteryLogger.reportCurrentUsage("Turret/Hood", inputs.hoodState.currentAmps());
-    Robot.batteryLogger.reportCurrentUsage("Turret/Flywheel", inputs.shooterState.currentAmps());
+    Robot.batteryLogger.reportCurrentUsage(
+        "Turret/FlywheelL", inputs.leftFlywheelState.currentAmps());
+    Robot.batteryLogger.reportCurrentUsage(
+        "Turret/FlywheelR", inputs.rightFlywheelState.currentAmps());
 
     // Logic
     applyState();

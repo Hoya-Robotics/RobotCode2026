@@ -6,7 +6,7 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -30,28 +30,34 @@ public class TurretIOHardware implements TurretIO {
   private final PositionTorqueCurrentFOC hoodRequest =
       new PositionTorqueCurrentFOC(0.0).withUpdateFreqHz(250);
 
-  private final TalonFX shooterMotor;
-  private final TalonFXSignals shooterSignals;
-  private final VelocityTorqueCurrentFOC shooterRequest =
-      new VelocityTorqueCurrentFOC(0.0).withUpdateFreqHz(250);
+  private final TalonFX leftFlywheelMotor;
+  private final TalonFX rightFlywheelMotor;
+  private final TalonFXSignals leftFlywheelSignals;
+  private final TalonFXSignals rightFlywheelSignals;
+  private final VelocityVoltage flywheelRequest = new VelocityVoltage(0.0).withUpdateFreqHz(150);
 
-  public TurretIOHardware(int azimuthId, int azimuthEncoderId, int hoodId, int shooterId) {
+  public TurretIOHardware(
+      int azimuthId, int azimuthEncoderId, int hoodId, int LFlywheelId, int RFlywheelId) {
     azimuthMotor = new TalonFX(azimuthId);
     azimuthEncoder = new CANcoder(azimuthEncoderId);
     hoodMotor = new TalonFX(hoodId);
-    shooterMotor = new TalonFX(shooterId);
+    leftFlywheelMotor = new TalonFX(LFlywheelId);
+    rightFlywheelMotor = new TalonFX(RFlywheelId);
 
     configureAzimuth();
     configureHood();
-    configureShooter();
+    configureFlywheel(leftFlywheelMotor, false);
+    configureFlywheel(rightFlywheelMotor, true);
 
     TurretConstants.azimuthGains.registerMotor(azimuthMotor);
     TurretConstants.hoodGains.registerMotor(hoodMotor);
-    TurretConstants.flywheelGains.registerMotor(shooterMotor);
+    TurretConstants.leftFlywheelGains.registerMotor(leftFlywheelMotor);
+    TurretConstants.rightFlywheelGains.registerMotor(rightFlywheelMotor);
 
     azimuthSignals = PhoenixSync.registerTalonFX(azimuthMotor, 150);
     hoodSignals = PhoenixSync.registerTalonFX(hoodMotor, 150);
-    shooterSignals = PhoenixSync.registerTalonFX(shooterMotor, 150);
+    leftFlywheelSignals = PhoenixSync.registerTalonFX(leftFlywheelMotor, 150);
+    rightFlywheelSignals = PhoenixSync.registerTalonFX(rightFlywheelMotor, 150);
 
     hoodMotor.setPosition(0.0);
   }
@@ -60,7 +66,8 @@ public class TurretIOHardware implements TurretIO {
   public void updateInputs(TurretIOInputs inputs) {
     inputs.azimuthState = MotorState.fromTalonSignals(azimuthSignals);
     inputs.hoodState = MotorState.fromTalonSignals(hoodSignals);
-    inputs.shooterState = MotorState.fromTalonSignals(shooterSignals);
+    inputs.rightFlywheelState = MotorState.fromTalonSignals(rightFlywheelSignals);
+    inputs.leftFlywheelState = MotorState.fromTalonSignals(leftFlywheelSignals);
   }
 
   @Override
@@ -68,7 +75,8 @@ public class TurretIOHardware implements TurretIO {
     azimuthMotor.setControl(azimuthTrackRequest.withPosition(outputs.azimuthSetpointRots));
     // .withVelocity(outputs.azimuthFFRotsPerSec));
     hoodMotor.setControl(hoodRequest.withPosition(outputs.hoodSetpointRots));
-    shooterMotor.setControl(shooterRequest.withVelocity(outputs.flywheelRPS));
+    leftFlywheelMotor.setControl(flywheelRequest.withVelocity(outputs.flywheelRPS));
+    rightFlywheelMotor.setControl(flywheelRequest.withVelocity(outputs.flywheelRPS));
   }
 
   private void configureAzimuth() {
@@ -113,14 +121,13 @@ public class TurretIOHardware implements TurretIO {
     }
   }
 
-  private void configureShooter() {
+  private void configureFlywheel(TalonFX motor, boolean invert) {
     var config = new TalonFXConfiguration();
-    config.Feedback.withSensorToMechanismRatio(TurretConstants.launcherGearRatio);
-    config.CurrentLimits.withStatorCurrentLimit(100);
+    config.CurrentLimits.withStatorCurrentLimit(80);
     config.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive)
         .withNeutralMode(NeutralModeValue.Brake);
     for (int i = 0; i < 5; ++i) {
-      if (shooterMotor.getConfigurator().apply(config).isOK()) break;
+      if (motor.getConfigurator().apply(config).isOK()) break;
     }
   }
 }
