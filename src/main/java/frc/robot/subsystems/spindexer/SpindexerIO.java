@@ -19,11 +19,17 @@ public interface SpindexerIO {
     public Voltage feedMotorVoltageApplied = Volts.zero();
     public Current feedMotorCurrent = Amps.zero();
     public AngularVelocity feedMotorVelocity = RotationsPerSecond.zero();
+
+    public boolean rampConnected = false;
+    public Voltage rampMotorVoltageApplied = Volts.zero();
+    public Current rampMotorCurrent = Amps.zero();
+    public AngularVelocity rampMotorVelocity = RotationsPerSecond.zero();
   }
 
   public class SpindexerIOOutputs {
     public double indexSetpointRPS = 0.0;
     public double feedSetpointRPS = 0.0;
+    public double rampSetpointRPS = 0.0;
   }
 
   public default void updateInputs(SpindexerIOInputs inputs) {}

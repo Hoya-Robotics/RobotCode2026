@@ -4,7 +4,7 @@ import com.ctre.phoenix6.configs.SlotConfigs;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
-import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import java.util.ArrayList;
@@ -96,7 +96,7 @@ public class GenericTunableGains {
   }
 
   public static class SparkTunableGains extends GenericTunableGains {
-    private Optional<SparkFlex> motor = Optional.empty();
+    private Optional<SparkBase> motor = Optional.empty();
     private static final Map<String, BiConsumer<ClosedLoopConfig, Double>> gainSetters =
         Map.of(
             "kp",
@@ -121,7 +121,7 @@ public class GenericTunableGains {
       super.registerUpdateCallback(this::applyGains);
     }
 
-    public void registerMotor(SparkFlex motor) {
+    public void registerMotor(SparkBase motor) {
       this.motor = Optional.of(motor);
     }
 

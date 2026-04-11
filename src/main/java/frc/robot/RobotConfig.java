@@ -105,12 +105,15 @@ public class RobotConfig {
 
     public static final int indexMotorId = 20;
     public static final int feedMotorId = 21;
+    public static final int rampMotorId = 22;
 
     public static final double feedGearRatio = 1.0;
     public static final double indexGearRatio = 1.0 / 3.0;
+    public static final double rampGearRatio = 1.1667;
 
     public static final SparkTunableGains indexGains = new SparkTunableGains("Spindexer/Index");
     public static final SparkTunableGains feederGains = new SparkTunableGains("Spindexer/Feed");
+    public static final SparkTunableGains rampGains = new SparkTunableGains("Spindexer/Ramp");
 
     static {
       indexGains.registerGain("kp", 0.0002);
@@ -118,6 +121,9 @@ public class RobotConfig {
 
       feederGains.registerGain("kp", 0.0002);
       feederGains.registerGain("kv", 0.0018);
+
+      rampGains.registerGain("kp", 0.0);
+      rampGains.registerGain("kd", 0.0);
     }
   }
 

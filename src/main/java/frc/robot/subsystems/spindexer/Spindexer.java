@@ -56,13 +56,16 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
       case HOLD:
         outputs.indexSetpointRPS = 0.0;
         outputs.feedSetpointRPS = 0.0;
+        outputs.rampSetpointRPS = 0.0;
         break;
       case COOLDOWN:
         outputs.feedSetpointRPS = latestFeedSpeed;
+        outputs.rampSetpointRPS = latestFeedSpeed;
         outputs.indexSetpointRPS = 0.0;
         break;
       case FEED:
         outputs.feedSetpointRPS = latestFeedSpeed;
+        outputs.rampSetpointRPS = latestFeedSpeed;
         outputs.indexSetpointRPS = latestIndexSpeed;
         break;
     }

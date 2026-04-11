@@ -81,7 +81,8 @@ public class RobotContainer {
             new Spindexer(
                 new SpindexerIOHardware(
                     RobotConfig.SpindexerConstants.indexMotorId,
-                    RobotConfig.SpindexerConstants.feedMotorId));
+                    RobotConfig.SpindexerConstants.feedMotorId,
+                    RobotConfig.SpindexerConstants.rampMotorId));
         intake =
             new Intake(
                 new IntakeIOHardware(
