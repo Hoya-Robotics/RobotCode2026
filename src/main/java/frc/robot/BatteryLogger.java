@@ -6,40 +6,41 @@ import java.util.Map;
 import org.littletonrobotics.junction.Logger;
 
 public class BatteryLogger {
-  public record EnergyState(double current, double power, double energy) {
-    public static EnergyState integrate(EnergyState past, EnergyState present) {
-      return new EnergyState(present.current(), present.power(), past.energy() + present.energy());
-    }
-
-    public EnergyState sum(EnergyState b) {
-      return new EnergyState(current + b.current(), power + b.power(), energy + b.energy());
-    }
-  }
-
-  private EnergyState robotState = new EnergyState(0.0, 0.0, 0.0);
-  private Map<String, EnergyState> subsystemStates = new HashMap<>();
+  private double robotCurrent, robotPower, robotEnergy = 0.0;
+  private Map<String, Double> subsystemCurrents = new HashMap<>();
+  private Map<String, Double> subsystemPowers = new HashMap<>();
+  private Map<String, Double> subsystemEnergies = new HashMap<>();
   private static final double kLoopPeriod = 1.0 / 50.0;
 
   public void reportCurrentUsage(String key, double amps) {
     double power = amps * RobotController.getBatteryVoltage();
-    EnergyState subsystemState = new EnergyState(amps, power, power * kLoopPeriod);
-    robotState = robotState.sum(subsystemState);
-    subsystemStates.merge(key, subsystemState, EnergyState::integrate);
+    double energy = power * kLoopPeriod;
+
+    robotCurrent += amps;
+    robotPower += power;
+    robotEnergy += energy;
+
+    subsystemCurrents.put(key, amps);
+    subsystemPowers.put(key, power);
+    subsystemEnergies.merge(key, energy, Double::sum);
   }
 
   public void periodic() {
-    Logger.recordOutput("BatteryLogger/totalCurrent", robotState.current(), "amps");
-    Logger.recordOutput("BatteryLogger/totalPower", robotState.power(), "watts");
-    Logger.recordOutput("BatteryLogger/totalEnergy", robotState.energy(), "watt seconds");
+    Logger.recordOutput("BatteryLogger/totalCurrent", robotCurrent, "amps");
+    Logger.recordOutput("BatteryLogger/totalPower", robotPower, "watts");
+    Logger.recordOutput("BatteryLogger/totalEnergy", robotEnergy, "watt seconds");
 
-    for (var entry : subsystemStates.entrySet()) {
-      var state = entry.getValue();
-      Logger.recordOutput("BatteryLogger/Current/" + entry.getKey(), state.current(), "amps");
-      Logger.recordOutput("BatteryLogger/Power/" + entry.getKey(), state.power(), "watts");
-      Logger.recordOutput("BatteryLogger/Energy/" + entry.getKey(), state.energy(), "watt hours");
-      subsystemStates.put(entry.getKey(), new EnergyState(0.0, 0.0, 0.0));
+    for (var entry : subsystemCurrents.entrySet()) {
+      String key = entry.getKey();
+      Logger.recordOutput("BatteryLogger/Current/" + key, subsystemCurrents.get(key), "amps");
+      Logger.recordOutput("BatteryLogger/Power/" + key, subsystemPowers.get(key), "watts");
+      Logger.recordOutput("BatteryLogger/Energy/" + key, subsystemEnergies.get(key), "watt hours");
+
+      subsystemCurrents.put(key, 0.0);
+      subsystemPowers.put(key, 0.0);
     }
 
-    robotState = new EnergyState(0.0, 0.0, robotState.energy());
+    robotCurrent = 0.0;
+    robotPower = 0.0;
   }
 }
