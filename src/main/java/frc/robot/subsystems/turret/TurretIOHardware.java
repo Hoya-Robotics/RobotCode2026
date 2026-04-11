@@ -72,8 +72,10 @@ public class TurretIOHardware implements TurretIO {
 
   @Override
   public void applyOutputs(TurretIOOutputs outputs) {
-    azimuthMotor.setControl(azimuthTrackRequest.withPosition(outputs.azimuthSetpointRots));
-    // .withVelocity(outputs.azimuthFFRotsPerSec));
+    azimuthMotor.setControl(
+        azimuthTrackRequest
+            .withPosition(outputs.azimuthSetpointRots)
+            .withFeedForward(outputs.azimuthFeedforward));
     hoodMotor.setControl(hoodRequest.withPosition(outputs.hoodSetpointRots));
     leftFlywheelMotor.setControl(flywheelRequest.withVelocity(outputs.flywheelRPS));
     rightFlywheelMotor.setControl(flywheelRequest.withVelocity(outputs.flywheelRPS));

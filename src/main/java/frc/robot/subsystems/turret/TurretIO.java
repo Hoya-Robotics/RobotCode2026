@@ -16,7 +16,7 @@ public interface TurretIO {
 
   public class TurretIOOutputs {
     public double azimuthSetpointRots = 0.0;
-    public double azimuthFFRotsPerSec = 0.0;
+    public double azimuthFeedforward = 0.0;
     public double hoodSetpointRots = 0.0;
     public double flywheelRPS = 0.0;
   }

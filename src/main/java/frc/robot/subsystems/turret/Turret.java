@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
-import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -41,11 +40,15 @@ public class Turret extends StateSubsystem<TurretState> {
 
   private final LoggedTunableNumber flywheelIdleSpeed =
       new LoggedTunableNumber("Turret/Flywheel/idleSpeedRPS", 10);
-  private final LoggedTunableNumber wrapLooheadSeconds =
-      new LoggedTunableNumber("Turret/Azimuth/wrapLooheadSeconds", 0.5);
+  private final LoggedTunableNumber kVelocity =
+      new LoggedTunableNumber("Turret/Azimuth/kVelocity", 0.0);
+  private final LoggedTunableNumber wrapMarginDegs =
+      new LoggedTunableNumber("Turret/Azimuth/wrapMarginDegs", 8);
 
-  private final LinearFilter azimuthFFFilter = LinearFilter.movingAverage(5);
-  private final Debouncer azimuthSettledDebouncer = new Debouncer(0.1, DebounceType.kBoth);
+  private final Debouncer azimuthSettledDebouncer = new Debouncer(0.15, DebounceType.kFalling);
+
+  private double lastTime = 0.0;
+  private double azimuthFFVel = 0.0;
 
   public Turret(TurretIO io) {
     this.io = io;
@@ -76,46 +79,27 @@ public class Turret extends StateSubsystem<TurretState> {
     this.passing = passing;
   }
 
-  private boolean willAzimuthWrapWithin(double dt) {
-    double posRots = inputs.azimuthState.nativePosition();
-    double futurePos = posRots + dt * inputs.azimuthState.nativeVelocity();
-    return futurePos > TurretConstants.maxAzimuthAngle.in(Rotations)
-        || futurePos < TurretConstants.minAzimuthAngle.in(Rotations);
-  }
-
-  private boolean isAzimuthTracking() {
-    double posError = Math.abs(inputs.azimuthState.nativePosition() - outputs.azimuthSetpointRots);
-    // double velError = Math.abs(inputs.azimuthState.nativeVelocity() -
-    // outputs.azimuthFFRotsPerSec);
-
-    boolean withinTolerance = posError < Units.degreesToRotations(3.0);
-    /*
-    if (RobotConfig.getMode() != OperationMode.SIM) {
-      withinTolerance = withinTolerance && velError < 0.1;
-    }*/
-    return azimuthSettledDebouncer.calculate(withinTolerance);
+  private boolean nearWrapBoundary() {
+    double pos = inputs.azimuthState.nativePosition();
+    double max = TurretConstants.maxAzimuthAngle.in(Rotations);
+    double min = TurretConstants.minAzimuthAngle.in(Rotations);
+    double WRAP_MARGIN_ROTS = Units.degreesToRotations(wrapMarginDegs.getAsDouble());
+    return (max - pos) < WRAP_MARGIN_ROTS || (pos - min) < WRAP_MARGIN_ROTS;
   }
 
   public boolean readyForFeed() {
-    boolean hoodReady =
-        getHoodAngle().isNear(parameters.hoodAngle(), TurretConstants.hoodTolerance);
-    boolean upToSpeed =
-        getShooterSpeed().isNear(parameters.flywheelSpeed(), TurretConstants.shotSpeedTolerance);
-    boolean azimuthReady = isAzimuthTracking();
-    boolean willWrap = willAzimuthWrapWithin(wrapLooheadSeconds.getAsDouble());
-
-    Logger.recordOutput("Turret/Ready/azimuthSettled", azimuthReady);
-    Logger.recordOutput("Turret/Ready/hoodPosition", hoodReady);
-    Logger.recordOutput("Turret/Ready/flywheelSpeed", upToSpeed);
-    Logger.recordOutput("Turret/Ready/azimuthWillWrap", willWrap);
+    double posError = Math.abs(inputs.azimuthState.nativePosition() - outputs.azimuthSetpointRots);
+    boolean withinTolerance = posError < Units.degreesToRotations(3.0);
+    boolean azimuthAtSetpoint = azimuthSettledDebouncer.calculate(withinTolerance);
+    boolean willWrap = nearWrapBoundary();
 
     boolean ready =
-        //  hoodReady &&
-        azimuthReady
-            // && upToSpeed
-            && (!willWrap)
-            && (getCurrentState() != TurretState.NEAR_TRENCH);
+        azimuthAtSetpoint && (!willWrap) && (getCurrentState() != TurretState.NEAR_TRENCH);
+
+    Logger.recordOutput("Turret/Ready/azimuthAtSetpoint", azimuthAtSetpoint);
+    Logger.recordOutput("Turret/Ready/azimuthWillWrap", willWrap);
     Logger.recordOutput("Turret/Ready/fullyReady", ready);
+
     return ready;
   }
 
@@ -139,20 +123,29 @@ public class Turret extends StateSubsystem<TurretState> {
         "Turret/FlywheelR", inputs.rightFlywheelState.currentAmps());
 
     // Logic
+    double lastAzimuthSetpoint = outputs.azimuthSetpointRots;
     applyState();
+
+    // Calculate azimuth feedforward term
+    double currentTime = Timer.getFPGATimestamp();
+    double dt = currentTime - lastTime;
+    if (dt > 0.0) {
+      azimuthFFVel = (outputs.azimuthSetpointRots - lastAzimuthSetpoint) / dt;
+    }
+    lastTime = currentTime;
+    outputs.azimuthFeedforward = azimuthFFVel * kVelocity.getAsDouble();
+
     io.applyOutputs(outputs);
 
     Logger.recordOutput("Turret/Setpoints/hoodRots", outputs.hoodSetpointRots);
     Logger.recordOutput("Turret/Setpoints/azimuthRots", outputs.azimuthSetpointRots);
-    Logger.recordOutput("Turret/Setpoints/azimuthFFRPS", outputs.azimuthFFRotsPerSec);
+    Logger.recordOutput("Turret/Setpoints/azimuthFFRPS", outputs.azimuthFeedforward);
     Logger.recordOutput("Turret/Setpoints/flywheelRPS", outputs.flywheelRPS);
   }
 
   @Override
   public void applyState() {
     outputs.azimuthSetpointRots = parameters.azimuthAngle().in(Rotations);
-    outputs.azimuthFFRotsPerSec =
-        azimuthFFFilter.calculate(parameters.azimuthVelocity().in(RotationsPerSecond));
     outputs.flywheelRPS = flywheelIdleSpeed.getAsDouble();
     outputs.hoodSetpointRots = parameters.hoodAngle().in(Rotations);
 

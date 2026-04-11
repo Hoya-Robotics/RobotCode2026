@@ -90,7 +90,9 @@ public class GenericTunableGains {
                   var setter = gainSetters.get(k);
                   if (setter != null) setter.accept(slot, v);
                 });
-            talon.getConfigurator().apply(slot);
+            for (int i = 0; i < 5; ++i) {
+              if (talon.getConfigurator().apply(slot).isOK()) break;
+            }
           });
     }
   }
