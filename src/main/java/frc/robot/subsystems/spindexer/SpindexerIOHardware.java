@@ -79,6 +79,12 @@ public class SpindexerIOHardware implements SpindexerIO {
     inputs.feedMotorCurrent = Amps.of(feedMotor.getOutputCurrent());
     inputs.feedMotorVelocity = RotationsPerSecond.of(feedEncoder.getVelocity() / 60.0);
     inputs.feedConnected = feedMotor.getLastError() == REVLibError.kOk;
+
+    inputs.rampMotorVoltageApplied =
+        Volts.of(rampMotor.getAppliedOutput() * rampMotor.getBusVoltage());
+    inputs.rampMotorCurrent = Amps.of(rampMotor.getOutputCurrent());
+    inputs.rampMotorVelocity = RotationsPerSecond.of(rampEncoder.getVelocity() / 60.0);
+    inputs.rampConnected = rampMotor.getLastError() == REVLibError.kOk;
   }
 
   @Override

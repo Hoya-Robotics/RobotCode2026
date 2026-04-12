@@ -15,6 +15,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import frc.robot.RobotConfig.TurretConstants;
+import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.MotorState;
 import frc.robot.util.PhoenixSync;
 import frc.robot.util.PhoenixSync.TalonFXSignals;
@@ -24,6 +25,9 @@ public class TurretIOHardware implements TurretIO {
   private final CANcoder azimuthEncoder;
   private final TalonFXSignals azimuthSignals;
   private final PositionTorqueCurrentFOC azimuthTrackRequest = new PositionTorqueCurrentFOC(0.0);
+
+  private LoggedTunableNumber flywheelTuningSetpoint =
+      new LoggedTunableNumber("Turret/Flywheel/TuningSetpoint", 20.0);
 
   private final TalonFX hoodMotor;
   private final TalonFXSignals hoodSignals;
@@ -71,13 +75,18 @@ public class TurretIOHardware implements TurretIO {
 
   @Override
   public void applyOutputs(TurretIOOutputs outputs) {
+    /*
     azimuthMotor.setControl(
         azimuthTrackRequest
             .withPosition(outputs.azimuthSetpointRots)
-            .withFeedForward(outputs.azimuthFeedforward));
+            .withFeedForward(outputs.azimuthFeedforward));*/
     hoodMotor.setControl(hoodRequest.withPosition(outputs.hoodSetpointRots));
-    leftFlywheelMotor.setControl(flywheelRequest.withVelocity(outputs.flywheelRPS));
-    rightFlywheelMotor.setControl(flywheelRequest.withVelocity(outputs.flywheelRPS));
+    // leftFlywheelMotor.setControl(flywheelRequest.withVelocity(outputs.flywheelRPS));
+    // rightFlywheelMotor.setControl(flywheelRequest.withVelocity(outputs.flywheelRPS));
+    leftFlywheelMotor.setControl(
+        flywheelRequest.withVelocity(flywheelTuningSetpoint.getAsDouble()));
+    rightFlywheelMotor.setControl(
+        flywheelRequest.withVelocity(flywheelTuningSetpoint.getAsDouble()));
   }
 
   private void configureAzimuth() {
@@ -124,8 +133,8 @@ public class TurretIOHardware implements TurretIO {
 
   private void configureFlywheel(TalonFX motor, boolean invert) {
     var config = new TalonFXConfiguration();
-    config.CurrentLimits.withStatorCurrentLimit(80);
-    config.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive)
+    config.CurrentLimits.withStatorCurrentLimit(60);
+    config.MotorOutput.withInverted(invert ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive)
         .withNeutralMode(NeutralModeValue.Brake);
     for (int i = 0; i < 5; ++i) {
       if (motor.getConfigurator().apply(config).isOK()) break;

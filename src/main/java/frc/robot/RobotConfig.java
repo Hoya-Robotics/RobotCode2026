@@ -88,11 +88,7 @@ public class RobotConfig {
     public static final PIDGains choreoYGains = new PIDGains(7.5, 0.0, 0.0);
     public static final PIDGains choreoOmegaGains = new PIDGains(5.25, 0.0, 0.0);
 
-    public static final double SOTMSpeedFactor = 0.3;
-    public static final double NeutralSOTMSpeedFactor = 0.4;
     public static final double SOTMOmegaFactor = 0.125;
-    public static final double SOTMAccelLimit = 0.2;
-
     public static final Angle odometryMaxPitch = Degrees.of(6.0);
   }
 
@@ -111,9 +107,9 @@ public class RobotConfig {
     public static final double indexGearRatio = 1.0 / 3.0;
     public static final double rampGearRatio = 1.1667;
 
-    public static final SparkTunableGains indexGains = new SparkTunableGains("Spindexer/Index");
-    public static final SparkTunableGains feederGains = new SparkTunableGains("Spindexer/Feed");
-    public static final SparkTunableGains rampGains = new SparkTunableGains("Spindexer/Ramp");
+    public static final SparkTunableGains indexGains = new SparkTunableGains("Spindexer/Index/");
+    public static final SparkTunableGains feederGains = new SparkTunableGains("Spindexer/Feed/");
+    public static final SparkTunableGains rampGains = new SparkTunableGains("Spindexer/Ramp/");
 
     static {
       indexGains.registerGain("kp", 0.0002);
@@ -122,8 +118,9 @@ public class RobotConfig {
       feederGains.registerGain("kp", 0.0002);
       feederGains.registerGain("kv", 0.0018);
 
-      rampGains.registerGain("kp", 0.0);
+      rampGains.registerGain("kp", 0.000075);
       rampGains.registerGain("kd", 0.0);
+      rampGains.registerGain("kv", 0.001827);
     }
   }
 
@@ -146,8 +143,8 @@ public class RobotConfig {
     public static final double extendGearRatio = 1.8364;
     public static final double intakeKv = 1.1 * (1.0 / 576.8) / intakeGearRatio; // 0.032408;
 
-    public static final SparkTunableGains intakeGains = new SparkTunableGains("Intake/Spin");
-    public static final TalonTunableGains extendGains = new TalonTunableGains("Intake/Rack", 0);
+    public static final SparkTunableGains intakeGains = new SparkTunableGains("Intake/Spin/");
+    public static final TalonTunableGains extendGains = new TalonTunableGains("Intake/Rack/", 0);
 
     static {
       intakeGains.registerGain("kp", 0.0002);
@@ -173,15 +170,16 @@ public class RobotConfig {
     public static final int leftFlywheelId = 43;
     public static final int rightFlywheelId = 44;
 
-    public static final double hoodGearRatio = 171.600;
+    public static final double hoodGearRatio = 103.8889;
     public static final double azimuthGearRatio = 42.0;
 
-    public static final TalonTunableGains azimuthGains = new TalonTunableGains("Turret/Azimuth", 0);
+    public static final TalonTunableGains azimuthGains =
+        new TalonTunableGains("Turret/Azimuth/", 0);
     public static final TalonTunableGains leftFlywheelGains =
-        new TalonTunableGains("Turret/FlywheelL", 0);
+        new TalonTunableGains("Turret/FlywheelL/", 0);
     public static final TalonTunableGains rightFlywheelGains =
-        new TalonTunableGains("Turret/FlywheelR", 0);
-    public static final TalonTunableGains hoodGains = new TalonTunableGains("Turret/Hood", 0);
+        new TalonTunableGains("Turret/FlywheelR/", 0);
+    public static final TalonTunableGains hoodGains = new TalonTunableGains("Turret/Hood/", 0);
 
     static {
       hoodGains.registerGain("kp", 0);
@@ -202,11 +200,13 @@ public class RobotConfig {
       azimuthGains.registerGain("kv", 2.5);
       azimuthGains.registerGain("ks", 14);
 
-      leftFlywheelGains.registerGain("kp", 0.0);
+      leftFlywheelGains.registerGain("kp", 0.5);
       leftFlywheelGains.registerGain("kd", 0.0);
+      leftFlywheelGains.registerGain("kv", 0.135);
 
-      rightFlywheelGains.registerGain("kp", 0.0);
+      rightFlywheelGains.registerGain("kp", 0.5);
       rightFlywheelGains.registerGain("kd", 0.0);
+      rightFlywheelGains.registerGain("kv", 0.135);
 
       /*
       Deprecated: VelocityTorqueFOC
