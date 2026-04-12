@@ -134,7 +134,8 @@ public class TurretIOHardware implements TurretIO {
   private void configureFlywheel(TalonFX motor, boolean invert) {
     var config = new TalonFXConfiguration();
     config.CurrentLimits.withStatorCurrentLimit(60);
-    config.MotorOutput.withInverted(invert ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive)
+    config.MotorOutput.withInverted(
+            invert ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive)
         .withNeutralMode(NeutralModeValue.Brake);
     for (int i = 0; i < 5; ++i) {
       if (motor.getConfigurator().apply(config).isOK()) break;

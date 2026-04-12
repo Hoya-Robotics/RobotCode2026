@@ -24,9 +24,16 @@ public interface IntakeIO {
     public AngularVelocity intakeVelocity = RadiansPerSecond.zero();
   }
 
+  public enum ExtendControlType {
+    POSITION,
+    VOLTAGE
+  }
+
   public class IntakeIOOutputs {
-    public AngularVelocity intakeVelocity = RotationsPerSecond.of(0.0);
-    public Distance extensionDistance = Meters.of(0.0);
+    public double intakeVelocityRPM = 0.0;
+    public ExtendControlType extendControlType = ExtendControlType.POSITION;
+    public double extendSetpointInches = 0.0;
+    public double extendVoltage = 0.0;
   }
 
   public default void updateInputs(IntakeIOInputs inputs) {}

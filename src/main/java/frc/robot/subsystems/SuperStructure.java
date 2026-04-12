@@ -106,7 +106,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
       case SHOOT:
         if (DriverStation.isTeleopEnabled()) RobotState.getInstance().setDriveSOTM(true);
         turret.setState(TurretState.SHOOT);
-        intake.setState(IntakeState.AGITATE);
+        intake.setState(IntakeState.RETRACT_SLOW);
         spindexer.setState(SpindexerState.COOLDOWN);
 
         if (turret.readyForFeed()) {

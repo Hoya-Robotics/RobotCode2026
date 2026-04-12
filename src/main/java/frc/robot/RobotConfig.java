@@ -128,8 +128,8 @@ public class RobotConfig {
     public enum IntakeState {
       IDLE,
       INTAKE,
-      AGITATE,
-      REVERSE
+      REVERSE,
+      RETRACT_SLOW
     }
 
     public static final int extendMotorId = 30;
@@ -144,7 +144,7 @@ public class RobotConfig {
     public static final double intakeKv = 1.1 * (1.0 / 576.8) / intakeGearRatio; // 0.032408;
 
     public static final SparkTunableGains intakeGains = new SparkTunableGains("Intake/Spin/");
-    public static final TalonTunableGains extendGains = new TalonTunableGains("Intake/Rack/", 0);
+    public static final TalonTunableGains extendGains = new TalonTunableGains("Intake/Extend/", 0);
 
     static {
       intakeGains.registerGain("kp", 0.0002);
@@ -202,10 +202,12 @@ public class RobotConfig {
 
       leftFlywheelGains.registerGain("kp", 0.5);
       leftFlywheelGains.registerGain("kd", 0.0);
+      leftFlywheelGains.registerGain("ks", 0.5);
       leftFlywheelGains.registerGain("kv", 0.135);
 
       rightFlywheelGains.registerGain("kp", 0.5);
       rightFlywheelGains.registerGain("kd", 0.0);
+      rightFlywheelGains.registerGain("ks", 0.5);
       rightFlywheelGains.registerGain("kv", 0.135);
 
       /*

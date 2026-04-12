@@ -13,6 +13,7 @@ import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import org.littletonrobotics.junction.Logger;
 
@@ -24,6 +25,7 @@ public class IntakeIOSimSimple implements IntakeIO {
           gearbox, 10.3846, 0.1, Inches.of(0.9).in(Meters), 0, Inches.of(11).in(Meters), false, 0);
 
   private PIDController intakePID = new PIDController(100, 0, 0);
+  private double voltageApplied = 0.0;
 
   public IntakeIOSimSimple() {
     intakeSim.setState(0.0, 0.0);
@@ -31,15 +33,14 @@ public class IntakeIOSimSimple implements IntakeIO {
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
-    double motorVoltage = intakePID.calculate(intakeSim.getPositionMeters());
-    intakeSim.setInputVoltage(motorVoltage);
+    intakeSim.setInputVoltage(voltageApplied);
     intakeSim.update(0.020);
 
     inputs.extendConnected = true;
     // Position is in inches due to SensorToMechanismRatio converting rotations to inches
     inputs.extendPosition = Meters.of(intakeSim.getPositionMeters());
     inputs.extendVelocity = MetersPerSecond.of(intakeSim.getVelocityMetersPerSecond());
-    inputs.extendVoltageApplied = Volts.of(motorVoltage);
+    inputs.extendVoltageApplied = Volts.of(voltageApplied);
     inputs.extendCurrent = Amps.of(0.0);
 
     inputs.intakeConnected = false;
@@ -50,13 +51,15 @@ public class IntakeIOSimSimple implements IntakeIO {
 
   @Override
   public void applyOutputs(IntakeIOOutputs outputs) {
-    Logger.recordOutput("Intake/extensionSetpoint", outputs.extensionDistance.in(Meters));
-    // Logger.recordOutput("Intake/extensionSetpoint", outputs.extendVoltage);
-    // Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVoltage);
-    Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVelocity);
+    Logger.recordOutput("Intake/extensionSetpoint", outputs.extendSetpointInches);
+    Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVelocityRPM);
 
-    // extendMotor.setVoltage(outputs.extendVoltage.in(Volts));
-    // extendMotor.setControl(extendRequest.withPosition(outputs.extensionDistance.in(Inches)));
-    intakePID.setSetpoint(outputs.extensionDistance.in(Meters));
+    intakePID.setSetpoint(Units.inchesToMeters(outputs.extendSetpointInches));
+
+    voltageApplied =
+        switch (outputs.extendControlType) {
+          case POSITION -> intakePID.calculate(intakeSim.getPositionMeters());
+          case VOLTAGE -> outputs.extendVoltage;
+        };
   }
 }

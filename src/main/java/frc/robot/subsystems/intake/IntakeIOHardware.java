@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -32,6 +33,7 @@ public class IntakeIOHardware implements IntakeIO {
   private final CANcoder extendEncoder;
   private final TalonFXSignals extendSignals;
   private PositionVoltage extendRequest = new PositionVoltage(0.0);
+  private VoltageOut extendRawRequest = new VoltageOut(0.0);
 
   private final SparkFlex intakeMotor;
   private final SparkClosedLoopController intakeController;
@@ -46,7 +48,7 @@ public class IntakeIOHardware implements IntakeIO {
     intakeEncoder = intakeMotor.getEncoder();
 
     var intakeConfig = new SparkFlexConfig();
-    intakeConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(60);
+    intakeConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(40);
     intakeConfig.encoder.positionConversionFactor(IntakeConstants.intakeGearRatio);
     intakeConfig.encoder.velocityConversionFactor(IntakeConstants.intakeGearRatio);
     intakeConfig.closedLoopRampRate(0.075);
@@ -108,10 +110,14 @@ public class IntakeIOHardware implements IntakeIO {
       extendMotor.getConfigurator().apply(new MotorOutputConfigs().withNeutralMode(desiredMode));
       lastNeutralMode = desiredMode;
     }
-    Logger.recordOutput("Intake/extensionSetpoint", outputs.extensionDistance.in(Meters));
-    Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVelocity);
+    Logger.recordOutput("Intake/extensionSetpoint", outputs.extendSetpointInches);
+    Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVelocityRPM);
 
-    extendMotor.setControl(extendRequest.withPosition(outputs.extensionDistance.in(Inches)));
-    intakeController.setSetpoint(outputs.intakeVelocity.in(RPM), ControlType.kVelocity);
+    extendMotor.setControl(
+        switch (outputs.extendControlType) {
+          case POSITION -> extendRequest.withPosition(outputs.extendSetpointInches);
+          case VOLTAGE -> extendRawRequest.withOutput(outputs.extendVoltage);
+        });
+    intakeController.setSetpoint(outputs.intakeVelocityRPM, ControlType.kVelocity);
   }
 }

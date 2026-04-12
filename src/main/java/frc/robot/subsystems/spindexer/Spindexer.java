@@ -31,8 +31,8 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
     Logger.processInputs("Spindexer", inputs);
     Logger.recordOutput("Spindexer/state", getCurrentState());
 
-    Robot.batteryLogger.reportCurrentUsage("Spindexer/Indexer", inputs.indexMotorCurrent.in(Amps));
-    Robot.batteryLogger.reportCurrentUsage("Spindexer/Feeder", inputs.feedMotorCurrent.in(Amps));
+    Robot.batteryLogger.reportCurrentUsage("Spindexer/Indexer", inputs.indexMotorCurrent);
+    Robot.batteryLogger.reportCurrentUsage("Spindexer/Feeder", inputs.feedMotorCurrent);
 
     if (feedSpeed.hasChanged(feedSpeed.hashCode())) {
       latestFeedSpeed = feedSpeed.getAsDouble();

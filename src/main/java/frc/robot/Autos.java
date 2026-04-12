@@ -97,7 +97,7 @@ public class Autos {
     return wrapShootAllianceIntakeNeutral(
         Commands.sequence(
             flippableTrajectory("OPStart", mirrorYAxis),
-            flippableTrajectory("OPEnd", mirrorYAxis),
+            flippableTrajectory("OPEnd2", mirrorYAxis),
             flippableTrajectory("OPEscape", mirrorYAxis)),
         superStructure);
   }

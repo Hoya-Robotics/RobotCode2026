@@ -1,29 +1,24 @@
 package frc.robot.subsystems.spindexer;
 
-import static edu.wpi.first.units.Units.*;
-
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Voltage;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface SpindexerIO {
   @AutoLog
   public class SpindexerIOInputs {
     public boolean indexConnected = false;
-    public Voltage indexMotorVoltageApplied = Volts.zero();
-    public Current indexMotorCurrent = Amps.zero();
-    public AngularVelocity indexMotorVelocity = RotationsPerSecond.zero();
+    public double indexMotorVoltageApplied = 0.0;
+    public double indexMotorCurrent = 0.0;
+    public double indexMotorVelocityRPS = 0.0;
 
     public boolean feedConnected = false;
-    public Voltage feedMotorVoltageApplied = Volts.zero();
-    public Current feedMotorCurrent = Amps.zero();
-    public AngularVelocity feedMotorVelocity = RotationsPerSecond.zero();
+    public double feedMotorVoltageApplied = 0.0;
+    public double feedMotorCurrent = 0.0;
+    public double feedMotorVelocityRPS = 0.0;
 
     public boolean rampConnected = false;
-    public Voltage rampMotorVoltageApplied = Volts.zero();
-    public Current rampMotorCurrent = Amps.zero();
-    public AngularVelocity rampMotorVelocity = RotationsPerSecond.zero();
+    public double rampMotorVoltageApplied = 0.0;
+    public double rampMotorCurrent = 0.0;
+    public double rampMotorVelocityRPS = 0.0;
   }
 
   public class SpindexerIOOutputs {

@@ -68,22 +68,19 @@ public class SpindexerIOHardware implements SpindexerIO {
 
   @Override
   public void updateInputs(SpindexerIOInputs inputs) {
-    inputs.indexMotorVoltageApplied =
-        Volts.of(indexMotor.getAppliedOutput() * indexMotor.getBusVoltage());
-    inputs.indexMotorCurrent = Amps.of(indexMotor.getOutputCurrent());
-    inputs.indexMotorVelocity = RotationsPerSecond.of(indexEncoder.getVelocity() / 60.0);
+    inputs.indexMotorVoltageApplied = indexMotor.getAppliedOutput() * indexMotor.getBusVoltage();
+    inputs.indexMotorCurrent = indexMotor.getOutputCurrent();
+    inputs.indexMotorVelocityRPS = indexEncoder.getVelocity() / 60.0;
     inputs.indexConnected = indexMotor.getLastError() == REVLibError.kOk;
 
-    inputs.feedMotorVoltageApplied =
-        Volts.of(feedMotor.getAppliedOutput() * feedMotor.getBusVoltage());
-    inputs.feedMotorCurrent = Amps.of(feedMotor.getOutputCurrent());
-    inputs.feedMotorVelocity = RotationsPerSecond.of(feedEncoder.getVelocity() / 60.0);
+    inputs.feedMotorVoltageApplied = feedMotor.getAppliedOutput() * feedMotor.getBusVoltage();
+    inputs.feedMotorCurrent = feedMotor.getOutputCurrent();
+    inputs.feedMotorVelocityRPS = feedEncoder.getVelocity() / 60.0;
     inputs.feedConnected = feedMotor.getLastError() == REVLibError.kOk;
 
-    inputs.rampMotorVoltageApplied =
-        Volts.of(rampMotor.getAppliedOutput() * rampMotor.getBusVoltage());
-    inputs.rampMotorCurrent = Amps.of(rampMotor.getOutputCurrent());
-    inputs.rampMotorVelocity = RotationsPerSecond.of(rampEncoder.getVelocity() / 60.0);
+    inputs.rampMotorVoltageApplied = rampMotor.getAppliedOutput() * rampMotor.getBusVoltage();
+    inputs.rampMotorCurrent = rampMotor.getOutputCurrent();
+    inputs.rampMotorVelocityRPS = rampEncoder.getVelocity() / 60.0;
     inputs.rampConnected = rampMotor.getLastError() == REVLibError.kOk;
   }
 
