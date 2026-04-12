@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -89,7 +90,12 @@ public class Turret extends StateSubsystem<TurretState> {
 
   public boolean readyForFeed() {
     double posError = Math.abs(inputs.azimuthState.nativePosition() - outputs.azimuthSetpointRots);
-    boolean withinTolerance = posError < Units.degreesToRotations(3.0);
+    ChassisSpeeds speeds = RobotState.getInstance().getFieldVelocity();
+    double tolerance =
+        Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond) > 0.2
+            ? TurretConstants.azimuthMovingToleranceRots
+            : TurretConstants.azimuthStaticToleranceRots;
+    boolean withinTolerance = posError < tolerance;
     boolean azimuthAtSetpoint = azimuthSettledDebouncer.calculate(withinTolerance);
     boolean willWrap = nearWrapBoundary();
 

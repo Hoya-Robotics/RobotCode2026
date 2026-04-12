@@ -10,7 +10,6 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -47,8 +46,17 @@ public class RobotConfig {
     }
   }
 
-  public record CameraConfig(
-      String name, Transform3d robotToCamera, SimCameraProperties simProps) {}
+  public record CameraConfig(String name, Transform3d robotToCamera, SimCameraProperties simProps) {
+    public CameraConfig toPV() {
+      Rotation3d realRot = robotToCamera().getRotation();
+      return new CameraConfig(
+          name,
+          new Transform3d(
+              robotToCamera().getTranslation(),
+              new Rotation3d(realRot.getX(), -realRot.getY(), realRot.getZ())),
+          simProps);
+    }
+  }
 
   public static OperationMode getMode() {
     return RobotBase.isReal() ? OperationMode.REAL : OperationMode.SIM;
@@ -185,14 +193,8 @@ public class RobotConfig {
       hoodGains.registerGain("kp", 0);
       hoodGains.registerGain("ki", 0);
       hoodGains.registerGain("kd", 0);
-      /*
-      Deprecated: PositionTorqueFOC
-         hoodGains.registerGain("kp", 170);
-         hoodGains.registerGain("ki", 0);
-         hoodGains.registerGain("kd", 0);
-         hoodGains.registerGain("ks", 4.0);
-         hoodGains.registerGain("ka", 0);
-      */
+      hoodGains.registerGain("ks", 0);
+      hoodGains.registerGain("kv", 0);
 
       azimuthGains.registerGain("kp", 125);
       azimuthGains.registerGain("kd", 8.0);
@@ -209,26 +211,17 @@ public class RobotConfig {
       rightFlywheelGains.registerGain("kd", 0.0);
       rightFlywheelGains.registerGain("ks", 0.5);
       rightFlywheelGains.registerGain("kv", 0.135);
-
-      /*
-      Deprecated: VelocityTorqueFOC
-         flywheelGains.registerGain("kv", 0.36);
-         flywheelGains.registerGain("ks", 12.3);
-         flywheelGains.registerGain("kp", 30.0);
-      */
     }
 
     public static final Angle trenchHoodAngle = Degrees.of(12.0);
-    public static final Angle hoodTolerance = Degrees.of(1.5);
 
     public static final Angle maxAzimuthAngle = Rotations.of(0.73);
     public static final Angle minAzimuthAngle = Rotations.of(-0.35);
-    public static final Angle azimuthTolerance = Degrees.of(2.0);
-    public static final double azimuthLatencyCompensation = 0.050;
-    public static final double azimuthRadiusMeters = Units.inchesToMeters(7.0733);
 
-    public static final AngularVelocity shotSpeedTolerance = RotationsPerSecond.of(2.5);
-    public static final AngularVelocity shotIdleSpeed = RotationsPerSecond.of(17.5);
+    public static final double azimuthStaticToleranceRots = Units.degreesToRotations(8.0);
+    public static final double azimuthMovingToleranceRots = Units.degreesToRotations(5.0);
+
+    public static final double azimuthRadiusMeters = Units.inchesToMeters(7.0733);
     public static final Distance launcherWheelRadius = Inches.of(2.0);
 
     public static final double cooldownSeconds = 0.5;
@@ -243,6 +236,36 @@ public class RobotConfig {
   }
 
   public static final class VisionConstants {
+    public static final CameraConfig turretConfig =
+        new CameraConfig(
+            "limelight-turret",
+            new Transform3d(
+                -Units.inchesToMeters(12.44),
+                Units.inchesToMeters(12.44),
+                Units.inchesToMeters(17.760),
+                new Rotation3d(0.0, Units.degreesToRadians(20), Units.degreesToRadians(135))),
+            new SimCameraProperties());
+
+    public static final CameraConfig backRight =
+        new CameraConfig(
+            "PV-backright",
+            new Transform3d(
+                -Units.inchesToMeters(12.916),
+                Units.inchesToMeters(8.470),
+                Units.inchesToMeters(7.490),
+                new Rotation3d(0.0, Units.degreesToRadians(20), Units.degreesToRadians(45))),
+            new SimCameraProperties());
+
+    public static final CameraConfig backLeft =
+        new CameraConfig(
+            "PV-backleft",
+            new Transform3d(
+                -Units.inchesToMeters(12.916),
+                -Units.inchesToMeters(8.470),
+                Units.inchesToMeters(7.490),
+                new Rotation3d(0.0, Units.degreesToRadians(20), Units.degreesToRadians(-45))),
+            new SimCameraProperties());
+
     public static final CameraConfig hopperConfig =
         new CameraConfig(
             "limelight-hopper",
@@ -254,6 +277,7 @@ public class RobotConfig {
                 new Rotation3d(0.0, Units.degreesToRadians(20.0), 0.0)),
             new SimCameraProperties());
 
+    /*
     public static final CameraConfig hopperConfigSim =
         new CameraConfig(
             "limelight-hopper",
@@ -263,7 +287,7 @@ public class RobotConfig {
                     -Units.inchesToMeters(11.396),
                     Units.inchesToMeters(19.828)),
                 new Rotation3d(0.0, Units.degreesToRadians(-20.0), 0.0)),
-            new SimCameraProperties());
+            new SimCameraProperties());*/
 
     public static final double linearTrustFactor = 1.2;
     public static final double zThreshold = 0.2;
