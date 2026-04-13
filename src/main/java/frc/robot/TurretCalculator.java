@@ -43,7 +43,8 @@ public class TurretCalculator {
   }
 
   public static double getTOF(double distance, boolean passing) {
-    return passing ? passingTofMap.get(distance) : 0.076 * distance + 0.982;
+    return passing ? passingTofMap.get(distance) : 0.0829 * distance + 0.886;
+    // return passing ? passingTofMap.get(distance) : 0.076 * distance + 0.982;
   }
 
   public record TurretParameters(

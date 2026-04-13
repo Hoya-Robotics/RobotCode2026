@@ -9,6 +9,7 @@ import edu.wpi.first.math.numbers.*;
 import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.RobotConfig.CameraConfig;
+import frc.robot.RobotConfig.OperationMode;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOInputsAutoLogged;
 import frc.robot.subsystems.vision.Vision;
@@ -84,7 +85,7 @@ public class RobotState {
     boolean autoNeutral =
         DriverStation.isAutonomousEnabled() && FieldConstants.inNeutralZone(getEstimatedPose());
     Logger.recordOutput("RobotState/autoNeutral", autoNeutral);
-    if (drive != null && !autoNeutral) {
+    if (drive != null && !autoNeutral && RobotConfig.getMode() != OperationMode.SIM) {
       drive.addVisionMeasurement(estimate);
     }
   }

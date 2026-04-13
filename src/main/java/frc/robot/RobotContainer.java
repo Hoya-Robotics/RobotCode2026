@@ -115,7 +115,7 @@ public class RobotContainer {
         intake = new Intake(new IntakeIO() {});
         break;
     }
-    superStructure = new SuperStructure(spindexer, turret, intake);
+    superStructure = new SuperStructure(spindexer, turret);
     PhoenixSync.optimizeAll();
 
     configureBindings();
@@ -123,37 +123,24 @@ public class RobotContainer {
 
   private void configureBindings() {
     superStructure.setDefaultCommand(superStructure.setStateCommand(SuperStructureState.IDLE));
+    intake.setDefaultCommand(intake.setStateCommand(IntakeState.IDLE));
+
     driveController
         .rightTrigger(0.3)
         .and(driveController.leftTrigger(0.3).negate())
-        .whileTrue(superStructure.setStateCommand(SuperStructureState.INTAKE).repeatedly());
-    // operatorController
+        .whileTrue(intake.setStateCommand(IntakeState.INTAKE));
+
     driveController
-        // .rightTrigger(0.3)
         .leftTrigger(0.3)
-        .and(driveController.rightTrigger(0.3).negate())
-        .whileTrue(superStructure.setStateCommand(SuperStructureState.SHOOT).repeatedly());
-    // operatorController
-    driveController
-        // .rightTrigger(0.3)
-        .leftTrigger(0.3)
-        .and(driveController.rightTrigger(0.3))
-        .whileTrue(superStructure.setStateCommand(SuperStructureState.SHOOT_INTAKE).repeatedly());
+        .whileTrue(
+            superStructure
+                .setStateCommand(SuperStructureState.PRE_SHOOT)
+                .alongWith(intake.weakSetStateCommand(IntakeState.RETRACT_SLOW))
+                .repeatedly());
 
     driveController
         .rightBumper()
-        .whileTrue(superStructure.setStateCommand(SuperStructureState.REVERSE_INTAKE).repeatedly());
-
-    /*
-     driveController
-         .b()
-         .whileTrue(superStructure.setTargetCommand(TurretTarget.CONSTANT_FORWARD))
-         .onFalse(superStructure.setTargetCommand(TurretTarget.DEFAULT));
-     driveController
-         .x()
-         .whileTrue(superStructure.setTargetCommand(TurretTarget.TUNING))
-         .onFalse(superStructure.setTargetCommand(TurretTarget.DEFAULT));
-    */
+        .whileTrue(intake.setStateCommand(IntakeState.REVERSE).repeatedly());
 
     driveController
         .start()

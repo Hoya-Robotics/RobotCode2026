@@ -9,9 +9,11 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.RobotConfig.IntakeConstants.IntakeState;
 import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.subsystems.SuperStructure;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.intake.Intake;
 import frc.robot.util.AllianceFlip;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -22,7 +24,7 @@ public class Autos {
   private static AutoFactory choreoFactory;
   private static Timer autoTimer = new Timer();
 
-  public static void warmup(Drive drive, SuperStructure superStructure) {
+  public static void warmup(Drive drive, SuperStructure superStructure, Intake intake) {
     choreoFactory =
         new AutoFactory(
             RobotState.getInstance()::getEstimatedPose,
@@ -31,11 +33,11 @@ public class Autos {
             true,
             drive);
 
-    dashboardChooser.addOption("2xSwipe|R", doubleSwipe(drive, superStructure, false));
-    dashboardChooser.addOption("2xSwipe|L", doubleSwipe(drive, superStructure, true));
-    dashboardChooser.addOption("2xBump|R", doubleBumpSwipe(drive, superStructure, false));
-    dashboardChooser.addOption("2xBump|L", doubleBumpSwipe(drive, superStructure, true));
-    dashboardChooser.addOption("Depot|C", centerDepot(drive, superStructure));
+    dashboardChooser.addOption("2xSwipe|R", doubleSwipe(drive, superStructure, intake, false));
+    dashboardChooser.addOption("2xSwipe|L", doubleSwipe(drive, superStructure, intake, true));
+    dashboardChooser.addOption("2xBump|R", doubleBumpSwipe(drive, superStructure, intake, false));
+    dashboardChooser.addOption("2xBump|L", doubleBumpSwipe(drive, superStructure, intake, true));
+    dashboardChooser.addOption("Depot|C", centerDepot(drive, superStructure, intake));
 
     CommandScheduler.getInstance().schedule(choreoFactory.warmupCmd());
   }
@@ -66,19 +68,22 @@ public class Autos {
   }
 
   private static Command wrapShootAllianceIntakeNeutral(
-      Command routine, SuperStructure superStructure) {
+      Command routine, SuperStructure superStructure, Intake intake) {
     return routine.alongWith(
-        Commands.run(
-            () ->
-                superStructure.setState(
-                    FieldConstants.inAllianceZone(RobotState.getInstance().getEstimatedPose())
-                        ? SuperStructureState.SHOOT
-                        : SuperStructureState.INTAKE),
-            superStructure));
+        Commands.either(
+                superStructure.setStateCommand(SuperStructureState.PRE_SHOOT),
+                superStructure.setStateCommand(SuperStructureState.IDLE),
+                () -> FieldConstants.inAllianceZone(RobotState.getInstance().getEstimatedPose()))
+            .repeatedly(),
+        Commands.either(
+                intake.setStateCommand(IntakeState.IDLE),
+                intake.setStateCommand(IntakeState.INTAKE),
+                () -> FieldConstants.inAllianceZone(RobotState.getInstance().getEstimatedPose()))
+            .repeatedly());
   }
 
   private static Command doubleSwipe(
-      Drive drive, SuperStructure superStructure, boolean mirrorYAxis) {
+      Drive drive, SuperStructure superStructure, Intake intake, boolean mirrorYAxis) {
     return wrapShootAllianceIntakeNeutral(
         Commands.sequence(
             Commands.runOnce(() -> autoTimer.start()),
@@ -89,22 +94,24 @@ public class Autos {
             flippableTrajectory("CleanSwipe", mirrorYAxis),
             alignToTrench(drive, Rotation2d.kZero, mirrorYAxis),
             Commands.runOnce(() -> Logger.recordOutput("Auto/secondCycleEnd", autoTimer.get()))),
-        superStructure);
+        superStructure,
+        intake);
   }
 
   private static Command doubleBumpSwipe(
-      Drive drive, SuperStructure superStructure, boolean mirrorYAxis) {
+      Drive drive, SuperStructure superStructure, Intake intake, boolean mirrorYAxis) {
     return wrapShootAllianceIntakeNeutral(
         Commands.sequence(
             flippableTrajectory("OPStart", mirrorYAxis),
-            flippableTrajectory("OPEnd2", mirrorYAxis),
+            flippableTrajectory("OPEnd", mirrorYAxis),
             flippableTrajectory("OPEscape", mirrorYAxis)),
-        superStructure);
+        superStructure,
+        intake);
   }
 
-  private static Command centerDepot(Drive drive, SuperStructure superStructure) {
+  private static Command centerDepot(Drive drive, SuperStructure superStructure, Intake intake) {
     return Commands.sequence(
-        superStructure.setStateCommand(SuperStructureState.INTAKE),
+        intake.setStateCommand(IntakeState.INTAKE),
         choreoFactory.trajectoryCmd("CenterDepotCollect"),
         superStructure.setStateCommand(SuperStructureState.SHOOT));
   }

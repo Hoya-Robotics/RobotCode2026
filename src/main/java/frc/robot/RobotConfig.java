@@ -21,10 +21,8 @@ import org.photonvision.simulation.SimCameraProperties;
 public class RobotConfig {
   public enum SuperStructureState {
     IDLE,
-    SHOOT_INTAKE,
-    INTAKE,
+    PRE_SHOOT,
     SHOOT,
-    REVERSE_INTAKE
   }
 
   public enum OperationMode {

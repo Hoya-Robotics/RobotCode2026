@@ -2,6 +2,7 @@ package frc.robot.subsystems.turret;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -50,7 +51,7 @@ public class Turret extends StateSubsystem<TurretState> {
   private final LoggedTunableNumber hoodTuningSetpoint =
       new LoggedTunableNumber("Turret/Flywheel/hoodSetpoint", 10);
 
-  private final Debouncer azimuthSettledDebouncer = new Debouncer(0.15, DebounceType.kFalling);
+  private final Debouncer azimuthSettledDebouncer = new Debouncer(0.25, DebounceType.kFalling);
 
   private double lastTime = 0.0;
   private double azimuthFFVel = 0.0;
@@ -165,7 +166,7 @@ public class Turret extends StateSubsystem<TurretState> {
   public void applyState() {
     outputs.azimuthSetpointRots = parameters.azimuthAngle().in(Rotations);
     outputs.flywheelRPS = flywheelIdleSpeed.getAsDouble();
-    outputs.hoodSetpointRots = parameters.hoodAngle().in(Rotations);
+    outputs.hoodSetpointRots = MathUtil.clamp(parameters.hoodAngle().in(Rotations), 0.02, 0.08276);
 
     switch (getCurrentState()) {
       case NEAR_TRENCH:

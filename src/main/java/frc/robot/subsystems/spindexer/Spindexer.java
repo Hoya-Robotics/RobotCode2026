@@ -15,9 +15,9 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
   private SpindexerIOOutputs outputs = new SpindexerIOOutputs();
 
   private LoggedTunableNumber indexSpeed = new LoggedTunableNumber("Spindexer/indexSpeed", 7.0);
-  private LoggedTunableNumber feedSpeed = new LoggedTunableNumber("Spindexer/feedSpeed", 25.0);
+  private LoggedTunableNumber feedSpeed = new LoggedTunableNumber("Spindexer/feedSpeed", 28.0);
 
-  private double latestFeedSpeed = 25.0;
+  private double latestFeedSpeed = 28.0;
   private double latestIndexSpeed = 7.0;
 
   public Spindexer(SpindexerIO io) {
@@ -51,8 +51,8 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
   }
 
   public boolean isFeedingAtSpeed() {
-    return Math.abs(inputs.rampMotorVelocityRPS - outputs.rampSetpointRPS) < 3.0
-        && Math.abs(inputs.feedMotorVelocityRPS - outputs.rampSetpointRPS) < 3.0;
+    return Math.abs(inputs.rampMotorVelocityRPS - outputs.rampSetpointRPS) < 5.0
+        && Math.abs(inputs.feedMotorVelocityRPS - outputs.rampSetpointRPS) < 5.0;
   }
 
   @Override

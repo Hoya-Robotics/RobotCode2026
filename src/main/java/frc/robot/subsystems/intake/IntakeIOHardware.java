@@ -48,7 +48,7 @@ public class IntakeIOHardware implements IntakeIO {
     intakeEncoder = intakeMotor.getEncoder();
 
     var intakeConfig = new SparkFlexConfig();
-    intakeConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(40);
+    intakeConfig.idleMode(IdleMode.kCoast).smartCurrentLimit(80);
     intakeConfig.encoder.positionConversionFactor(IntakeConstants.intakeGearRatio);
     intakeConfig.encoder.velocityConversionFactor(IntakeConstants.intakeGearRatio);
     intakeConfig.closedLoopRampRate(0.075);

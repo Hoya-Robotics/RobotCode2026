@@ -7,6 +7,8 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Robot;
 import frc.robot.RobotConfig.IntakeConstants;
 import frc.robot.RobotConfig.IntakeConstants.IntakeState;
@@ -60,6 +62,18 @@ public class Intake extends StateSubsystem<IntakeState> {
     io.applyOutputs(outputs);
   }
 
+  public Command setStateCommand(IntakeState state) {
+    return Commands.runOnce(() -> setState(state), this);
+  }
+
+  public Command weakSetStateCommand(IntakeState state) {
+    return Commands.runOnce(
+        () -> {
+          if (getCurrentState() == IntakeState.IDLE) setState(state);
+        },
+        this);
+  }
+
   private boolean isStalled() {
     return stateChangeTimer.get() > 0.5 && inputs.intakeVelocity.abs(RotationsPerSecond) < 2.0;
   }
@@ -94,7 +108,7 @@ public class Intake extends StateSubsystem<IntakeState> {
         break;
       case RETRACT_SLOW:
         outputs.extendControlType = ExtendControlType.VOLTAGE;
-        outputs.extendVoltage = -5.0;
+        outputs.extendVoltage = 0.0;
         outputs.intakeVelocityRPM = 0.0;
         break;
     }
