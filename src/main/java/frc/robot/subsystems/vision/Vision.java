@@ -58,7 +58,7 @@ public class Vision extends SubsystemBase {
                 new VisionObservation(
                     cameras[i].getConfig(),
                     obsv.pose().toPose2d(),
-                    VecBuilder.fill(xDev, yDev, Double.MAX_VALUE),
+                    VecBuilder.fill(xDev, yDev, 9999.0),
                     Seconds.of(obsv.timestamp())));
       }
     }

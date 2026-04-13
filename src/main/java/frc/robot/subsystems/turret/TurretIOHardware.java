@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
@@ -15,7 +14,6 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import frc.robot.RobotConfig.TurretConstants;
-import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.MotorState;
 import frc.robot.util.PhoenixSync;
 import frc.robot.util.PhoenixSync.TalonFXSignals;
@@ -24,10 +22,7 @@ public class TurretIOHardware implements TurretIO {
   private final TalonFX azimuthMotor;
   private final CANcoder azimuthEncoder;
   private final TalonFXSignals azimuthSignals;
-  private final PositionTorqueCurrentFOC azimuthTrackRequest = new PositionTorqueCurrentFOC(0.0);
-
-  private LoggedTunableNumber flywheelTuningSetpoint =
-      new LoggedTunableNumber("Turret/Flywheel/TuningSetpoint", 20.0);
+  private final PositionVoltage azimuthRequest = new PositionVoltage(0.0);
 
   private final TalonFX hoodMotor;
   private final TalonFXSignals hoodSignals;
@@ -57,10 +52,10 @@ public class TurretIOHardware implements TurretIO {
     TurretConstants.leftFlywheelGains.registerMotor(leftFlywheelMotor);
     TurretConstants.rightFlywheelGains.registerMotor(rightFlywheelMotor);
 
-    azimuthSignals = PhoenixSync.registerTalonFX(azimuthMotor, 150);
-    hoodSignals = PhoenixSync.registerTalonFX(hoodMotor, 150);
-    leftFlywheelSignals = PhoenixSync.registerTalonFX(leftFlywheelMotor, 150);
-    rightFlywheelSignals = PhoenixSync.registerTalonFX(rightFlywheelMotor, 150);
+    azimuthSignals = PhoenixSync.registerTalonFX(azimuthMotor, 100);
+    hoodSignals = PhoenixSync.registerTalonFX(hoodMotor, 100);
+    leftFlywheelSignals = PhoenixSync.registerTalonFX(leftFlywheelMotor, 100);
+    rightFlywheelSignals = PhoenixSync.registerTalonFX(rightFlywheelMotor, 100);
 
     hoodMotor.setPosition(0.0);
   }
@@ -75,30 +70,25 @@ public class TurretIOHardware implements TurretIO {
 
   @Override
   public void applyOutputs(TurretIOOutputs outputs) {
-    /*
     azimuthMotor.setControl(
-        azimuthTrackRequest
+        azimuthRequest
             .withPosition(outputs.azimuthSetpointRots)
-            .withFeedForward(outputs.azimuthFeedforward));*/
+            .withFeedForward(outputs.azimuthFeedforward));
     hoodMotor.setControl(hoodRequest.withPosition(outputs.hoodSetpointRots));
-    // leftFlywheelMotor.setControl(flywheelRequest.withVelocity(outputs.flywheelRPS));
-    // rightFlywheelMotor.setControl(flywheelRequest.withVelocity(outputs.flywheelRPS));
-    leftFlywheelMotor.setControl(
-        flywheelRequest.withVelocity(flywheelTuningSetpoint.getAsDouble()));
-    rightFlywheelMotor.setControl(
-        flywheelRequest.withVelocity(flywheelTuningSetpoint.getAsDouble()));
+    leftFlywheelMotor.setControl(flywheelRequest.withVelocity(outputs.flywheelRPS));
+    rightFlywheelMotor.setControl(flywheelRequest.withVelocity(outputs.flywheelRPS));
   }
 
   private void configureAzimuth() {
     var encoderConfig = new CANcoderConfiguration();
     encoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.Clockwise_Positive;
-    encoderConfig.MagnetSensor.withMagnetOffset(0.1557);
+    encoderConfig.MagnetSensor.withMagnetOffset(0.574956); // -0.425244, 0.1557
     azimuthEncoder.getConfigurator().apply(encoderConfig);
 
     var config = new TalonFXConfiguration();
     config.withSlot0(
         new Slot0Configs().withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign));
-    config.CurrentLimits.withStatorCurrentLimit(60);
+    config.CurrentLimits.withStatorCurrentLimit(50);
     config.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive)
         .withNeutralMode(NeutralModeValue.Coast);
     config.Feedback.withFusedCANcoder(azimuthEncoder)
@@ -118,14 +108,14 @@ public class TurretIOHardware implements TurretIO {
     var config = new TalonFXConfiguration();
     config.withSlot0(
         new Slot0Configs().withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign));
-    config.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive)
+    config.MotorOutput.withInverted(InvertedValue.Clockwise_Positive)
         .withNeutralMode(NeutralModeValue.Coast);
     config.Feedback.withSensorToMechanismRatio(TurretConstants.hoodGearRatio);
-    config.CurrentLimits.withStatorCurrentLimit(60);
+    config.CurrentLimits.withStatorCurrentLimit(50);
     config.SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
-        .withForwardSoftLimitThreshold(0.107)
+        .withForwardSoftLimitThreshold(0.08276)
         .withReverseSoftLimitEnable(true)
-        .withReverseSoftLimitThreshold(0.0);
+        .withReverseSoftLimitThreshold(0.02);
     for (int i = 0; i < 5; ++i) {
       if (hoodMotor.getConfigurator().apply(config).isOK()) break;
     }

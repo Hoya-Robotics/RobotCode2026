@@ -45,6 +45,8 @@ public class Turret extends StateSubsystem<TurretState> {
       new LoggedTunableNumber("Turret/Azimuth/kVelocity", 0.0);
   private final LoggedTunableNumber wrapMarginDegs =
       new LoggedTunableNumber("Turret/Azimuth/wrapMarginDegs", 8);
+  private final LoggedTunableNumber flywheelTuningSpeed =
+      new LoggedTunableNumber("Turret/Flywheel/tuningSetpoint", 40);
 
   private final Debouncer azimuthSettledDebouncer = new Debouncer(0.15, DebounceType.kFalling);
 
@@ -168,6 +170,7 @@ public class Turret extends StateSubsystem<TurretState> {
       default:
         break;
     }
+    outputs.flywheelRPS = flywheelTuningSpeed.getAsDouble();
   }
 
   private void logMechanisms() {

@@ -3,15 +3,12 @@ package frc.robot.subsystems.vision;
 import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.networktables.DoubleArraySubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.util.LimelightHelpers;
-import java.util.ArrayList;
-import java.util.List;
 
 public class VisionIOLimelight implements VisionIO {
   private final CameraConfig config;
@@ -35,9 +32,9 @@ public class VisionIOLimelight implements VisionIO {
         config.robotToCamera().getX(),
         config.robotToCamera().getY(),
         config.robotToCamera().getZ(),
-        config.robotToCamera().getRotation().getX(),
-        config.robotToCamera().getRotation().getY(),
-        config.robotToCamera().getRotation().getZ());
+        config.robotToCamera().getRotation().getMeasureX().in(Degrees),
+        config.robotToCamera().getRotation().getMeasureY().in(Degrees),
+        config.robotToCamera().getRotation().getMeasureZ().in(Degrees));
   }
 
   @Override
@@ -65,29 +62,23 @@ public class VisionIOLimelight implements VisionIO {
     double[] rawStddevs = stddevSubscriber.get();
     inputs.stddevs =
         new double[] {
-          rawStddevs[0], // MT1_x
-          rawStddevs[1] // MT1_y
+          rawStddevs[0] + 1e-6, // MT1_x
+          rawStddevs[1] + 1e-6 // MT1_y
         };
 
-    var mt1Stream = mt1Subscriber.readQueue();
-    var rawFiducialStream = rawFiducialSubscriber.readQueue();
-    List<PoseObservation> observations = new ArrayList<>();
-    for (int i = 0; i < mt1Stream.length; ++i) {
-      double[] sample = mt1Stream[i].value;
-      Pose3d pose =
-          new Pose3d(
-              sample[0], sample[1], sample[2], new Rotation3d(sample[3], sample[4], sample[5]));
-
-      observations.add(
+    var mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(config.name());
+    Pose3d pose3d = LimelightHelpers.getBotPose3d_wpiBlue(config.name());
+    LimelightHelpers.RawFiducial[] rawFiducials = LimelightHelpers.getRawFiducials(config.name());
+    inputs.observations =
+        new PoseObservation[] {
           new PoseObservation(
-              mt1Stream[i].timestamp * 1.0e-6 - sample[6] * 1.0e-3,
-              pose,
-              rawFiducialStream[i].value[6],
-              (int) sample[7],
-              sample[9],
-              sample[10]));
-    }
-    inputs.observations = observations.toArray(PoseObservation[]::new);
+              mt1.timestampSeconds,
+              pose3d,
+              rawFiducials.length == 0 ? 0.0 : rawFiducials[0].ambiguity,
+              mt1.tagCount,
+              mt1.avgTagDist,
+              mt1.avgTagArea)
+        };
   }
 
   @Override

@@ -190,17 +190,16 @@ public class RobotConfig {
     public static final TalonTunableGains hoodGains = new TalonTunableGains("Turret/Hood/", 0);
 
     static {
-      hoodGains.registerGain("kp", 0);
-      hoodGains.registerGain("ki", 0);
+      hoodGains.registerGain("kp", 750);
+      hoodGains.registerGain("ki", 30);
       hoodGains.registerGain("kd", 0);
       hoodGains.registerGain("ks", 0);
       hoodGains.registerGain("kv", 0);
 
-      azimuthGains.registerGain("kp", 125);
-      azimuthGains.registerGain("kd", 8.0);
-      azimuthGains.registerGain("ka", 2.13);
-      azimuthGains.registerGain("kv", 2.5);
-      azimuthGains.registerGain("ks", 14);
+      azimuthGains.registerGain("kp", 300);
+      azimuthGains.registerGain("kd", 8);
+      azimuthGains.registerGain("kv", 0);
+      azimuthGains.registerGain("ks", 0);
 
       leftFlywheelGains.registerGain("kp", 0.5);
       leftFlywheelGains.registerGain("kd", 0.0);
@@ -243,7 +242,7 @@ public class RobotConfig {
                 -Units.inchesToMeters(12.44),
                 Units.inchesToMeters(12.44),
                 Units.inchesToMeters(17.760),
-                new Rotation3d(0.0, Units.degreesToRadians(20), Units.degreesToRadians(135))),
+                new Rotation3d(0.0, Units.degreesToRadians(10), Units.degreesToRadians(225))),
             new SimCameraProperties());
 
     public static final CameraConfig backRight =

@@ -38,7 +38,7 @@ public class Robot extends LoggedRobot {
         break;
     }
     Logger.start();
-    batteryLoggerThread.startPeriodic(0.25); // Log currents at lower frequency 4Hz
+    // batteryLoggerThread.startPeriodic(0.25); // Log currents at lower frequency 4Hz
 
     m_robotContainer = new RobotContainer();
 
@@ -47,7 +47,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void robotPeriodic() {
-    PhoenixSync.refreshCriticalBlocking(0.004);
+    PhoenixSync.refreshCriticalBlocking(0.02);
     PhoenixSync.refreshTelemetryNonBlock();
     GenericTunableGains.periodicAll();
     CommandScheduler.getInstance().run();
