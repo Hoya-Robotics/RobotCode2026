@@ -94,7 +94,7 @@ public class Intake extends StateSubsystem<IntakeState> {
         break;
       case RETRACT_SLOW:
         outputs.extendControlType = ExtendControlType.VOLTAGE;
-        outputs.extendVoltage = -3.0;
+        outputs.extendVoltage = -5.0;
         outputs.intakeVelocityRPM = 0.0;
         break;
     }

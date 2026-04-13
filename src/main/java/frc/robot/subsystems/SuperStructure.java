@@ -2,6 +2,8 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
@@ -31,6 +33,8 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
   private final Spindexer spindexer;
   private final Turret turret;
   private final Intake intake;
+
+  private Debouncer feedAtSetpointDebouncer = new Debouncer(0.4, DebounceType.kFalling);
 
   public SuperStructure(Spindexer spindexer, Turret turret, Intake intake) {
     this.spindexer = spindexer;
@@ -109,7 +113,8 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         intake.setState(IntakeState.RETRACT_SLOW);
         spindexer.setState(SpindexerState.COOLDOWN);
 
-        if (turret.readyForFeed()) {
+        if (turret.readyForFeed()
+            && feedAtSetpointDebouncer.calculate(spindexer.isFeedingAtSpeed())) {
           if (!coolingDown) {
             spindexer.setState(SpindexerState.FEED);
           }

@@ -109,7 +109,7 @@ public class TurretIOHardware implements TurretIO {
     config.withSlot0(
         new Slot0Configs().withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign));
     config.MotorOutput.withInverted(InvertedValue.Clockwise_Positive)
-        .withNeutralMode(NeutralModeValue.Coast);
+        .withNeutralMode(NeutralModeValue.Brake);
     config.Feedback.withSensorToMechanismRatio(TurretConstants.hoodGearRatio);
     config.CurrentLimits.withStatorCurrentLimit(50);
     config.SoftwareLimitSwitch.withForwardSoftLimitEnable(true)

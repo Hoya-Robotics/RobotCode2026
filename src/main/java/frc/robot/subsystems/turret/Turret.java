@@ -47,6 +47,8 @@ public class Turret extends StateSubsystem<TurretState> {
       new LoggedTunableNumber("Turret/Azimuth/wrapMarginDegs", 8);
   private final LoggedTunableNumber flywheelTuningSpeed =
       new LoggedTunableNumber("Turret/Flywheel/tuningSetpoint", 40);
+  private final LoggedTunableNumber hoodTuningSetpoint =
+      new LoggedTunableNumber("Turret/Flywheel/hoodSetpoint", 10);
 
   private final Debouncer azimuthSettledDebouncer = new Debouncer(0.15, DebounceType.kFalling);
 
@@ -100,9 +102,17 @@ public class Turret extends StateSubsystem<TurretState> {
     boolean withinTolerance = posError < tolerance;
     boolean azimuthAtSetpoint = azimuthSettledDebouncer.calculate(withinTolerance);
     boolean willWrap = nearWrapBoundary();
+    boolean flywheelUpToSpeed =
+        Math.max(
+                Math.abs(inputs.leftFlywheelState.nativeVelocity() - outputs.flywheelRPS),
+                Math.abs(inputs.rightFlywheelState.nativeVelocity() - outputs.flywheelRPS))
+            < 3.0;
 
     boolean ready =
-        azimuthAtSetpoint && (!willWrap) && (getCurrentState() != TurretState.NEAR_TRENCH);
+        azimuthAtSetpoint
+            && (!willWrap)
+            && (getCurrentState() != TurretState.NEAR_TRENCH)
+            && flywheelUpToSpeed;
 
     Logger.recordOutput("Turret/Ready/azimuthAtSetpoint", azimuthAtSetpoint);
     Logger.recordOutput("Turret/Ready/azimuthWillWrap", willWrap);
@@ -170,7 +180,10 @@ public class Turret extends StateSubsystem<TurretState> {
       default:
         break;
     }
-    outputs.flywheelRPS = flywheelTuningSpeed.getAsDouble();
+    /*
+      outputs.flywheelRPS = flywheelTuningSpeed.getAsDouble();
+      outputs.hoodSetpointRots = Units.degreesToRotations(hoodTuningSetpoint.getAsDouble());
+    */
   }
 
   private void logMechanisms() {

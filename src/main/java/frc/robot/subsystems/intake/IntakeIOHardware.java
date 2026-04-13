@@ -112,6 +112,7 @@ public class IntakeIOHardware implements IntakeIO {
     }
     Logger.recordOutput("Intake/extensionSetpoint", outputs.extendSetpointInches);
     Logger.recordOutput("Intake/intakeSetpoint", outputs.intakeVelocityRPM);
+    Logger.recordOutput("Intake/extensionControlType", outputs.extendControlType.name());
 
     extendMotor.setControl(
         switch (outputs.extendControlType) {

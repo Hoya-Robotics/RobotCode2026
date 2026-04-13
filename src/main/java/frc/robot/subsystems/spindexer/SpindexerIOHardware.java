@@ -40,7 +40,7 @@ public class SpindexerIOHardware implements SpindexerIO {
     rampController = rampMotor.getClosedLoopController();
 
     SparkMaxConfig rampConfig = new SparkMaxConfig();
-    rampConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(40);
+    rampConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(80);
     rampConfig.encoder.positionConversionFactor(SpindexerConstants.rampGearRatio);
     rampConfig.encoder.velocityConversionFactor(SpindexerConstants.rampGearRatio);
 
@@ -50,7 +50,7 @@ public class SpindexerIOHardware implements SpindexerIO {
     indexConfig.encoder.velocityConversionFactor(SpindexerConstants.indexGearRatio);
 
     SparkFlexConfig feedConfig = new SparkFlexConfig();
-    feedConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(50);
+    feedConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(80);
     feedConfig.encoder.positionConversionFactor(SpindexerConstants.feedGearRatio);
     feedConfig.encoder.velocityConversionFactor(SpindexerConstants.feedGearRatio);
 

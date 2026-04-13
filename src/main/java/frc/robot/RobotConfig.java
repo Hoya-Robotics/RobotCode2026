@@ -120,13 +120,15 @@ public class RobotConfig {
     public static final SparkTunableGains rampGains = new SparkTunableGains("Spindexer/Ramp/");
 
     static {
-      indexGains.registerGain("kp", 0.0002);
+      indexGains.registerGain("kp", 0.000325);
+      indexGains.registerGain("kd", 0.0);
       indexGains.registerGain("kv", 0.0054);
 
       feederGains.registerGain("kp", 0.0002);
+      feederGains.registerGain("kd", 0.0);
       feederGains.registerGain("kv", 0.0018);
 
-      rampGains.registerGain("kp", 0.000075);
+      rampGains.registerGain("kp", 0.00012);
       rampGains.registerGain("kd", 0.0);
       rampGains.registerGain("kv", 0.001827);
     }
@@ -190,7 +192,7 @@ public class RobotConfig {
     public static final TalonTunableGains hoodGains = new TalonTunableGains("Turret/Hood/", 0);
 
     static {
-      hoodGains.registerGain("kp", 750);
+      hoodGains.registerGain("kp", 450);
       hoodGains.registerGain("ki", 30);
       hoodGains.registerGain("kd", 0);
       hoodGains.registerGain("ks", 0);

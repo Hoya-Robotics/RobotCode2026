@@ -53,11 +53,13 @@ public class TurretCalculator {
       AngularVelocity flywheelSpeed) {
 
     private static Angle computeHood(double x, boolean passing) {
-      return Degrees.of(passing ? passingHoodMap.get(x) : 4.0 * x - 2.0);
+      return Degrees.of(passing ? passingHoodMap.get(x) : 7.61 * x - 13.1);
+      // return Degrees.of(passing ? passingHoodMap.get(x) : 4.0 * x - 2.0);
     }
 
     private static AngularVelocity computeFlywheel(double x, boolean passing) {
-      return RotationsPerSecond.of(passing ? passingFlywheelMap.get(x) : 2.27 * x + 22.3);
+      return RotationsPerSecond.of(passing ? passingFlywheelMap.get(x) : 3.6 * x + 29.5);
+      // return RotationsPerSecond.of(passing ? passingFlywheelMap.get(x) : 2.27 * x + 22.3);
     }
 
     private static Angle computeAzimuth(Angle angle, Angle currentAngle) {
