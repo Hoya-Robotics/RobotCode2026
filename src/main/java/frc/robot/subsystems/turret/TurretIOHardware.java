@@ -52,7 +52,7 @@ public class TurretIOHardware implements TurretIO {
     TurretConstants.leftFlywheelGains.registerMotor(leftFlywheelMotor);
     TurretConstants.rightFlywheelGains.registerMotor(rightFlywheelMotor);
 
-    azimuthSignals = PhoenixSync.registerTalonFX(azimuthMotor, 100);
+    azimuthSignals = PhoenixSync.registerTalonFX(azimuthMotor, 250);
     hoodSignals = PhoenixSync.registerTalonFX(hoodMotor, 100);
     leftFlywheelSignals = PhoenixSync.registerTalonFX(leftFlywheelMotor, 100);
     rightFlywheelSignals = PhoenixSync.registerTalonFX(rightFlywheelMotor, 100);

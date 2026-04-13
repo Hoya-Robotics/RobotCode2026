@@ -102,7 +102,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         turret.setState(TurretState.SHOOT);
         spindexer.setState(SpindexerState.COOLDOWN);
 
-        if ((turret.readyForFeed()
+        if ((turret.flywheelUpToSpeed()
                 && feedAtSetpointDebouncer.calculate(spindexer.isFeedingAtSpeed()))
             || RobotConfig.getMode() == OperationMode.SIM) {
           setState(SuperStructureState.SHOOT);

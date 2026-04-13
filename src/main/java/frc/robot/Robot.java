@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -46,8 +47,13 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
+  public void robotInit() {
+    PortForwarder.add(5800, "photonvision.local", 5800);
+  }
+
+  @Override
   public void robotPeriodic() {
-    PhoenixSync.refreshCriticalBlocking(0.02);
+    PhoenixSync.refreshCriticalBlocking(0.008);
     PhoenixSync.refreshTelemetryNonBlock();
     GenericTunableGains.periodicAll();
     CommandScheduler.getInstance().run();

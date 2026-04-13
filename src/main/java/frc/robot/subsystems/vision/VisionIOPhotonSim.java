@@ -13,6 +13,9 @@ public class VisionIOPhotonSim extends VisionIOPhotonReal {
 
     cameraSim = new PhotonCameraSim(camera, config.simProps(), FieldConstants.aprilLayout);
     cameraSim.setMaxSightRange(4.5);
+    cameraSim.enableRawStream(false);
+    cameraSim.enableDrawWireframe(false);
+    cameraSim.enableProcessedStream(false);
     RobotState.getInstance().getVisionSim().addCamera(cameraSim, config.robotToCamera());
   }
 

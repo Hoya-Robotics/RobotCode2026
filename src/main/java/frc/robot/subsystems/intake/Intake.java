@@ -24,8 +24,8 @@ public class Intake extends StateSubsystem<IntakeState> {
   private IntakeIOOutputs outputs = new IntakeIOOutputs();
   private boolean hasExtended = false;
 
-  private LoggedTunableNumber intakeSpeed = new LoggedTunableNumber("Intake/Spin/speedRPM", 3200);
-  private double latestIntakeSpeed = 3200;
+  private LoggedTunableNumber intakeSpeed = new LoggedTunableNumber("Intake/Spin/speedRPM", 2200);
+  private double latestIntakeSpeed = 2200;
 
   private Timer stateChangeTimer = new Timer();
 
@@ -108,8 +108,8 @@ public class Intake extends StateSubsystem<IntakeState> {
         break;
       case RETRACT_SLOW:
         outputs.extendControlType = ExtendControlType.VOLTAGE;
-        outputs.extendVoltage = 0.0;
-        outputs.intakeVelocityRPM = 0.0;
+        outputs.extendVoltage = -2.0;
+        outputs.intakeVelocityRPM = 1500;
         break;
     }
 

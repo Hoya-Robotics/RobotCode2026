@@ -27,6 +27,9 @@ public class VisionIOLimelightSim extends VisionIOLimelight {
     camera = new PhotonCamera(config.name());
     cameraSim = new PhotonCameraSim(camera, config.simProps());
     cameraSim.setMaxSightRange(4.5);
+    cameraSim.enableRawStream(false);
+    cameraSim.enableProcessedStream(false);
+    cameraSim.enableDrawWireframe(false);
     RobotState.getInstance().getVisionSim().addCamera(cameraSim, config.robotToCamera());
   }
 

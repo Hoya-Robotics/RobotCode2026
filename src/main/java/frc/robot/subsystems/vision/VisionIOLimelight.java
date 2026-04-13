@@ -57,14 +57,10 @@ public class VisionIOLimelight implements VisionIO {
     }
 
     inputs.seesTarget = NT.getEntry("tv").getDouble(0.0) == 1.0;
-    if (!inputs.seesTarget) return;
+    // if (!inputs.seesTarget) return;
 
     double[] rawStddevs = stddevSubscriber.get();
-    inputs.stddevs =
-        new double[] {
-          rawStddevs[0] + 1e-6, // MT1_x
-          rawStddevs[1] + 1e-6 // MT1_y
-        };
+    inputs.stddevs = new double[] {rawStddevs[0] + 1e-6, rawStddevs[1] + 1e-6};
 
     var mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(config.name());
     Pose3d pose3d = LimelightHelpers.getBotPose3d_wpiBlue(config.name());

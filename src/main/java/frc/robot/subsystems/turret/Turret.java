@@ -93,6 +93,13 @@ public class Turret extends StateSubsystem<TurretState> {
     return (max - pos) < WRAP_MARGIN_ROTS || (pos - min) < WRAP_MARGIN_ROTS;
   }
 
+  public boolean flywheelUpToSpeed() {
+    return Math.max(
+            Math.abs(inputs.leftFlywheelState.nativeVelocity() - outputs.flywheelRPS),
+            Math.abs(inputs.rightFlywheelState.nativeVelocity() - outputs.flywheelRPS))
+        < 3.0;
+  }
+
   public boolean readyForFeed() {
     double posError = Math.abs(inputs.azimuthState.nativePosition() - outputs.azimuthSetpointRots);
     ChassisSpeeds speeds = RobotState.getInstance().getFieldVelocity();
@@ -103,17 +110,9 @@ public class Turret extends StateSubsystem<TurretState> {
     boolean withinTolerance = posError < tolerance;
     boolean azimuthAtSetpoint = azimuthSettledDebouncer.calculate(withinTolerance);
     boolean willWrap = nearWrapBoundary();
-    boolean flywheelUpToSpeed =
-        Math.max(
-                Math.abs(inputs.leftFlywheelState.nativeVelocity() - outputs.flywheelRPS),
-                Math.abs(inputs.rightFlywheelState.nativeVelocity() - outputs.flywheelRPS))
-            < 3.0;
 
     boolean ready =
-        azimuthAtSetpoint
-            && (!willWrap)
-            && (getCurrentState() != TurretState.NEAR_TRENCH)
-            && flywheelUpToSpeed;
+        azimuthAtSetpoint && (!willWrap) && (getCurrentState() != TurretState.NEAR_TRENCH);
 
     Logger.recordOutput("Turret/Ready/azimuthAtSetpoint", azimuthAtSetpoint);
     Logger.recordOutput("Turret/Ready/azimuthWillWrap", willWrap);
