@@ -14,11 +14,11 @@ public class Spindexer extends StateSubsystem<SpindexerState> {
   private final SpindexerIOInputsAutoLogged inputs = new SpindexerIOInputsAutoLogged();
   private SpindexerIOOutputs outputs = new SpindexerIOOutputs();
 
-  private LoggedTunableNumber indexSpeed = new LoggedTunableNumber("Spindexer/indexSpeed", 7.0);
-  private LoggedTunableNumber feedSpeed = new LoggedTunableNumber("Spindexer/feedSpeed", 28.0);
+  private LoggedTunableNumber indexSpeed = new LoggedTunableNumber("Spindexer/indexSpeed", 6.5);
+  private LoggedTunableNumber feedSpeed = new LoggedTunableNumber("Spindexer/feedSpeed", 30.0);
 
-  private double latestFeedSpeed = 28.0;
-  private double latestIndexSpeed = 7.0;
+  private double latestFeedSpeed = 30.0;
+  private double latestIndexSpeed = 6.5;
 
   public Spindexer(SpindexerIO io) {
     this.io = io;

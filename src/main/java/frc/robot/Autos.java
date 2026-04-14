@@ -2,6 +2,10 @@ package frc.robot;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoTrajectory;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -9,6 +13,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.RobotConfig.DriveConstants;
 import frc.robot.RobotConfig.IntakeConstants.IntakeState;
 import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.subsystems.SuperStructure;
@@ -25,6 +30,24 @@ public class Autos {
   private static Timer autoTimer = new Timer();
 
   public static void warmup(Drive drive, SuperStructure superStructure, Intake intake) {
+    try {
+      com.pathplanner.lib.config.RobotConfig pp_config;
+      pp_config = com.pathplanner.lib.config.RobotConfig.fromGUISettings();
+
+      AutoBuilder.configure(
+          RobotState.getInstance()::getEstimatedPose,
+          RobotState.getInstance()::resetOdometry,
+          RobotState.getInstance()::getRobotVelocity,
+          drive::followPathplannerTrajectory,
+          new PPHolonomicDriveController(
+              DriveConstants.PP_translationConstants, DriveConstants.PP_rotationConstants),
+          pp_config,
+          () -> !FieldConstants.isBlueAlliance(),
+          drive);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
     choreoFactory =
         new AutoFactory(
             RobotState.getInstance()::getEstimatedPose,
@@ -33,12 +56,29 @@ public class Autos {
             true,
             drive);
 
-    dashboardChooser.addOption("2xSwipe|R", doubleSwipe(drive, superStructure, intake, false));
-    dashboardChooser.addOption("2xSwipe|L", doubleSwipe(drive, superStructure, intake, true));
-    dashboardChooser.addOption("2xBump|R", doubleBumpSwipe(drive, superStructure, intake, false));
-    dashboardChooser.addOption("2xBump|L", doubleBumpSwipe(drive, superStructure, intake, true));
-    dashboardChooser.addOption("Depot|C", centerDepot(drive, superStructure, intake));
+    dashboardChooser.addOption("2xSwipe\t|R", doubleSwipe(drive, superStructure, intake, false));
+    dashboardChooser.addOption("2xSwipe\t|L", doubleSwipe(drive, superStructure, intake, true));
+    dashboardChooser.addOption("2xBump\t|R", doubleBumpSwipe(drive, superStructure, intake, false));
+    dashboardChooser.addOption("2xBump\t|L", doubleBumpSwipe(drive, superStructure, intake, true));
+    dashboardChooser.addOption("Depot\t|C", centerDepot(drive, superStructure, intake));
 
+    try {
+      PathPlannerPath bumpPath = PathPlannerPath.fromPathFile("BumpStart");
+      Command bumpAuto =
+          Commands.sequence(
+              Commands.runOnce(
+                  () ->
+                      RobotState.getInstance()
+                          .resetOdometry(
+                              AllianceFlip.apply(bumpPath.getStartingHolonomicPose().get()))),
+              AutoBuilder.followPath(bumpPath));
+      dashboardChooser.addOption(
+          "Pathplanner Test", wrapShootAllianceIntakeNeutral(bumpAuto, superStructure, intake));
+    } catch (Exception e) {
+      System.out.println("Pathplanner path not found");
+    }
+
+    CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     CommandScheduler.getInstance().schedule(choreoFactory.warmupCmd());
   }
 
@@ -103,7 +143,7 @@ public class Autos {
     return wrapShootAllianceIntakeNeutral(
         Commands.sequence(
             flippableTrajectory("OPStart", mirrorYAxis),
-            flippableTrajectory("OPEnd", mirrorYAxis),
+            flippableTrajectory("OPEnd2", mirrorYAxis),
             flippableTrajectory("OPEscape", mirrorYAxis)),
         superStructure,
         intake);

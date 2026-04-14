@@ -3,6 +3,7 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.pathplanner.lib.config.PIDConstants;
 import com.revrobotics.spark.config.ClosedLoopConfig;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -75,8 +76,12 @@ public class RobotConfig {
       IDLE,
       TO_POSE,
       TELEOP,
+      PATHPLANNER,
       CHOREO
     }
+
+    public static final PIDConstants PP_translationConstants = new PIDConstants(5.0, 0.05);
+    public static final PIDConstants PP_rotationConstants = new PIDConstants(5.0, 0.05);
 
     public static final double maxDriveSpeedMps =
         TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
@@ -90,8 +95,8 @@ public class RobotConfig {
     public static final double toPoseThetaTolerance = Units.degreesToRadians(3.0);
     public static final double toPoseEndSpeed = 0.25;
 
-    public static final PIDGains choreoXGains = new PIDGains(7.5, 0.0, 0.0);
-    public static final PIDGains choreoYGains = new PIDGains(7.5, 0.0, 0.0);
+    public static final PIDGains choreoXGains = new PIDGains(6.0, 0.0, 0.0);
+    public static final PIDGains choreoYGains = new PIDGains(6.0, 0.0, 0.0);
     public static final PIDGains choreoOmegaGains = new PIDGains(5.25, 0.0, 0.0);
 
     public static final double SOTMOmegaFactor = 0.125;

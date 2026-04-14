@@ -88,7 +88,7 @@ public class TurretIOHardware implements TurretIO {
     var config = new TalonFXConfiguration();
     config.withSlot0(
         new Slot0Configs().withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign));
-    config.CurrentLimits.withStatorCurrentLimit(50);
+    config.CurrentLimits.withStatorCurrentLimit(30);
     config.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive)
         .withNeutralMode(NeutralModeValue.Coast);
     config.Feedback.withFusedCANcoder(azimuthEncoder)
@@ -111,7 +111,7 @@ public class TurretIOHardware implements TurretIO {
     config.MotorOutput.withInverted(InvertedValue.Clockwise_Positive)
         .withNeutralMode(NeutralModeValue.Brake);
     config.Feedback.withSensorToMechanismRatio(TurretConstants.hoodGearRatio);
-    config.CurrentLimits.withStatorCurrentLimit(50);
+    config.CurrentLimits.withStatorCurrentLimit(30);
     config.SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
         .withForwardSoftLimitThreshold(0.08276)
         .withReverseSoftLimitEnable(true)
