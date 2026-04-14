@@ -81,11 +81,11 @@
     {
       "anchor": {
         "x": 3.5838306971958698,
-        "y": 0.5863786097935269
+        "y": 0.6677957153320324
       },
       "prevControl": {
         "x": 2.7904983084542407,
-        "y": 0.5303475080217629
+        "y": 0.6117646135602685
       },
       "nextControl": null,
       "isLocked": false,
@@ -112,11 +112,11 @@
   ],
   "constraintZones": [
     {
-      "name": "Constraints Zone",
-      "minWaypointRelativePos": 2.452662140933567,
+      "name": "Bump Zone",
+      "minWaypointRelativePos": 2.3394019299820465,
       "maxWaypointRelativePos": 3.663704836175943,
       "constraints": {
-        "maxVelocity": 3.0,
+        "maxVelocity": 2.75,
         "maxAcceleration": 6.5,
         "maxAngularVelocity": 540.0,
         "maxAngularAcceleration": 720.0,
@@ -125,11 +125,11 @@
       }
     },
     {
-      "name": "Constraints Zone",
+      "name": "Shooting Zone",
       "minWaypointRelativePos": 3.7948482383303355,
       "maxWaypointRelativePos": 5.0,
       "constraints": {
-        "maxVelocity": 0.5,
+        "maxVelocity": 0.6,
         "maxAcceleration": 6.5,
         "maxAngularVelocity": 540.0,
         "maxAngularAcceleration": 720.0,

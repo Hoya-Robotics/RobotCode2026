@@ -4,6 +4,7 @@ import choreo.auto.AutoFactory;
 import choreo.auto.AutoTrajectory;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -20,6 +21,8 @@ import frc.robot.subsystems.SuperStructure;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.util.AllianceFlip;
+import java.util.List;
+import java.util.Set;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -28,6 +31,8 @@ public class Autos {
       new LoggedDashboardChooser<>("Auto Routine");
   private static AutoFactory choreoFactory;
   private static Timer autoTimer = new Timer();
+
+  private static final List<String> pathPlannerAutos = List.of("BumpAuto");
 
   public static void warmup(Drive drive, SuperStructure superStructure, Intake intake) {
     try {
@@ -62,20 +67,33 @@ public class Autos {
     dashboardChooser.addOption("2xBump\t|L", doubleBumpSwipe(drive, superStructure, intake, true));
     dashboardChooser.addOption("Depot\t|C", centerDepot(drive, superStructure, intake));
 
-    try {
-      PathPlannerPath bumpPath = PathPlannerPath.fromPathFile("BumpStart");
-      Command bumpAuto =
-          Commands.sequence(
-              Commands.runOnce(
-                  () ->
-                      RobotState.getInstance()
-                          .resetOdometry(
-                              AllianceFlip.apply(bumpPath.getStartingHolonomicPose().get()))),
-              AutoBuilder.followPath(bumpPath));
-      dashboardChooser.addOption(
-          "Pathplanner Test", wrapShootAllianceIntakeNeutral(bumpAuto, superStructure, intake));
-    } catch (Exception e) {
-      System.out.println("Pathplanner path not found");
+    for (String name : pathPlannerAutos) {
+      try {
+        List<PathPlannerPath> paths = PathPlannerAuto.getPathGroupFromAutoFile(name);
+        Command reset =
+            Commands.defer(
+                () -> AutoBuilder.resetOdom(paths.get(0).getStartingHolonomicPose().get()),
+                Set.of());
+        Command routine =
+            Commands.sequence(paths.stream().map(AutoBuilder::followPath).toArray(Command[]::new));
+        Command mirroredRoutine =
+            Commands.sequence(
+                paths.stream()
+                    .map(path -> AutoBuilder.followPath(path.mirrorPath()))
+                    .toArray(Command[]::new));
+        dashboardChooser.addOption(
+            name,
+            reset
+                .asProxy()
+                .andThen(wrapShootAllianceIntakeNeutral(routine, superStructure, intake)));
+        dashboardChooser.addOption(
+            name + "_mirrored",
+            reset
+                .asProxy()
+                .andThen(wrapShootAllianceIntakeNeutral(mirroredRoutine, superStructure, intake)));
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
 
     CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
