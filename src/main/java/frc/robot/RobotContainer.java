@@ -29,9 +29,10 @@ import frc.robot.subsystems.turret.TurretIOHardware;
 import frc.robot.subsystems.turret.TurretIOSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
-import frc.robot.subsystems.vision.VisionIOLimelight;
+import frc.robot.subsystems.vision.VisionIOLimelightReal;
 import frc.robot.subsystems.vision.VisionIOLimelightSim;
 import frc.robot.subsystems.vision.VisionIOPhotonReal;
+import frc.robot.subsystems.vision.VisionIOPhotonSim;
 import frc.robot.util.FuelSim;
 import frc.robot.util.PhoenixSync;
 
@@ -64,10 +65,9 @@ public class RobotContainer {
         vision =
             new Vision(
                 new VisionIOLimelightSim(VisionConstants.hopperConfig.toPV()),
-                new VisionIOLimelightSim(VisionConstants.turretConfig.toPV()));
-        /*
-        new VisionIOPhotonSim(VisionConstants.backLeft.toPV()),
-        new VisionIOPhotonSim(VisionConstants.backRight.toPV()));*/
+                new VisionIOLimelightSim(VisionConstants.turretConfig.toPV()),
+                new VisionIOPhotonSim(VisionConstants.backLeft.toPV()),
+                new VisionIOPhotonSim(VisionConstants.backRight.toPV()));
         configureFuelSim();
         break;
       case REAL:
@@ -103,8 +103,8 @@ public class RobotContainer {
                     TurretConstants.rightFlywheelId));
         vision =
             new Vision(
-                new VisionIOLimelight(VisionConstants.hopperConfig),
-                new VisionIOLimelight(VisionConstants.turretConfig),
+                new VisionIOLimelightReal(VisionConstants.hopperConfig),
+                new VisionIOLimelightReal(VisionConstants.turretConfig),
                 new VisionIOPhotonReal(VisionConstants.backLeft.toPV()),
                 new VisionIOPhotonReal(VisionConstants.backRight.toPV()));
         break;

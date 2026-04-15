@@ -15,7 +15,7 @@ import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.targeting.PhotonPipelineResult;
 
-public class VisionIOLimelightSim extends VisionIOLimelight {
+public class VisionIOLimelightSim extends VisionIOLimelightReal {
   private final PhotonCamera camera;
   private final PhotonCameraSim cameraSim;
   private final PhotonPoseEstimator estimator;
@@ -38,7 +38,6 @@ public class VisionIOLimelightSim extends VisionIOLimelight {
     RobotState.getInstance().getVisionSim().update(RobotState.getInstance().getSimulatedPose());
 
     var table = NetworkTableInstance.getDefault().getTable(getConfig().name());
-    boolean seesTarget = false;
     for (var result : camera.getAllUnreadResults()) {
       if (!result.hasTargets()) continue;
       var estimate = estimator.estimateCoprocMultiTagPose(result);
@@ -64,12 +63,11 @@ public class VisionIOLimelightSim extends VisionIOLimelight {
               new double[] {
                 VisionConstants.defaultLinearStddevPhoton, VisionConstants.defaultLinearStddevPhoton
               });
-      table.getEntry("cl").setDouble(result.metadata.getLatencyMillis());
-      seesTarget = true;
+      table.getEntry("tl").setDouble(result.metadata.getLatencyMillis());
     }
-    table.getEntry("tv").setInteger(seesTarget ? 1 : 0);
 
     super.updateInputs(inputs);
+    inputs.connected = true;
   }
 
   private static List<Double> estimateToBotposeArray(

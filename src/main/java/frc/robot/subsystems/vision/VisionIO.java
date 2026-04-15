@@ -24,10 +24,6 @@ public interface VisionIO {
          4. Not far avg dist
          */
       return pose.getZ() > VisionConstants.zThreshold
-          || tagCount == 0
-          || Math.abs(pose.getX()) < 1e-6
-          || Math.abs(pose.getY()) < 1e-6
-          || Math.abs(pose.getZ()) < 1e-6
           || (tagCount == 1 && ambiguity > VisionConstants.maxAmbiguity)
           || pose.getX() < 0.0
           || pose.getY() < 0.0
@@ -39,9 +35,8 @@ public interface VisionIO {
 
   @AutoLog
   public class VisionIOInputs {
-    public boolean seesTarget = false;
+    public boolean connected = false;
     public PoseObservation[] observations;
-    public double[] stddevs = new double[2];
   }
 
   public default CameraConfig getConfig() {

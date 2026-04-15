@@ -281,23 +281,11 @@ public class RobotConfig {
                 new Rotation3d(0.0, Units.degreesToRadians(20.0), 0.0)),
             new SimCameraProperties());
 
-    /*
-    public static final CameraConfig hopperConfigSim =
-        new CameraConfig(
-            "limelight-hopper",
-            new Transform3d(
-                new Translation3d(
-                    -Units.inchesToMeters(9.125),
-                    -Units.inchesToMeters(11.396),
-                    Units.inchesToMeters(19.828)),
-                new Rotation3d(0.0, Units.degreesToRadians(-20.0), 0.0)),
-            new SimCameraProperties());*/
-
     public static final double linearTrustFactor = 1.2;
     public static final double zThreshold = 0.2;
     public static final double maxAmbiguity = 0.19;
     public static final double maxAvgDist = 5.0; // meters
-    public static final double defaultLinearStddevPhoton = 0.05; // meters
+    public static final double defaultLinearStddevPhoton = 0.08; // meters
   }
 
   public static final class SimConstants {

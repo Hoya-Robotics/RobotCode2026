@@ -31,10 +31,9 @@ public class Vision extends SubsystemBase {
   public void periodic() {
     for (int i = 0; i < cameras.length; ++i) {
       cameras[i].updateInputs(cameraInputs[i]);
-
       Logger.processInputs("Vision/" + cameras[i].getConfig().name(), cameraInputs[i]);
 
-      if (cameraInputs[i].observations == null) continue;
+      if (!cameraInputs[i].connected || cameraInputs[i].observations == null) continue;
       for (int j = 0; j < cameraInputs[i].observations.length; ++j) {
         var obsv = cameraInputs[i].observations[j];
         if (obsv.isInvalid()) {
@@ -47,10 +46,10 @@ public class Vision extends SubsystemBase {
         double tagCount = (double) obsv.tagCount();
         double scale = (avgDist * avgDist) / tagCount;
         double xDev =
-            (cameraInputs[i].stddevs[0] * scale / tagCount)
+            (VisionConstants.defaultLinearStddevPhoton * scale / tagCount)
                 * (1.0 / VisionConstants.linearTrustFactor);
         double yDev =
-            (cameraInputs[i].stddevs[1] * scale / tagCount)
+            (VisionConstants.defaultLinearStddevPhoton * scale / tagCount)
                 * (1.0 / VisionConstants.linearTrustFactor);
 
         RobotState.getInstance()
