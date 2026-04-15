@@ -70,7 +70,7 @@ public class Drive extends StateSubsystem<DriveState> {
   private SwerveRequest.SwerveDriveBrake brakeRequest = new SwerveRequest.SwerveDriveBrake();
 
   private LoggedTunableNumber sotmSpeedFactor =
-      new LoggedTunableNumber("Drive/sotmSpeedFactor", 0.25);
+      new LoggedTunableNumber("Drive/sotmSpeedFactor", 0.2);
   private LoggedTunableNumber neutralSotmSpeedFactor =
       new LoggedTunableNumber("Drive/neutralSotmSpeedFactor", 0.325);
 

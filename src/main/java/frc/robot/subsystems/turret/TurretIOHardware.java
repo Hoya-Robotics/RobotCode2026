@@ -113,7 +113,7 @@ public class TurretIOHardware implements TurretIO {
     config.Feedback.withSensorToMechanismRatio(TurretConstants.hoodGearRatio);
     config.CurrentLimits.withStatorCurrentLimit(30);
     config.SoftwareLimitSwitch.withForwardSoftLimitEnable(true)
-        .withForwardSoftLimitThreshold(0.08276)
+        .withForwardSoftLimitThreshold(0.078)
         .withReverseSoftLimitEnable(true)
         .withReverseSoftLimitThreshold(0.02);
     for (int i = 0; i < 5; ++i) {

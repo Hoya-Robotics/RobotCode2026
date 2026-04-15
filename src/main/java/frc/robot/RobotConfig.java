@@ -257,7 +257,7 @@ public class RobotConfig {
                 -Units.inchesToMeters(12.916),
                 Units.inchesToMeters(8.470),
                 Units.inchesToMeters(7.490),
-                new Rotation3d(0.0, Units.degreesToRadians(20), Units.degreesToRadians(45))),
+                new Rotation3d(0.0, Units.degreesToRadians(20), Units.degreesToRadians(-135))),
             new SimCameraProperties());
 
     public static final CameraConfig backLeft =
@@ -267,7 +267,7 @@ public class RobotConfig {
                 -Units.inchesToMeters(12.916),
                 -Units.inchesToMeters(8.470),
                 Units.inchesToMeters(7.490),
-                new Rotation3d(0.0, Units.degreesToRadians(20), Units.degreesToRadians(-45))),
+                new Rotation3d(0.0, Units.degreesToRadians(20), Units.degreesToRadians(135))),
             new SimCameraProperties());
 
     public static final CameraConfig hopperConfig =

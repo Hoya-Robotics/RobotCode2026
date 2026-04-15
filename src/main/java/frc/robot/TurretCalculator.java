@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
@@ -29,9 +30,9 @@ public class TurretCalculator {
       TurretConstants.robotToTurret.getTranslation().toTranslation2d();
 
   static {
-    passingHoodMap.put(6.0, 36.0);
-    passingHoodMap.put(5.0, 32.0);
-    passingHoodMap.put(4.0, 29.0);
+    passingHoodMap.put(6.0, 26.0);
+    passingHoodMap.put(5.0, 22.0);
+    passingHoodMap.put(4.0, 19.0);
 
     passingFlywheelMap.put(6.0, 30.0);
     passingFlywheelMap.put(5.0, 28.0);
@@ -43,7 +44,8 @@ public class TurretCalculator {
   }
 
   public static double getTOF(double distance, boolean passing) {
-    return passing ? passingTofMap.get(distance) : 0.0829 * distance + 0.886;
+    return passing ? passingTofMap.get(distance) : 0.196 * distance + 0.33;
+    // return passing ? passingTofMap.get(distance) : 0.0829 * distance + 0.886;
     // return passing ? passingTofMap.get(distance) : 0.076 * distance + 0.982;
   }
 
@@ -54,12 +56,14 @@ public class TurretCalculator {
       AngularVelocity flywheelSpeed) {
 
     private static Angle computeHood(double x, boolean passing) {
-      return Degrees.of(passing ? passingHoodMap.get(x) : 7.61 * x - 13.1);
+      return Degrees.of(passing ? -0.233 * x * x + 4.52 * x + 8.21 : 1.92 * x + 7.28);
+      // return Degrees.of(passing ? passingHoodMap.get(x) : 7.61 * x - 13.1);
       // return Degrees.of(passing ? passingHoodMap.get(x) : 4.0 * x - 2.0);
     }
 
     private static AngularVelocity computeFlywheel(double x, boolean passing) {
-      return RotationsPerSecond.of(passing ? passingFlywheelMap.get(x) : 3.6 * x + 29.5);
+      return RotationsPerSecond.of(passing ? 5.0 * x + 14.5 : 3.6 * x + 28.0);
+      // return RotationsPerSecond.of(passing ? passingFlywheelMap.get(x) : 3.6 * x + 29.5);
       // return RotationsPerSecond.of(passing ? passingFlywheelMap.get(x) : 2.27 * x + 22.3);
     }
 
@@ -69,9 +73,11 @@ public class TurretCalculator {
       double diff = targetRotations - currentRotations;
       diff = MathUtil.inputModulus(diff, -0.5, 0.5);
       double closestTarget = currentRotations + diff;
-      if (closestTarget > TurretConstants.maxAzimuthAngle.in(Rotations)) {
+      if (closestTarget
+          > TurretConstants.maxAzimuthAngle.in(Rotations) - Units.degreesToRotations(3.0)) {
         closestTarget -= 1;
-      } else if (closestTarget < TurretConstants.minAzimuthAngle.in(Rotations)) {
+      } else if (closestTarget
+          < TurretConstants.minAzimuthAngle.in(Rotations) + Units.degreesToRotations(3.0)) {
         closestTarget += 1;
       }
       return Rotations.of(closestTarget);

@@ -8,6 +8,7 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.RobotConfig.CameraConfig;
+import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.util.LimelightHelpers;
 
 public class VisionIOLimelight implements VisionIO {
@@ -60,7 +61,13 @@ public class VisionIOLimelight implements VisionIO {
     // if (!inputs.seesTarget) return;
 
     double[] rawStddevs = stddevSubscriber.get();
-    inputs.stddevs = new double[] {rawStddevs[0] + 1e-6, rawStddevs[1] + 1e-6};
+    // Check for 0 length stddevs
+    inputs.stddevs =
+        rawStddevs.length == 0
+            ? new double[] {
+              VisionConstants.defaultLinearStddevPhoton, VisionConstants.defaultLinearStddevPhoton
+            }
+            : new double[] {rawStddevs[0] + 1e-6, rawStddevs[1] + 1e-6};
 
     var mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue(config.name());
     Pose3d pose3d = LimelightHelpers.getBotPose3d_wpiBlue(config.name());

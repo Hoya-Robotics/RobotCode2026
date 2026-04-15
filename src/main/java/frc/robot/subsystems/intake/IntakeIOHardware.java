@@ -68,7 +68,7 @@ public class IntakeIOHardware implements IntakeIO {
     extendConfig.Feedback.withSensorToMechanismRatio(0.1768);
     extendConfig.MotorOutput.withInverted(InvertedValue.CounterClockwise_Positive);
     extendConfig.MotorOutput.withNeutralMode(NeutralModeValue.Brake);
-    extendConfig.CurrentLimits.withStatorCurrentLimit(24);
+    extendConfig.CurrentLimits.withStatorCurrentLimit(15);
     extendConfig
         .SoftwareLimitSwitch
         .withForwardSoftLimitEnable(true)

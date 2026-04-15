@@ -24,8 +24,8 @@ public class Intake extends StateSubsystem<IntakeState> {
   private IntakeIOOutputs outputs = new IntakeIOOutputs();
   private boolean hasExtended = false;
 
-  private LoggedTunableNumber intakeSpeed = new LoggedTunableNumber("Intake/Spin/speedRPM", 2200);
-  private double latestIntakeSpeed = 2200;
+  private LoggedTunableNumber intakeSpeed = new LoggedTunableNumber("Intake/Spin/speedRPM", 1500);
+  private double latestIntakeSpeed = 1500;
 
   private Timer stateChangeTimer = new Timer();
 

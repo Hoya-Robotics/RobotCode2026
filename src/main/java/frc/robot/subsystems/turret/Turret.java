@@ -165,7 +165,7 @@ public class Turret extends StateSubsystem<TurretState> {
   public void applyState() {
     outputs.azimuthSetpointRots = parameters.azimuthAngle().in(Rotations);
     outputs.flywheelRPS = flywheelIdleSpeed.getAsDouble();
-    outputs.hoodSetpointRots = MathUtil.clamp(parameters.hoodAngle().in(Rotations), 0.02, 0.08276);
+    outputs.hoodSetpointRots = MathUtil.clamp(parameters.hoodAngle().in(Rotations), 0.02, 0.078);
 
     switch (getCurrentState()) {
       case NEAR_TRENCH:

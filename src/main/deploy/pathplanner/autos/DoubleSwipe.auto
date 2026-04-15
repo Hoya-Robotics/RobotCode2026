@@ -7,19 +7,25 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BumpStart"
+            "pathName": "FirstSwipe"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 4.0
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "BumpSecond"
+            "pathName": "SecondSwipe"
           }
         },
         {
-          "type": "path",
+          "type": "wait",
           "data": {
-            "pathName": "BumpEscape"
+            "waitTime": 4.0
           }
         }
       ]

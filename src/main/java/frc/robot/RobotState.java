@@ -7,9 +7,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.*;
 import edu.wpi.first.units.measure.Time;
-import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.RobotConfig.CameraConfig;
-import frc.robot.RobotConfig.OperationMode;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOInputsAutoLogged;
 import frc.robot.subsystems.vision.Vision;
@@ -82,10 +80,11 @@ public class RobotState {
   }
 
   public void addVisionMeasurement(VisionObservation estimate) {
+    /*
     boolean autoNeutral =
-        DriverStation.isAutonomousEnabled() && FieldConstants.inNeutralZone(getEstimatedPose());
-    Logger.recordOutput("RobotState/autoNeutral", autoNeutral);
-    if (drive != null && !autoNeutral && RobotConfig.getMode() != OperationMode.SIM) {
+        DriverStation.isAutonomousEnabled() && FieldConstants.inNeutralZone(getEstimatedPose());*/
+    // Logger.recordOutput("RobotState/autoNeutral", autoNeutral);
+    if (drive != null) { // && !autoNeutral) { // && RobotConfig.getMode() != OperationMode.SIM) {
       drive.addVisionMeasurement(estimate);
     }
   }
