@@ -124,7 +124,11 @@ public class RobotContainer {
 
   private void configureBindings() {
     superStructure.setDefaultCommand(superStructure.setStateCommand(SuperStructureState.IDLE));
-    intake.setDefaultCommand(intake.setStateCommand(IntakeState.IDLE));
+    intake.setDefaultCommand(
+        Commands.either(
+            intake.setStateCommand(IntakeState.RETRACT_SLOW),
+            intake.setStateCommand(IntakeState.IDLE),
+            () -> superStructure.getCurrentState() == SuperStructureState.SHOOT));
 
     driveController
         .rightTrigger(0.3)
@@ -132,16 +136,7 @@ public class RobotContainer {
 
     operatorController
         .rightTrigger(0.3)
-        .whileTrue(
-            superStructure
-                .setStateCommand(SuperStructureState.PRE_SHOOT)
-                .alongWith(
-                    intake
-                        .weakSetStateCommand(IntakeState.RETRACT_SLOW)
-                        .onlyIf(
-                            () -> superStructure.getCurrentState() == SuperStructureState.SHOOT))
-                .repeatedly())
-        .onFalse(intake.clearWeakState());
+        .whileTrue(superStructure.setStateCommand(SuperStructureState.PRE_SHOOT).repeatedly());
 
     driveController
         .rightBumper()

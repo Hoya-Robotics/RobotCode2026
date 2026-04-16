@@ -31,7 +31,6 @@ public class Intake extends StateSubsystem<IntakeState> {
   private boolean agitateForward = true;
 
   private Timer stateChangeTimer = new Timer();
-  private IntakeState weakRequest = null;
 
   public Intake(IntakeIO io) {
     this.io = io;
@@ -62,10 +61,6 @@ public class Intake extends StateSubsystem<IntakeState> {
       latestIntakeSpeed = intakeSpeed.getAsDouble();
     }
 
-    if (weakRequest != null && getCurrentState() == IntakeState.IDLE) {
-      setState(weakRequest);
-    }
-
     applyState();
     io.applyOutputs(outputs);
   }
@@ -74,26 +69,18 @@ public class Intake extends StateSubsystem<IntakeState> {
     return Commands.runOnce(() -> setState(state), this);
   }
 
-  public Command weakSetStateCommand(IntakeState state) {
-    return Commands.runOnce(() -> weakRequest = state);
-  }
-
-  public Command clearWeakState() {
-    return Commands.runOnce(
-        () -> {
-          weakRequest = null;
-          agitateCycles = 0;
-          retractHasExtended = false;
-          agitateForward = false;
-        });
-  }
-
   private boolean isStalled() {
     return stateChangeTimer.get() > 0.5 && inputs.intakeVelocity.abs(RotationsPerSecond) < 2.0;
   }
 
   @Override
   public IntakeState handleStateTransitions() {
+    if (getRequestedState() == IntakeState.RETRACT_SLOW
+        && getCurrentState() != IntakeState.RETRACT_SLOW) {
+      agitateCycles = 0;
+      retractHasExtended = false;
+      agitateForward = false;
+    }
     if (getRequestedState() != getCurrentState() && getCurrentState() != IntakeState.REVERSE) {
       stateChangeTimer.restart();
     }

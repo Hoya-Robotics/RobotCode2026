@@ -88,7 +88,6 @@ public class Robot extends LoggedRobot {
   @Override
   public void teleopInit() {
     ShiftTracker.start();
-    CommandScheduler.getInstance().schedule(m_robotContainer.intake.clearWeakState());
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
