@@ -45,7 +45,7 @@ public class SpindexerIOHardware implements SpindexerIO {
     rampConfig.encoder.velocityConversionFactor(SpindexerConstants.rampGearRatio);
 
     SparkFlexConfig indexConfig = new SparkFlexConfig();
-    indexConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(50); // 29
+    indexConfig.idleMode(IdleMode.kBrake).inverted(true).smartCurrentLimit(75); // 29
     indexConfig.encoder.positionConversionFactor(SpindexerConstants.indexGearRatio);
     indexConfig.encoder.velocityConversionFactor(SpindexerConstants.indexGearRatio);
 

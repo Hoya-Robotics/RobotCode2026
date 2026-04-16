@@ -1,7 +1,10 @@
 package frc.robot.subsystems.vision;
 
+import static edu.wpi.first.units.Units.*;
+
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.DoubleArraySubscriber;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.IntegerPublisher;
@@ -30,6 +33,14 @@ public class VisionIOLimelightReal implements VisionIO {
         networkTable.getDoubleArrayTopic("botpose_wpiblue").subscribe(new double[] {});
     throttlePublisher = networkTable.getIntegerTopic("throttle_set").publish();
 
+    LimelightHelpers.setCameraPose_RobotSpace(
+        config.name(),
+        config.robotToCamera().getTranslation().getX(),
+        config.robotToCamera().getTranslation().getY(),
+        config.robotToCamera().getTranslation().getZ(),
+        config.robotToCamera().getRotation().getMeasureX().in(Degrees),
+        config.robotToCamera().getRotation().getMeasureY().in(Degrees),
+        config.robotToCamera().getRotation().getMeasureZ().in(Degrees));
     LimelightHelpers.setRewindEnabled(config.name(), true);
   }
 
@@ -64,7 +75,10 @@ public class VisionIOLimelightReal implements VisionIO {
               rawSample.value[0],
               rawSample.value[1],
               rawSample.value[2],
-              new Rotation3d(rawSample.value[3], rawSample.value[4], rawSample.value[5]));
+              new Rotation3d(
+                  Units.degreesToRadians(rawSample.value[3]),
+                  Units.degreesToRadians(rawSample.value[4]),
+                  Units.degreesToRadians(rawSample.value[5])));
 
       observations.add(
           new PoseObservation(

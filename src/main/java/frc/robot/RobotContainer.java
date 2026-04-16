@@ -138,9 +138,10 @@ public class RobotContainer {
                 .alongWith(
                     intake
                         .weakSetStateCommand(IntakeState.RETRACT_SLOW)
-                        .onlyWhile(
+                        .onlyIf(
                             () -> superStructure.getCurrentState() == SuperStructureState.SHOOT))
-                .repeatedly());
+                .repeatedly())
+        .onFalse(intake.clearWeakState());
 
     driveController
         .rightBumper()

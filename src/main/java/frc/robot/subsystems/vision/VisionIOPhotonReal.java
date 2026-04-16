@@ -1,5 +1,6 @@
 package frc.robot.subsystems.vision;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.FieldConstants;
 import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.RobotState;
@@ -13,6 +14,7 @@ public class VisionIOPhotonReal implements VisionIO {
   protected final CameraConfig config;
   protected final PhotonCamera camera;
   private final PhotonPoseEstimator poseEstimator;
+  private double lastFPSLimit = -1;
 
   public VisionIOPhotonReal(CameraConfig config) {
     this.config = config;
@@ -27,6 +29,14 @@ public class VisionIOPhotonReal implements VisionIO {
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
+    if (DriverStation.isDisabled() && lastFPSLimit == -1) {
+      lastFPSLimit = 5;
+      camera.setFPSLimit(5);
+    } else if (DriverStation.isEnabled() && lastFPSLimit != -1) {
+      lastFPSLimit = -1;
+      camera.setFPSLimit(-1);
+    }
+
     List<PoseObservation> observations = new ArrayList<>();
     var results = camera.getAllUnreadResults();
 

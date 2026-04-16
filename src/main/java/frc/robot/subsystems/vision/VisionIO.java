@@ -24,9 +24,10 @@ public interface VisionIO {
          4. Not far avg dist
          */
       return pose.getZ() > VisionConstants.zThreshold
+          || tagCount == 0
           || (tagCount == 1 && ambiguity > VisionConstants.maxAmbiguity)
-          || pose.getX() < 0.0
-          || pose.getY() < 0.0
+          || pose.getX() < 1e-6
+          || pose.getY() < 1e-6
           || pose.getMeasureX().gt(FieldConstants.fieldLength)
           || pose.getMeasureY().gt(FieldConstants.fieldWidth)
           || avgTagDist > VisionConstants.maxAvgDist;

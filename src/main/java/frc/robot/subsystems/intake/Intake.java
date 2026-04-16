@@ -24,10 +24,12 @@ public class Intake extends StateSubsystem<IntakeState> {
   private IntakeIOOutputs outputs = new IntakeIOOutputs();
   private boolean hasExtended = false;
 
-  private LoggedTunableNumber intakeSpeed = new LoggedTunableNumber("Intake/Spin/speedRPM", 1500);
-  private double latestIntakeSpeed = 1500;
+  private LoggedTunableNumber intakeSpeed = new LoggedTunableNumber("Intake/Spin/speedRPM", 1800);
+  private double latestIntakeSpeed = 1800;
+  private boolean retractHasExtended = false;
 
   private Timer stateChangeTimer = new Timer();
+  private IntakeState weakRequest = null;
 
   public Intake(IntakeIO io) {
     this.io = io;
@@ -58,6 +60,10 @@ public class Intake extends StateSubsystem<IntakeState> {
       latestIntakeSpeed = intakeSpeed.getAsDouble();
     }
 
+    if (weakRequest != null && getCurrentState() == IntakeState.IDLE) {
+      setState(weakRequest);
+    }
+
     applyState();
     io.applyOutputs(outputs);
   }
@@ -67,11 +73,11 @@ public class Intake extends StateSubsystem<IntakeState> {
   }
 
   public Command weakSetStateCommand(IntakeState state) {
-    return Commands.runOnce(
-        () -> {
-          if (getCurrentState() == IntakeState.IDLE) setState(state);
-        },
-        this);
+    return Commands.runOnce(() -> weakRequest = state);
+  }
+
+  public Command clearWeakState() {
+    return Commands.runOnce(() -> weakRequest = null);
   }
 
   private boolean isStalled() {
@@ -80,6 +86,9 @@ public class Intake extends StateSubsystem<IntakeState> {
 
   @Override
   public IntakeState handleStateTransitions() {
+    if (getRequestedState() == IntakeState.RETRACT_SLOW
+        && getCurrentState() != IntakeState.RETRACT_SLOW
+        && getCurrentState() != IntakeState.IDLE) retractHasExtended = false;
     if (getRequestedState() != getCurrentState() && getCurrentState() != IntakeState.REVERSE) {
       stateChangeTimer.restart();
     }
@@ -95,7 +104,7 @@ public class Intake extends StateSubsystem<IntakeState> {
     outputs.extendControlType = ExtendControlType.POSITION;
     switch (getCurrentState()) {
       case IDLE:
-        outputs.extendSetpointInches = 7.25;
+        outputs.extendSetpointInches = 7.0;
         outputs.intakeVelocityRPM = 750;
         break;
       case REVERSE:
@@ -107,16 +116,22 @@ public class Intake extends StateSubsystem<IntakeState> {
         outputs.intakeVelocityRPM = latestIntakeSpeed;
         break;
       case RETRACT_SLOW:
-        outputs.extendControlType = ExtendControlType.VOLTAGE;
-        outputs.extendVoltage = stateChangeTimer.get() > 0.2 ? -2.0 : 0.0;
-        outputs.intakeVelocityRPM = 1500;
+        if (!retractHasExtended) {
+          retractHasExtended = inputs.extendPosition.gt(Inches.of(10.75));
+          outputs.extendControlType = ExtendControlType.POSITION;
+          outputs.extendSetpointInches = IntakeConstants.maxExtension.in(Inches);
+        } else {
+          outputs.extendControlType = ExtendControlType.VOLTAGE;
+          outputs.extendVoltage = -1.25;
+        }
+        outputs.intakeVelocityRPM = 1800;
         break;
     }
 
     // First extension override
     if (!hasExtended && DriverStation.isEnabled()) {
       outputs.extendControlType = ExtendControlType.VOLTAGE;
-      outputs.extendVoltage = 2.0;
+      outputs.extendVoltage = 2.75;
 
       hasExtended = inputs.extendPosition.gt(Inches.of(10.75));
     }

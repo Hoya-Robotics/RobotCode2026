@@ -3,7 +3,6 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.configs.Slot0Configs;
-import com.pathplanner.lib.config.PIDConstants;
 import com.revrobotics.spark.config.ClosedLoopConfig;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -79,9 +78,6 @@ public class RobotConfig {
       PATHPLANNER,
       CHOREO
     }
-
-    public static final PIDConstants PP_translationConstants = new PIDConstants(5.0, 0.05);
-    public static final PIDConstants PP_rotationConstants = new PIDConstants(5.0, 0.05);
 
     public static final double maxDriveSpeedMps =
         TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);

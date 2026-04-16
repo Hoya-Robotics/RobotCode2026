@@ -7,7 +7,6 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
-import com.pathplanner.lib.util.DriveFeedforwards;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -48,9 +47,6 @@ public class Drive extends StateSubsystem<DriveState> {
 
   private SwerveSample choreoSample;
   private boolean firstSample = true;
-
-  private ChassisSpeeds pathplannerSpeeds;
-  private DriveFeedforwards pathplannerFeedforwards;
 
   private Pose2d targetDrivePose = null;
   private SwerveRequest.ApplyRobotSpeeds robotRelativeRequest =
@@ -135,12 +131,6 @@ public class Drive extends StateSubsystem<DriveState> {
     setState(DriveState.CHOREO);
   }
 
-  public void followPathplannerTrajectory(ChassisSpeeds speeds, DriveFeedforwards feedforwards) {
-    this.pathplannerSpeeds = speeds;
-    this.pathplannerFeedforwards = feedforwards;
-    setState(DriveState.PATHPLANNER);
-  }
-
   public void addVisionMeasurement(VisionObservation observation) {
     io.addVisionMeasurement(observation.pose(), observation.timestamp(), observation.stdDevs());
   }
@@ -173,14 +163,6 @@ public class Drive extends StateSubsystem<DriveState> {
   public void applyState() {
     Pose2d robotPose = inputs.Pose;
     switch (getCurrentState()) {
-      case PATHPLANNER:
-        applyRequest(
-            robotRelativeRequest
-                .withSpeeds(ChassisSpeeds.discretize(pathplannerSpeeds, 0.020))
-                .withWheelForceFeedforwardsX(pathplannerFeedforwards.robotRelativeForcesXNewtons())
-                .withWheelForceFeedforwardsY(
-                    pathplannerFeedforwards.robotRelativeForcesYNewtons()));
-        break;
       case TELEOP:
         applyRequest(getInputRequest());
         break;
