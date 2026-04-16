@@ -47,7 +47,7 @@ public class FuelSim {
   protected static final double FUEL_CROSS_AREA = Math.PI * FUEL_RADIUS * FUEL_RADIUS;
   // Drag coefficient of smooth sphere:
   // https://en.wikipedia.org/wiki/Drag_coefficient#/media/File:14ilf1l.svg
-  protected static final double DRAG_COF = 0.47; // dimensionless
+  protected static final double DRAG_COF = 0.63; // dimensionless
   protected static final double DRAG_FORCE_FACTOR = 0.5 * AIR_DENSITY * DRAG_COF * FUEL_CROSS_AREA;
 
   protected static final Translation3d[] FIELD_XZ_LINE_STARTS = {

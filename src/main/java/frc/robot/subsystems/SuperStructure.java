@@ -112,7 +112,8 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         if (DriverStation.isTeleopEnabled()) RobotState.getInstance().setDriveSOTM(true);
         turret.setState(TurretState.SHOOT);
 
-        if (RobotConfig.getMode() == OperationMode.SIM) {
+        if (RobotConfig.getMode() == OperationMode.SIM
+            && turret.getCurrentState() != TurretState.NEAR_TRENCH) {
           turret.simulateShot();
         } else if (turret.readyForFeed() && !coolingDown) {
           spindexer.setState(SpindexerState.FEED);

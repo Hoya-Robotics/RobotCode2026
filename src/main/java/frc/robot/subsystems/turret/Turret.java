@@ -207,14 +207,14 @@ public class Turret extends StateSubsystem<TurretState> {
   }
 
   public void simulateShot() {
-    if (simShotTimer.get() < 0.25) return;
+    if (simShotTimer.get() < 0.35) return;
     if (!RobotState.getInstance().consumeFuel()) return;
     LinearVelocity launchSpeed =
         MetersPerSecond.of(
             TurretConstants.launcherWheelRadius.times(2.0 * Math.PI).in(Meters)
                 * parameters
                     .flywheelSpeed()
-                    .minus(RotationsPerSecond.of(4.0))
+                    .minus(RotationsPerSecond.of(6.0))
                     .in(RotationsPerSecond));
     RobotState.getInstance()
         .getFuelSim()

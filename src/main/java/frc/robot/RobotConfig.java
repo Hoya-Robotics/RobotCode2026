@@ -222,7 +222,7 @@ public class RobotConfig {
     public static final double azimuthMovingToleranceRots = Units.degreesToRotations(5.0);
 
     public static final double azimuthRadiusMeters = Units.inchesToMeters(7.0733);
-    public static final Distance launcherWheelRadius = Inches.of(2.0);
+    public static final Distance launcherWheelRadius = Inches.of(1.5);
 
     public static final double cooldownSeconds = 0.5;
     public static final Transform3d robotToTurret =

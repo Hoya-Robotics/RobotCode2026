@@ -37,7 +37,7 @@ public interface VisionIO {
   @AutoLog
   public class VisionIOInputs {
     public boolean connected = false;
-    public PoseObservation[] observations;
+    public PoseObservation[] observations = new PoseObservation[] {};
     public int[] tagIds = new int[] {};
   }
 
