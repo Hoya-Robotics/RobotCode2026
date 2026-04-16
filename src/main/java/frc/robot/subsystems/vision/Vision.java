@@ -5,11 +5,14 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.FieldConstants;
 import frc.robot.RobotConfig.VisionConstants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.VisionObservation;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
@@ -42,13 +45,13 @@ public class Vision extends SubsystemBase {
         }
         acceptedPoseEstimates.add(obsv.pose());
 
-        /*
-            Logger.recordOutput(
-                "Vision/" + cameras[i].getConfig().name() + "/visionTargets",
-                Arrays.stream(cameraInputs[i].tagIds)
-                    .mapToObj(id -> FieldConstants.aprilLayout.getTagPose(id).get())
-                    .toArray(Pose3d[]::new));
-        */
+        Logger.recordOutput(
+            "Vision/" + cameras[i].getConfig().name() + "/visionTargets",
+            Arrays.stream(cameraInputs[i].tagIds)
+                .mapToObj(id -> FieldConstants.aprilLayout.getTagPose(id))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toArray(Pose3d[]::new));
 
         double avgDist = obsv.avgTagDist();
         double tagCount = (double) obsv.tagCount();

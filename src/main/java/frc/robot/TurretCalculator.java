@@ -17,10 +17,6 @@ import frc.robot.util.AllianceFlip;
 import org.littletonrobotics.junction.Logger;
 
 public class TurretCalculator {
-  private static final InterpolatingDoubleTreeMap passingHoodMap = new InterpolatingDoubleTreeMap();
-  private static final InterpolatingDoubleTreeMap passingFlywheelMap =
-      new InterpolatingDoubleTreeMap();
-  private static final InterpolatingDoubleTreeMap passingTofMap = new InterpolatingDoubleTreeMap();
 
   private static final int kMaxIterations = 10;
   private static final double kConvergenceEpsilon = 0.001;
@@ -29,15 +25,9 @@ public class TurretCalculator {
   private static final Translation2d kTurretOffset =
       TurretConstants.robotToTurret.getTranslation().toTranslation2d();
 
+  private static final InterpolatingDoubleTreeMap passingTofMap = new InterpolatingDoubleTreeMap();
+
   static {
-    passingHoodMap.put(6.0, 26.0);
-    passingHoodMap.put(5.0, 22.0);
-    passingHoodMap.put(4.0, 19.0);
-
-    passingFlywheelMap.put(6.0, 30.0);
-    passingFlywheelMap.put(5.0, 28.0);
-    passingFlywheelMap.put(4.0, 26.0);
-
     passingTofMap.put(4.0, 1.25);
     passingTofMap.put(5.0, 1.27);
     passingTofMap.put(6.0, 1.28);
@@ -45,8 +35,6 @@ public class TurretCalculator {
 
   public static double getTOF(double distance, boolean passing) {
     return passing ? passingTofMap.get(distance) : 0.196 * distance + 0.33;
-    // return passing ? passingTofMap.get(distance) : 0.0829 * distance + 0.886;
-    // return passing ? passingTofMap.get(distance) : 0.076 * distance + 0.982;
   }
 
   public record TurretParameters(
@@ -57,14 +45,10 @@ public class TurretCalculator {
 
     private static Angle computeHood(double x, boolean passing) {
       return Degrees.of(passing ? -0.233 * x * x + 4.52 * x + 8.21 : 1.92 * x + 7.28);
-      // return Degrees.of(passing ? passingHoodMap.get(x) : 7.61 * x - 13.1);
-      // return Degrees.of(passing ? passingHoodMap.get(x) : 4.0 * x - 2.0);
     }
 
     private static AngularVelocity computeFlywheel(double x, boolean passing) {
       return RotationsPerSecond.of(passing ? 5.0 * x + 14.5 : 3.6 * x + 28.0);
-      // return RotationsPerSecond.of(passing ? passingFlywheelMap.get(x) : 3.6 * x + 29.5);
-      // return RotationsPerSecond.of(passing ? passingFlywheelMap.get(x) : 2.27 * x + 22.3);
     }
 
     private static Angle computeAzimuth(Angle angle, Angle currentAngle) {

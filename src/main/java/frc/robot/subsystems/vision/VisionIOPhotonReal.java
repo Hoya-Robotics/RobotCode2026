@@ -5,6 +5,7 @@ import frc.robot.FieldConstants;
 import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.RobotState;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -78,6 +79,6 @@ public class VisionIOPhotonReal implements VisionIO {
 
     inputs.connected = camera.isConnected();
     inputs.observations = observations.toArray(PoseObservation[]::new);
-    // inputs.tagIds = Arrays.stream(tagSet.toArray(Integer[]::new)).mapToInt(i -> i).toArray();
+    inputs.tagIds = Arrays.stream(tagSet.toArray(Integer[]::new)).mapToInt(i -> i).toArray();
   }
 }

@@ -31,13 +31,17 @@ public class BatteryLogger {
     Logger.recordOutput("BatteryLogger/totalEnergy", robotEnergy, "watt seconds");
 
     for (var entry : subsystemCurrents.entrySet()) {
-      String key = entry.getKey();
-      Logger.recordOutput("BatteryLogger/Current/" + key, subsystemCurrents.get(key), "amps");
-      Logger.recordOutput("BatteryLogger/Power/" + key, subsystemPowers.get(key), "watts");
-      Logger.recordOutput("BatteryLogger/Energy/" + key, subsystemEnergies.get(key), "watt hours");
+      Logger.recordOutput("BatteryLogger/Current/" + entry.getKey(), entry.getValue(), "amps");
+      subsystemCurrents.put(entry.getKey(), 0.0);
+    }
 
-      subsystemCurrents.put(key, 0.0);
-      subsystemPowers.put(key, 0.0);
+    for (var entry : subsystemPowers.entrySet()) {
+      Logger.recordOutput("BatteryLogger/Power/" + entry.getKey(), entry.getValue(), "watts");
+      subsystemPowers.put(entry.getKey(), 0.0);
+    }
+
+    for (var entry : subsystemEnergies.entrySet()) {
+      Logger.recordOutput("BatteryLogger/Energy/" + entry.getKey(), entry.getValue(), "watt hours");
     }
 
     robotCurrent = 0.0;

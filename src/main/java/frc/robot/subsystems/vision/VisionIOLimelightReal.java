@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.util.LimelightHelpers;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -98,6 +99,6 @@ public class VisionIOLimelightReal implements VisionIO {
     }
 
     inputs.observations = observations.toArray(PoseObservation[]::new);
-    // inputs.tagIds = Arrays.stream(tagSet.toArray(Integer[]::new)).mapToInt(i -> i).toArray();
+    inputs.tagIds = Arrays.stream(tagSet.toArray(Integer[]::new)).mapToInt(i -> i).toArray();
   }
 }
