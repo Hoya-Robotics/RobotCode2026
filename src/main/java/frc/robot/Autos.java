@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.RobotConfig.DriveConstants.DriveState;
 import frc.robot.RobotConfig.IntakeConstants.IntakeState;
 import frc.robot.RobotConfig.SuperStructureState;
 import frc.robot.subsystems.SuperStructure;
@@ -119,6 +120,7 @@ public class Autos {
     return Commands.sequence(
         intake.setStateCommand(IntakeState.INTAKE),
         choreoFactory.trajectoryCmd("CenterDepotCollect"),
-        superStructure.setStateCommand(SuperStructureState.SHOOT));
+        Commands.runOnce(() -> drive.setState(DriveState.IDLE)),
+        superStructure.setStateCommand(SuperStructureState.SHOOT).repeatedly());
   }
 }

@@ -130,8 +130,8 @@ public class RobotContainer {
         .rightTrigger(0.3)
         .whileTrue(intake.setStateCommand(IntakeState.INTAKE).repeatedly());
 
-    driveController
-        .leftTrigger(0.3)
+    operatorController
+        .rightTrigger(0.3)
         .whileTrue(
             superStructure
                 .setStateCommand(SuperStructureState.PRE_SHOOT)

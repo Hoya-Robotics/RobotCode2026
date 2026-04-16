@@ -27,9 +27,10 @@ public class Intake extends StateSubsystem<IntakeState> {
   private LoggedTunableNumber intakeSpeed = new LoggedTunableNumber("Intake/Spin/speedRPM", 1800);
   private double latestIntakeSpeed = 1800;
   private boolean retractHasExtended = false;
+  private int agitateCycles = 0;
+  private boolean agitateForward = true;
 
   private Timer stateChangeTimer = new Timer();
-	private Timer agitateTimer = new Timer();
   private IntakeState weakRequest = null;
 
   public Intake(IntakeIO io) {
@@ -78,7 +79,13 @@ public class Intake extends StateSubsystem<IntakeState> {
   }
 
   public Command clearWeakState() {
-    return Commands.runOnce(() -> weakRequest = null);
+    return Commands.runOnce(
+        () -> {
+          weakRequest = null;
+          agitateCycles = 0;
+          retractHasExtended = false;
+          agitateForward = false;
+        });
   }
 
   private boolean isStalled() {
@@ -87,11 +94,6 @@ public class Intake extends StateSubsystem<IntakeState> {
 
   @Override
   public IntakeState handleStateTransitions() {
-    if (getRequestedState() == IntakeState.RETRACT_SLOW
-        && getCurrentState() != IntakeState.RETRACT_SLOW
-        && getCurrentState() != IntakeState.IDLE) {
-			retractHasExtended = false;
-		}
     if (getRequestedState() != getCurrentState() && getCurrentState() != IntakeState.REVERSE) {
       stateChangeTimer.restart();
     }
@@ -120,12 +122,21 @@ public class Intake extends StateSubsystem<IntakeState> {
         break;
       case RETRACT_SLOW:
         if (!retractHasExtended) {
-          retractHasExtended = inputs.extendPosition.gt(Inches.of(10.75));
+          retractHasExtended = inputs.extendPosition.gt(Inches.of(10.5));
           outputs.extendControlType = ExtendControlType.POSITION;
           outputs.extendSetpointInches = IntakeConstants.maxExtension.in(Inches);
         } else {
+          boolean lastAgitateForward = agitateForward;
+          agitateForward = Timer.getFPGATimestamp() % 1.0 < 0.75;
+          if (!agitateForward && lastAgitateForward) {
+            agitateCycles += 1;
+          }
           outputs.extendControlType = ExtendControlType.VOLTAGE;
-          outputs.extendVoltage = Timer.getFPGATimestamp() % 1.0 > 0.75 ? 3.5 : -1.0;
+          if (agitateCycles <= 3) {
+            outputs.extendVoltage = Timer.getFPGATimestamp() % 1.0 > 0.75 ? 3.5 : -1.2;
+          } else {
+            outputs.extendVoltage = -1.2;
+          }
         }
         outputs.intakeVelocityRPM = 1800;
         break;
