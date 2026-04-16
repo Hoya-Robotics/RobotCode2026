@@ -5,7 +5,9 @@ import frc.robot.FieldConstants;
 import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.RobotState;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.targeting.PhotonTrackedTarget;
@@ -37,6 +39,7 @@ public class VisionIOPhotonReal implements VisionIO {
       camera.setFPSLimit(-1);
     }
 
+    Set<Integer> tagSet = new HashSet<>();
     List<PoseObservation> observations = new ArrayList<>();
     var results = camera.getAllUnreadResults();
 
@@ -53,6 +56,8 @@ public class VisionIOPhotonReal implements VisionIO {
       if (estimatedPose.isEmpty())
         estimatedPose = poseEstimator.estimateLowestAmbiguityPose(result);
       if (estimatedPose.isEmpty()) continue;
+
+      tagSet.addAll(estimatedPose.get().targetsUsed.stream().map(t -> t.fiducialId).toList());
 
       var pose = estimatedPose.get();
       observations.add(
@@ -73,5 +78,6 @@ public class VisionIOPhotonReal implements VisionIO {
 
     inputs.connected = camera.isConnected();
     inputs.observations = observations.toArray(PoseObservation[]::new);
+    // inputs.tagIds = Arrays.stream(tagSet.toArray(Integer[]::new)).mapToInt(i -> i).toArray();
   }
 }

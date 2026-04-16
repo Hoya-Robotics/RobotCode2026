@@ -19,10 +19,10 @@ public interface VisionIO {
     public boolean isInvalid() {
       /*
          1. Not too high
-      2. Not single tag ambiguous
+         2. Not single tag ambiguous
          3. Estimate in field
          4. Not far avg dist
-         */
+      */
       return pose.getZ() > VisionConstants.zThreshold
           || tagCount == 0
           || (tagCount == 1 && ambiguity > VisionConstants.maxAmbiguity)
@@ -38,6 +38,7 @@ public interface VisionIO {
   public class VisionIOInputs {
     public boolean connected = false;
     public PoseObservation[] observations;
+    public int[] tagIds = new int[] {};
   }
 
   public default CameraConfig getConfig() {

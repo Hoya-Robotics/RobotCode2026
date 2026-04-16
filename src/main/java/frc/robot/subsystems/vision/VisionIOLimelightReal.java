@@ -14,8 +14,10 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import frc.robot.RobotConfig.CameraConfig;
 import frc.robot.util.LimelightHelpers;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class VisionIOLimelightReal implements VisionIO {
   private final CameraConfig config;
@@ -67,9 +69,14 @@ public class VisionIOLimelightReal implements VisionIO {
     inputs.connected =
         ((RobotController.getFPGATime() - latencySubscriber.getLastChange()) / 1000) < 250;
 
+    Set<Integer> tagSet = new HashSet<>();
     List<PoseObservation> observations = new LinkedList<>();
     for (var rawSample : megatag1Subscriber.readQueue()) {
       if (rawSample.value.length == 0) continue;
+      for (int i = 0; i < rawSample.value.length; i += 7) {
+        tagSet.add((int) rawSample.value[i]);
+      }
+
       Pose3d pose =
           new Pose3d(
               rawSample.value[0],
@@ -91,5 +98,6 @@ public class VisionIOLimelightReal implements VisionIO {
     }
 
     inputs.observations = observations.toArray(PoseObservation[]::new);
+    // inputs.tagIds = Arrays.stream(tagSet.toArray(Integer[]::new)).mapToInt(i -> i).toArray();
   }
 }

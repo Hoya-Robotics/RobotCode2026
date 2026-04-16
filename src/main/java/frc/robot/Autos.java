@@ -70,12 +70,19 @@ public class Autos {
       Command routine, SuperStructure superStructure, Intake intake) {
     return routine.alongWith(
         Commands.either(
-                superStructure.setStateCommand(SuperStructureState.PRE_SHOOT),
+                superStructure
+                    .setStateCommand(SuperStructureState.PRE_SHOOT)
+                    .alongWith(
+                        intake
+                            .weakSetStateCommand(IntakeState.RETRACT_SLOW)
+                            .onlyIf(
+                                () ->
+                                    superStructure.getCurrentState() == SuperStructureState.SHOOT)),
                 superStructure.setStateCommand(SuperStructureState.IDLE),
                 () -> FieldConstants.inAllianceZone(RobotState.getInstance().getEstimatedPose()))
             .repeatedly(),
         Commands.either(
-                intake.setStateCommand(IntakeState.RETRACT_SLOW),
+                intake.setStateCommand(IntakeState.IDLE),
                 intake.setStateCommand(IntakeState.INTAKE),
                 () -> FieldConstants.inAllianceZone(RobotState.getInstance().getEstimatedPose()))
             .repeatedly());
@@ -102,7 +109,7 @@ public class Autos {
     return wrapShootAllianceIntakeNeutral(
         Commands.sequence(
             flippableTrajectory("OPStart", mirrorYAxis),
-            flippableTrajectory("OPEnd2", mirrorYAxis),
+            flippableTrajectory("OPEnd", mirrorYAxis),
             flippableTrajectory("OPEscape", mirrorYAxis)),
         superStructure,
         intake);

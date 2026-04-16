@@ -29,6 +29,7 @@ public class Intake extends StateSubsystem<IntakeState> {
   private boolean retractHasExtended = false;
 
   private Timer stateChangeTimer = new Timer();
+	private Timer agitateTimer = new Timer();
   private IntakeState weakRequest = null;
 
   public Intake(IntakeIO io) {
@@ -88,7 +89,9 @@ public class Intake extends StateSubsystem<IntakeState> {
   public IntakeState handleStateTransitions() {
     if (getRequestedState() == IntakeState.RETRACT_SLOW
         && getCurrentState() != IntakeState.RETRACT_SLOW
-        && getCurrentState() != IntakeState.IDLE) retractHasExtended = false;
+        && getCurrentState() != IntakeState.IDLE) {
+			retractHasExtended = false;
+		}
     if (getRequestedState() != getCurrentState() && getCurrentState() != IntakeState.REVERSE) {
       stateChangeTimer.restart();
     }
@@ -122,7 +125,7 @@ public class Intake extends StateSubsystem<IntakeState> {
           outputs.extendSetpointInches = IntakeConstants.maxExtension.in(Inches);
         } else {
           outputs.extendControlType = ExtendControlType.VOLTAGE;
-          outputs.extendVoltage = -1.25;
+          outputs.extendVoltage = Timer.getFPGATimestamp() % 1.0 > 0.75 ? 3.5 : -1.0;
         }
         outputs.intakeVelocityRPM = 1800;
         break;

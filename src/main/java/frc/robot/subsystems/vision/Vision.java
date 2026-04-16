@@ -42,6 +42,14 @@ public class Vision extends SubsystemBase {
         }
         acceptedPoseEstimates.add(obsv.pose());
 
+        /*
+            Logger.recordOutput(
+                "Vision/" + cameras[i].getConfig().name() + "/visionTargets",
+                Arrays.stream(cameraInputs[i].tagIds)
+                    .mapToObj(id -> FieldConstants.aprilLayout.getTagPose(id).get())
+                    .toArray(Pose3d[]::new));
+        */
+
         double avgDist = obsv.avgTagDist();
         double tagCount = (double) obsv.tagCount();
         double scale = (avgDist * avgDist) / tagCount;
