@@ -10,8 +10,11 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.RobotController;
 import frc.robot.util.AllianceFlip;
 import java.io.IOException;
+
+import com.sun.org.apache.bcel.internal.generic.AllocationInstruction;
 
 public class FieldConstants {
   public static AprilTagFieldLayout aprilLayout;
@@ -55,16 +58,14 @@ public class FieldConstants {
           neutralZoneStart.minus(RobotConfig.bumperWidthX),
           aprilLayout.getTagPose(28).get().getMeasureY());
 
+	private static final Distance trenchDelta = trenchDepth.div(2.0).plus(RobotConfig.bumperWidthX.times(0.75));
+	private static final Distance trenchCloseLine = neutralZoneStart.minus(trenchDelta);
+	private static final Distance trenchFarLine = neutralZoneStart.plus(trenchDelta);
+
   public static boolean underTrench(Pose2d pose) {
-    pose = AllianceFlip.apply(pose);
-    return pose.getMeasureX()
-            .lt(
-                neutralZoneStart.plus(
-                    trenchDepth.div(2.0).plus(RobotConfig.bumperWidthX.times(0.75))))
-        && pose.getMeasureX()
-            .gt(
-                neutralZoneStart.minus(
-                    trenchDepth.div(2.0).plus(RobotConfig.bumperWidthX.times(0.75))))
+		boolean allianceTrench = pose.getMeasureX().lt(trenchFarLine) && pose.getMeasureX().gt(trenchCloseLine);
+		boolean opponentTrench = pose.getMeasureX().lt(trenchFarLine.plus(neutralZoneLength)) && pose.getMeasureX().gt(trenchCloseLine.plus(neutralZoneLength));
+    return (allianceTrench || opponentTrench)
         && (pose.getMeasureY().lt(trenchWidth)
             || pose.getMeasureY().gt(fieldWidth.minus(trenchWidth)));
   }

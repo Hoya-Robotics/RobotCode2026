@@ -48,7 +48,7 @@ public class TurretCalculator {
     }
 
     private static AngularVelocity computeFlywheel(double x, boolean passing) {
-      return RotationsPerSecond.of((passing ? 5.0 * x + 14.5 : 3.6 * x + 28.0) - 1.0);
+      return RotationsPerSecond.of((passing ? 5.0 * x + 14.5 : 3.6 * x + 28.0) - 2.2);
     }
 
     private static Angle computeAzimuth(Angle angle, Angle currentAngle) {
@@ -116,7 +116,7 @@ public class TurretCalculator {
     // Iterative convergence with raw doubles — no Translation2d allocations in loop
     double dx = targetX - turretX;
     double dy = targetY - turretY;
-    double distance = Math.sqrt(dx * dx + dy * dy);
+    double distance = Math.sqrt(dx * dx + dy * dy) - 0.175;
     double tof = getTOF(distance, passing);
     for (int i = 0; i < kMaxIterations; ++i) {
       dx = targetX - (turretX + fvx * tof);

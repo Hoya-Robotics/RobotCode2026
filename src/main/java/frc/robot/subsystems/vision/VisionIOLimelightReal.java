@@ -19,12 +19,14 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import org.littletonrobotics.junction.Logger;
 
 public class VisionIOLimelightReal implements VisionIO {
   private final CameraConfig config;
   private final DoubleSubscriber latencySubscriber;
   private final IntegerPublisher throttlePublisher;
   private final DoubleArraySubscriber megatag1Subscriber;
+  private final DoubleArraySubscriber hardwareMetricSubcriber;
   private int lastThrottleValue = 0;
 
   public VisionIOLimelightReal(CameraConfig config) {
@@ -35,6 +37,7 @@ public class VisionIOLimelightReal implements VisionIO {
     megatag1Subscriber =
         networkTable.getDoubleArrayTopic("botpose_wpiblue").subscribe(new double[] {});
     throttlePublisher = networkTable.getIntegerTopic("throttle_set").publish();
+    hardwareMetricSubcriber = networkTable.getDoubleArrayTopic("hw").subscribe(new double[] {});
 
     LimelightHelpers.setCameraPose_RobotSpace(
         config.name(),
@@ -59,6 +62,11 @@ public class VisionIOLimelightReal implements VisionIO {
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
+    double[] hardwareMetrics = hardwareMetricSubcriber.get();
+    if (hardwareMetrics.length >= 1) {
+      Logger.recordOutput("Vision/" + config.name() + "/cpuTemp", hardwareMetrics[0]);
+    }
+
     if (DriverStation.isDisabled() && lastThrottleValue == 0) {
       lastThrottleValue = 200;
       throttlePublisher.set(200);

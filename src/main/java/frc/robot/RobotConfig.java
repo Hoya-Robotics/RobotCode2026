@@ -214,7 +214,7 @@ public class RobotConfig {
       rightFlywheelGains.registerGain("kv", 0.135);
     }
 
-    public static final Angle trenchHoodAngle = Degrees.of(12.0);
+    public static final Angle trenchHoodAngle = Degrees.of(8.0);
 
     public static final Angle maxAzimuthAngle = Rotations.of(0.73);
     public static final Angle minAzimuthAngle = Rotations.of(-0.35);
