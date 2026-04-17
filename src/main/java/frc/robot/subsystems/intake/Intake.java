@@ -119,7 +119,7 @@ public class Intake extends StateSubsystem<IntakeState> {
             agitateCycles += 1;
           }
           outputs.extendControlType = ExtendControlType.VOLTAGE;
-          if (agitateCycles <= 3) {
+          if (agitateCycles <= 1) {
             outputs.extendVoltage = Timer.getFPGATimestamp() % 1.0 > 0.75 ? 3.5 : -1.2;
           } else {
             outputs.extendVoltage = -1.2;
@@ -137,7 +137,7 @@ public class Intake extends StateSubsystem<IntakeState> {
     // First extension override
     if (!hasExtended && DriverStation.isEnabled() && getCurrentState() != IntakeState.RETRACT) {
       outputs.extendControlType = ExtendControlType.VOLTAGE;
-      outputs.extendVoltage = 2.75;
+      outputs.extendVoltage = 2.25;
 
       hasExtended = inputs.extendPosition.gt(Inches.of(10.75));
     }

@@ -8,7 +8,6 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.numbers.N3;
@@ -41,13 +40,13 @@ public class DriveIOHardware extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder
     if (telemetryCache.get() == null) return;
     inputs.fromDriveState(telemetryCache.get());
 
-    double pitch = Math.abs(getPigeon2().getPitch().getValueAsDouble());
+    /*double pitch = Math.abs(getPigeon2().getPitch().getValueAsDouble());
     Logger.recordOutput("Drive/pigeonPitchDegrees", pitch);
     if (pitch > 8.0) {
       setStateStdDevs(VecBuilder.fill(9999, 9999, 9999));
     } else {
       setStateStdDevs(VecBuilder.fill(0.1, 0.1, 0.1));
-    }
+    }*/
 
     int i = 0;
     for (var module : getModules()) {
