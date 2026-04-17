@@ -2,7 +2,6 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 
-import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
@@ -13,8 +12,8 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Time;
+import frc.robot.Robot;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import org.littletonrobotics.junction.Logger;
@@ -22,13 +21,11 @@ import org.littletonrobotics.junction.Logger;
 public class DriveIOHardware extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder>
     implements DriveIO {
   AtomicReference<SwerveDriveState> telemetryCache = new AtomicReference<>();
-  private StatusSignal<Angle> pigeonPitch;
 
   public DriveIOHardware(
       SwerveDrivetrainConstants swerveConstants,
       SwerveModuleConstants<?, ?, ?>... moduleConstants) {
     super(TalonFX::new, TalonFX::new, CANcoder::new, swerveConstants, 250.0, moduleConstants);
-    pigeonPitch = getPigeon2().getPitch();
 
     this.getOdometryThread().setThreadPriority(99);
 
@@ -44,7 +41,7 @@ public class DriveIOHardware extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder
     if (telemetryCache.get() == null) return;
     inputs.fromDriveState(telemetryCache.get());
 
-    double pitch = pigeonPitch.getValue().abs(Degrees);
+    double pitch = Math.abs(getPigeon2().getPitch().getValueAsDouble());
     Logger.recordOutput("Drive/pigeonPitchDegrees", pitch);
     if (pitch > 8.0) {
       setStateStdDevs(VecBuilder.fill(9999, 9999, 9999));
@@ -52,18 +49,16 @@ public class DriveIOHardware extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder
       setStateStdDevs(VecBuilder.fill(0.1, 0.1, 0.1));
     }
 
-    /*
-      int i = 0;
-      for (var module : getModules()) {
-        Robot.batteryLogger.reportCurrentUsage(
-            "Drive/module" + i + "/drive",
-            module.getDriveMotor().getStatorCurrent().getValueAsDouble());
-        Robot.batteryLogger.reportCurrentUsage(
-            "Drive/module" + i + "/steer",
-            module.getSteerMotor().getStatorCurrent().getValueAsDouble());
-        i += 1;
-      }
-    */
+    int i = 0;
+    for (var module : getModules()) {
+      Robot.batteryLogger.reportCurrentUsage(
+          "Drive/module" + i + "/drive",
+          module.getDriveMotor().getStatorCurrent().getValueAsDouble());
+      Robot.batteryLogger.reportCurrentUsage(
+          "Drive/module" + i + "/steer",
+          module.getSteerMotor().getStatorCurrent().getValueAsDouble());
+      i += 1;
+    }
   }
 
   @Override

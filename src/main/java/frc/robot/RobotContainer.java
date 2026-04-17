@@ -143,6 +143,10 @@ public class RobotContainer {
         .whileTrue(intake.setStateCommand(IntakeState.REVERSE).repeatedly());
 
     driveController
+        .leftBumper()
+        .whileTrue(intake.setStateCommand(IntakeState.RETRACT).repeatedly());
+
+    driveController
         .start()
         .onTrue(
             Commands.runOnce(

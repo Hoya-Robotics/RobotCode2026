@@ -109,13 +109,12 @@ public class Turret extends StateSubsystem<TurretState> {
             : TurretConstants.azimuthStaticToleranceRots;
     boolean withinTolerance = posError < tolerance;
     boolean azimuthAtSetpoint = azimuthSettledDebouncer.calculate(withinTolerance);
-    boolean willWrap = nearWrapBoundary();
+    // boolean willWrap = nearWrapBoundary();
 
-    boolean ready =
-        azimuthAtSetpoint && (!willWrap) && (getCurrentState() != TurretState.NEAR_TRENCH);
+    boolean ready = azimuthAtSetpoint; // && (!willWrap);
 
     Logger.recordOutput("Turret/Ready/azimuthAtSetpoint", azimuthAtSetpoint);
-    Logger.recordOutput("Turret/Ready/azimuthWillWrap", willWrap);
+    // Logger.recordOutput("Turret/Ready/azimuthWillWrap", willWrap);
     Logger.recordOutput("Turret/Ready/fullyReady", ready);
 
     return ready;

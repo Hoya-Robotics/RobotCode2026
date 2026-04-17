@@ -48,7 +48,7 @@ public class TurretCalculator {
     }
 
     private static AngularVelocity computeFlywheel(double x, boolean passing) {
-      return RotationsPerSecond.of(passing ? 5.0 * x + 14.5 : 3.6 * x + 28.0);
+      return RotationsPerSecond.of((passing ? 5.0 * x + 14.5 : 3.6 * x + 28.0) - 1.0);
     }
 
     private static Angle computeAzimuth(Angle angle, Angle currentAngle) {

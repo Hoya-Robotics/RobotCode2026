@@ -93,6 +93,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
       state = SuperStructureState.SHOOT;
     }
 
+    boolean underTrench = FieldConstants.underTrench(RobotState.getInstance().getEstimatedPose());
     switch (state) {
       case IDLE:
         spindexer.setState(SpindexerState.HOLD);
@@ -112,10 +113,8 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
         if (DriverStation.isTeleopEnabled()) RobotState.getInstance().setDriveSOTM(true);
         turret.setState(TurretState.SHOOT);
 
-        if (RobotConfig.getMode() == OperationMode.SIM
-            && turret.getCurrentState() != TurretState.NEAR_TRENCH) {
-          turret.simulateShot();
-        } else if (turret.readyForFeed() && !coolingDown) {
+        if (turret.readyForFeed() && !coolingDown && !underTrench) {
+          if (RobotConfig.getMode() == OperationMode.SIM) turret.simulateShot();
           spindexer.setState(SpindexerState.FEED);
         } else {
           spindexer.setState(SpindexerState.COOLDOWN);
@@ -124,7 +123,7 @@ public class SuperStructure extends StateSubsystem<SuperStructureState> {
     }
 
     // Trench override
-    if (FieldConstants.underTrench(RobotState.getInstance().getEstimatedPose())) {
+    if (underTrench) {
       turret.setState(TurretState.NEAR_TRENCH);
     }
   }

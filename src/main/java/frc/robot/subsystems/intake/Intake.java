@@ -127,10 +127,15 @@ public class Intake extends StateSubsystem<IntakeState> {
         }
         outputs.intakeVelocityRPM = 1800;
         break;
+      case RETRACT:
+        outputs.extendControlType = ExtendControlType.VOLTAGE;
+        outputs.extendVoltage = -2.0;
+        outputs.intakeVelocityRPM = 0.0;
+        break;
     }
 
     // First extension override
-    if (!hasExtended && DriverStation.isEnabled()) {
+    if (!hasExtended && DriverStation.isEnabled() && getCurrentState() != IntakeState.RETRACT) {
       outputs.extendControlType = ExtendControlType.VOLTAGE;
       outputs.extendVoltage = 2.75;
 
