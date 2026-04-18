@@ -22,7 +22,11 @@ public class Intake extends StateSubsystem<IntakeState> {
   private final IntakeIO io;
   private IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
   private IntakeIOOutputs outputs = new IntakeIOOutputs();
-  private boolean hasExtended = false;
+
+  private boolean deployKicker = true;
+  private boolean resettingKicker = false;
+  private boolean postDelay = false;
+  private Timer deployDelay = new Timer();
 
   private LoggedTunableNumber intakeSpeed = new LoggedTunableNumber("Intake/Spin/speedRPM", 1800);
   private double latestIntakeSpeed = 1800;
@@ -61,16 +65,17 @@ public class Intake extends StateSubsystem<IntakeState> {
       latestIntakeSpeed = intakeSpeed.getAsDouble();
     }
 
+    Logger.recordOutput("Intake/deployingKicker", deployKicker);
+    if (deployKicker && DriverStation.isEnabled()) {
+      setState(resettingKicker ? IntakeState.KICKER_RESET : IntakeState.KICKER_DEPLOY);
+    }
+
     applyState();
     io.applyOutputs(outputs);
   }
 
   public Command setStateCommand(IntakeState state) {
     return Commands.runOnce(() -> setState(state), this);
-  }
-
-  private boolean isStalled() {
-    return stateChangeTimer.get() > 0.5 && inputs.intakeVelocity.abs(RotationsPerSecond) < 2.0;
   }
 
   @Override
@@ -89,12 +94,26 @@ public class Intake extends StateSubsystem<IntakeState> {
 
   @Override
   public void applyState() {
-    if (getCurrentState() == IntakeState.INTAKE && isStalled()) {
-      setState(IntakeState.REVERSE);
-    }
-
     outputs.extendControlType = ExtendControlType.POSITION;
+
     switch (getCurrentState()) {
+      case KICKER_DEPLOY:
+        deployKicker = !(postDelay && deployDelay.get() > 0.175);
+        resettingKicker = inputs.extendCurrent.gt(Amps.of(15.0));
+
+        if (!postDelay && inputs.extendPosition.gt(Inches.of(4.0))) {
+          postDelay = true;
+          deployDelay.restart();
+        }
+
+        outputs.extendSetpointInches = 4.45;
+        break;
+      case KICKER_RESET:
+        resettingKicker = !inputs.extendPosition.lt(Inches.of(5.75));
+
+        outputs.extendControlType = ExtendControlType.VOLTAGE;
+        outputs.extendVoltage = -2.25;
+        break;
       case IDLE:
         outputs.extendSetpointInches = 7.0;
         outputs.intakeVelocityRPM = 750;
@@ -132,14 +151,6 @@ public class Intake extends StateSubsystem<IntakeState> {
         outputs.extendVoltage = -2.0;
         outputs.intakeVelocityRPM = 0.0;
         break;
-    }
-
-    // First extension override
-    if (!hasExtended && DriverStation.isEnabled() && getCurrentState() != IntakeState.RETRACT) {
-      outputs.extendControlType = ExtendControlType.VOLTAGE;
-      outputs.extendVoltage = 2.25;
-
-      hasExtended = inputs.extendPosition.gt(Inches.of(10.75));
     }
   }
 }
