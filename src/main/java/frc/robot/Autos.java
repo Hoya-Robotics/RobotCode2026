@@ -73,7 +73,7 @@ public class Autos {
                 () -> FieldConstants.inAllianceZone(RobotState.getInstance().getEstimatedPose()))
             .repeatedly(),
         Commands.either(
-                intake.setStateCommand(IntakeState.RETRACT_SLOW),
+                intake.setStateCommand(IntakeState.AGITATE),
                 intake.setStateCommand(IntakeState.INTAKE),
                 () -> FieldConstants.inAllianceZone(RobotState.getInstance().getEstimatedPose()))
             .repeatedly());
@@ -97,8 +97,8 @@ public class Autos {
       Drive drive, SuperStructure superStructure, Intake intake, boolean mirrorYAxis) {
     return wrapShootAllianceIntakeNeutral(
         Commands.sequence(
-            flippableTrajectory("OPStart", mirrorYAxis),
-            flippableTrajectory("OPEnd", mirrorYAxis),
+            flippableTrajectory("OPStart_1241", mirrorYAxis),
+            flippableTrajectory("OPEnd_1241", mirrorYAxis),
             flippableTrajectory("OPEscape", mirrorYAxis),
             Commands.runOnce(() -> drive.setState(DriveState.IDLE))),
         superStructure,

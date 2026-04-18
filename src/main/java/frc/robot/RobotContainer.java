@@ -126,7 +126,7 @@ public class RobotContainer {
     superStructure.setDefaultCommand(superStructure.setStateCommand(SuperStructureState.IDLE));
     intake.setDefaultCommand(
         Commands.either(
-            intake.setStateCommand(IntakeState.RETRACT_SLOW),
+            intake.setStateCommand(IntakeState.AGITATE),
             intake.setStateCommand(IntakeState.IDLE),
             () -> superStructure.getCurrentState() == SuperStructureState.SHOOT));
 
@@ -142,8 +142,8 @@ public class RobotContainer {
         .rightBumper()
         .whileTrue(intake.setStateCommand(IntakeState.REVERSE).repeatedly());
 
-    driveController
-        .leftBumper()
+    operatorController
+        .leftTrigger(0.3)
         .whileTrue(intake.setStateCommand(IntakeState.RETRACT).repeatedly());
 
     driveController

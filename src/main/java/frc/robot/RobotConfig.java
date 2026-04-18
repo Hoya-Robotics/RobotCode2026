@@ -138,10 +138,10 @@ public class RobotConfig {
       IDLE,
       INTAKE,
       REVERSE,
-      RETRACT_SLOW,
+      AGITATE,
       RETRACT,
       KICKER_DEPLOY,
-      KICKER_RESET
+      KICKER_RESET,
     }
 
     public static final int extendMotorId = 30;

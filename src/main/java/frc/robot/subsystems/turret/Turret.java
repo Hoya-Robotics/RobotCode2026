@@ -180,8 +180,8 @@ public class Turret extends StateSubsystem<TurretState> {
         break;
     }
     /*
-      outputs.flywheelRPS = flywheelTuningSpeed.getAsDouble();
-      outputs.hoodSetpointRots = Units.degreesToRotations(hoodTuningSetpoint.getAsDouble());
+    outputs.flywheelRPS = flywheelTuningSpeed.getAsDouble();
+    outputs.hoodSetpointRots = Units.degreesToRotations(hoodTuningSetpoint.getAsDouble());
     */
   }
 
