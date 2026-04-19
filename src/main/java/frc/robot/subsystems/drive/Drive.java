@@ -68,7 +68,7 @@ public class Drive extends StateSubsystem<DriveState> {
   private LoggedTunableNumber sotmSpeedFactor =
       new LoggedTunableNumber("Drive/sotmSpeedFactor", 0.2);
   private LoggedTunableNumber neutralSotmSpeedFactor =
-      new LoggedTunableNumber("Drive/neutralSotmSpeedFactor", 0.325);
+      new LoggedTunableNumber("Drive/neutralSotmSpeedFactor", 0.45);
 
   public Drive(CommandXboxController controller, DriveIO io) {
     this.driveController = controller;

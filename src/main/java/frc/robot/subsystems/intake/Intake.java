@@ -28,8 +28,8 @@ public class Intake extends StateSubsystem<IntakeState> {
   private boolean postDelay = false;
   private Timer deployDelay = new Timer();
 
-  private LoggedTunableNumber intakeSpeed = new LoggedTunableNumber("Intake/Spin/speedRPM", 1800);
-  private double latestIntakeSpeed = 1800;
+  private LoggedTunableNumber intakeSpeed = new LoggedTunableNumber("Intake/Spin/speedRPM", 2000);
+  private double latestIntakeSpeed = 2000;
 
   private Timer stateChangeTimer = new Timer();
 
@@ -124,9 +124,11 @@ public class Intake extends StateSubsystem<IntakeState> {
           agitatingForward = !inputs.extendPosition.gt(Inches.of(10.5));
           outputs.extendSetpointInches = IntakeConstants.maxExtension.in(Inches);
         } else {
-          agitatingForward = inputs.extendPosition.lt(Inches.of(4.5));
+          agitatingForward = inputs.extendCurrent.lt(Amps.of(-18.0));
+          // outputs.extendSetpointInches = 1.75;
+          // agitatingForward = inputs.extendPosition.lt(Inches.of(4.5));
           outputs.extendControlType = ExtendControlType.VOLTAGE;
-          outputs.extendVoltage = -3.0;
+          outputs.extendVoltage = -3.5;
         }
         outputs.intakeVelocityRPM = 1600;
         break;
