@@ -5,7 +5,6 @@ import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -37,8 +36,6 @@ public class Autos {
     dashboardChooser.addOption("2xSwipe |L", doubleSwipe(drive, superStructure, intake, true));
     dashboardChooser.addOption("2xBump  |R", doubleBumpSwipe(drive, superStructure, intake, false));
     dashboardChooser.addOption("2xBump  |L", doubleBumpSwipe(drive, superStructure, intake, true));
-    dashboardChooser.addOption("Diabolical  |R", diabolical(drive, superStructure, intake, false));
-    dashboardChooser.addOption("Diabolical  |L", diabolical(drive, superStructure, intake, true));
     dashboardChooser.addOption("Depot   |C", centerDepot(drive, superStructure, intake));
   }
 
@@ -115,41 +112,5 @@ public class Autos {
             .deadlineFor(intake.setStateCommand(IntakeState.INTAKE).repeatedly()),
         Commands.runOnce(() -> drive.setState(DriveState.IDLE)),
         superStructure.setStateCommand(SuperStructureState.SHOOT).repeatedly());
-  }
-
-  private static Command diabolical(
-      Drive drive, SuperStructure superStructure, Intake intake, boolean mirrorY) {
-    return Commands.sequence(
-        flippableTrajectory("Diabolical", mirrorY),
-        Commands.waitSeconds(1.0),
-        drive
-            .driveToPoseCommandDeferred(
-                () ->
-                    AllianceFlip.apply(
-                        new Pose2d(
-                            7.0,
-                            mirrorY ? FieldConstants.fieldWidth.in(Units.Meters) - 3.54 : 3.54,
-                            Rotation2d.fromDegrees(-90))))
-            .until(
-                () ->
-                    new Translation2d(
-                                7.0,
-                                mirrorY ? FieldConstants.fieldWidth.in(Units.Meters) - 3.54 : 3.54)
-                            .getDistance(
-                                RobotState.getInstance().getEstimatedPose().getTranslation())
-                        < edu.wpi.first.math.util.Units.inchesToMeters(30))
-            .andThen(
-                drive.driveToPoseCommandDeferred(
-                    () ->
-                        AllianceFlip.apply(
-                            new Pose2d(
-                                5.93,
-                                mirrorY
-                                    ? FieldConstants.fieldWidth.in(Units.Meters) - 0.622
-                                    : 0.622,
-                                Rotation2d.fromDegrees(0.0)))))
-            .deadlineFor(intake.setStateCommand(IntakeState.INTAKE)),
-        alignToTrench(drive, Rotation2d.kZero, mirrorY)
-            .alongWith(superStructure.setStateCommand(SuperStructureState.SHOOT).repeatedly()));
   }
 }
